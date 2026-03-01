@@ -1,0 +1,274 @@
+---
+layout: default
+---
+
+<style>
+  #protected-gate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 40vh;
+    padding: 2rem 1rem;
+  }
+
+  .gate-card {
+    background: var(--sidebar-color, #f5f6fa);
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 8px;
+    padding: 2.5rem 2rem;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+
+  .gate-lock {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+    line-height: 1;
+  }
+
+  .gate-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--body-text-color, #27262b);
+    margin: 0 0 0.5rem 0;
+  }
+
+  .gate-subtitle {
+    font-size: 0.875rem;
+    color: var(--body-text-color, #5c5962);
+    opacity: 0.75;
+    margin: 0 0 1.5rem 0;
+  }
+
+  .gate-input-row {
+    display: flex;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  #gate-password {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color, #d0d0d0);
+    border-radius: 4px;
+    font-size: 1rem;
+    background: var(--body-background-color, #fff);
+    color: var(--body-text-color, #27262b);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  #gate-password:focus {
+    border-color: var(--links-color, #7253ed);
+  }
+
+  #gate-submit {
+    padding: 0.5rem 1.1rem;
+    background: var(--links-color, #7253ed);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+
+  #gate-submit:hover {
+    opacity: 0.88;
+  }
+
+  #gate-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  #gate-error {
+    margin-top: 0.85rem;
+    font-size: 0.875rem;
+    color: #c0392b;
+    min-height: 1.25rem;
+    display: none;
+  }
+
+  #gate-status {
+    margin-top: 0.85rem;
+    font-size: 0.875rem;
+    color: var(--body-text-color, #5c5962);
+    opacity: 0.7;
+    min-height: 1.25rem;
+    display: none;
+  }
+
+  #protected-content {
+    display: none;
+  }
+</style>
+
+<!-- Password gate -->
+<div id="protected-gate">
+  <div class="gate-card">
+    <div class="gate-lock">🔒</div>
+    <p class="gate-title">{{ page.title | default: "Protected Page" }}</p>
+    <p class="gate-subtitle">This page is password-protected. Enter the passphrase to unlock.</p>
+    <div class="gate-input-row">
+      <input
+        id="gate-password"
+        type="password"
+        placeholder="Passphrase"
+        autocomplete="current-password"
+        autofocus
+      />
+      <button id="gate-submit">Unlock</button>
+    </div>
+    <div id="gate-error">Incorrect passphrase — please try again.</div>
+    <div id="gate-status">Decrypting…</div>
+  </div>
+</div>
+
+<!-- Revealed content goes here -->
+<div id="protected-content">
+  <!-- decrypted HTML injected by JS -->
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // Encrypted blob injected by Jekyll from front matter field `encrypted`
+  const ENCRYPTED_B64 = {{ page.encrypted | jsonify }};
+
+  const SESSION_KEY = 'site-passphrase';
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+
+  function b64ToBytes(b64) {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+
+  async function deriveKey(passphrase, salt) {
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw',
+      enc.encode(passphrase),
+      { name: 'PBKDF2' },
+      false,
+      ['deriveKey']
+    );
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: salt, iterations: 100000, hash: 'SHA-256' },
+      keyMaterial,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['decrypt']
+    );
+  }
+
+  async function decrypt(passphrase) {
+    // Blob layout: salt[0..15] + iv[16..27] + ciphertext[28..]
+    const blob   = b64ToBytes(ENCRYPTED_B64);
+    const salt   = blob.slice(0, 16);
+    const iv     = blob.slice(16, 28);
+    const ct     = blob.slice(28);
+
+    const key = await deriveKey(passphrase, salt);
+    const plaintext = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: iv },
+      key,
+      ct
+    );
+    return new TextDecoder().decode(plaintext);
+  }
+
+  // ── UI ───────────────────────────────────────────────────────────────────
+
+  const gate      = document.getElementById('protected-gate');
+  const content   = document.getElementById('protected-content');
+  const input     = document.getElementById('gate-password');
+  const btn       = document.getElementById('gate-submit');
+  const errEl     = document.getElementById('gate-error');
+  const statusEl  = document.getElementById('gate-status');
+
+  function showError(msg) {
+    errEl.textContent = msg || 'Incorrect passphrase — please try again.';
+    errEl.style.display = 'block';
+    statusEl.style.display = 'none';
+    btn.disabled = false;
+    input.select();
+  }
+
+  function showStatus(msg) {
+    statusEl.textContent = msg;
+    statusEl.style.display = 'block';
+    errEl.style.display = 'none';
+  }
+
+  function reveal(html) {
+    gate.style.display = 'none';
+    content.innerHTML = html;
+    content.style.display = 'block';
+  }
+
+  async function tryUnlock(passphrase, cache) {
+    try {
+      showStatus('Decrypting…');
+      btn.disabled = true;
+      const html = await decrypt(passphrase);
+      if (cache) {
+        try { sessionStorage.setItem(SESSION_KEY, passphrase); } catch (_) {}
+      }
+      reveal(html);
+    } catch (e) {
+      showError('Incorrect passphrase — please try again.');
+    }
+  }
+
+  // Auto-unlock if passphrase is cached from this session
+  async function init() {
+    // Only attempt auto-unlock if we have an encrypted blob
+    if (!ENCRYPTED_B64) {
+      gate.style.display = 'none';
+      content.style.display = 'block';
+      return;
+    }
+    try {
+      const cached = sessionStorage.getItem(SESSION_KEY);
+      if (cached) {
+        showStatus('Unlocking…');
+        btn.disabled = true;
+        input.disabled = true;
+        try {
+          const html = await decrypt(cached);
+          reveal(html);
+          return;
+        } catch (_) {
+          // Cached passphrase no longer valid (content re-encrypted?) — fall through to gate
+          sessionStorage.removeItem(SESSION_KEY);
+          btn.disabled = false;
+          input.disabled = false;
+          statusEl.style.display = 'none';
+        }
+      }
+    } catch (_) {}
+  }
+
+  btn.addEventListener('click', function () {
+    const pw = input.value;
+    if (!pw) { input.focus(); return; }
+    tryUnlock(pw, true);
+  });
+
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') btn.click();
+  });
+
+  init();
+})();
+</script>
