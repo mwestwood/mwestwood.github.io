@@ -120,7 +120,7 @@ layout: default
         id="gate-password"
         type="password"
         placeholder="Passphrase"
-        autocomplete="current-password"
+        autocomplete="off"
         autofocus
       />
       <button id="gate-submit">Unlock</button>
@@ -146,6 +146,10 @@ layout: default
   const ENCRYPTED_B64 = {{ page.encrypted | jsonify }};
 
   const SESSION_KEY = 'site-passphrase';
+
+  // Debug: log blob stats on load (harmless — blob is opaque without the key)
+  console.log('[protected] blob length:', ENCRYPTED_B64 ? ENCRYPTED_B64.length : 'MISSING');
+  console.log('[protected] crypto.subtle available:', !!(typeof crypto !== 'undefined' && crypto.subtle));
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -232,7 +236,15 @@ layout: default
       }
       reveal(html);
     } catch (e) {
-      showError('Incorrect passphrase — please try again.');
+      // Log full error to browser console for debugging
+      console.error('[protected] Unlock failed:', e.name, e.message, e);
+      if (e instanceof DOMException && e.name === 'OperationError') {
+        showError('Incorrect passphrase — please try again.');
+      } else if (e instanceof TypeError && e.message.includes('subtle')) {
+        showError('Error: Web Crypto API unavailable. This page requires HTTPS.');
+      } else {
+        showError('Error (' + e.name + '): ' + e.message + ' — check browser console.');
+      }
     }
   }
 
