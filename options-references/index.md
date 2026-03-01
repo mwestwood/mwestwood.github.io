@@ -1,13 +1,8 @@
 ---
+layout: protected
 title: Options References
 nav_order: 6
 has_children: true
 permalink: /options-references/
+encrypted: "0kbqYEkc+apPVVCQbZL0JFJfyqgGIzQPcCWvnwkDLK3B4BF+1EoyNV7ecXRd1sSz2c9qE9u/Yv47HQ5tRaWDl6ySo/roihaf6bx94Qej2Tn9Irg296W3P8fO0ybcFLgS+d5qU7IWqyrNJIZI/oVmfryymG1S42Q5SKYH128J00Pqbbd6rU8YUWZ6QeGY29+zp4KQOuzBZ/TNBpaMsWUjYVJRHyI/D1fC/xR1c25RGjfJ7r/UjTJVdSCunO5UP653D6uwG9WegD8JHfi0/H1zLPoaqy2+SfsnH09vCcaAfBm/iWOV6yf0x6sd8GYg7Lmo7z+Vs77QokAe0dlsh382BzZINfZNZoe+LkT9Hp8CDpHeLowjZF3GnSDnblrmgHiR2iGZO0RLJcf0OZUAhZJo/HSUCpwNs9oBALk8V3Z/h1r1zNhI+OgzDz4jwK9i9YN+8yZ8AJ5S++Y9MFOq03Vu6QVDFQKiceat4+4YL8221ii+jLszehhhMjM="
 ---
-
-# Options References
-
-A curated guide to the most widely-used options trading platforms, analytics tools, data vendors, and brokerages — with detailed breakdowns of what each one does best.
-
-{: .note }
-These profiles are for educational and informational purposes only and do not constitute financial advice or an endorsement of any platform.

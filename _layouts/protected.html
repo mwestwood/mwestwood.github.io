@@ -135,6 +135,9 @@ layout: default
   <!-- decrypted HTML injected by JS -->
 </div>
 
+<!-- marked.js: client-side markdown renderer (MIT licence, no tracking) -->
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+
 <script>
 (function () {
   'use strict';
@@ -210,9 +213,12 @@ layout: default
     errEl.style.display = 'none';
   }
 
-  function reveal(html) {
+  function reveal(markdown) {
     gate.style.display = 'none';
-    content.innerHTML = html;
+    // Render markdown → HTML using marked.js (loaded below)
+    content.innerHTML = typeof marked !== 'undefined'
+      ? marked.parse(markdown)
+      : '<pre>' + markdown.replace(/</g, '&lt;') + '</pre>';
     content.style.display = 'block';
   }
 
