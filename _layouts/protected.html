@@ -142,16 +142,15 @@ layout: default
 (function () {
   'use strict';
 
-  // Encrypted blob injected by Jekyll from front matter field `encrypted`
+  /* Encrypted blob injected by Jekyll from front matter field `encrypted` */
   const ENCRYPTED_B64 = {{ page.encrypted | jsonify }};
 
   const STORAGE_KEY = 'site-passphrase';
 
-  // Debug: log blob stats on load (harmless — blob is opaque without the key)
   console.log('[protected] blob length:', ENCRYPTED_B64 ? ENCRYPTED_B64.length : 'MISSING');
   console.log('[protected] crypto.subtle available:', !!(typeof crypto !== 'undefined' && crypto.subtle));
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
+  /* ── Helpers ────────────────────────────────────────────────────────────── */
 
   function b64ToBytes(b64) {
     const bin = atob(b64);
@@ -179,7 +178,7 @@ layout: default
   }
 
   async function decrypt(passphrase) {
-    // Blob layout: salt[0..15] + iv[16..27] + ciphertext[28..]
+    /* Blob layout: salt[0..15] + iv[16..27] + ciphertext[28..] */
     const blob   = b64ToBytes(ENCRYPTED_B64);
     const salt   = blob.slice(0, 16);
     const iv     = blob.slice(16, 28);
@@ -194,7 +193,7 @@ layout: default
     return new TextDecoder().decode(plaintext);
   }
 
-  // ── UI ───────────────────────────────────────────────────────────────────
+  /* ── UI ─────────────────────────────────────────────────────────────────── */
 
   const gate      = document.getElementById('protected-gate');
   const content   = document.getElementById('protected-content');
@@ -219,7 +218,6 @@ layout: default
 
   function reveal(markdown) {
     gate.style.display = 'none';
-    // Render markdown → HTML using marked.js (loaded below)
     content.innerHTML = typeof marked !== 'undefined'
       ? marked.parse(markdown)
       : '<pre>' + markdown.replace(/</g, '&lt;') + '</pre>';
@@ -236,7 +234,6 @@ layout: default
       }
       reveal(html);
     } catch (e) {
-      // Log full error to browser console for debugging
       console.error('[protected] Unlock failed:', e.name, e.message, e);
       if (e instanceof DOMException && e.name === 'OperationError') {
         showError('Incorrect passphrase — please try again.');
@@ -248,9 +245,7 @@ layout: default
     }
   }
 
-  // Auto-unlock if passphrase is cached in localStorage
   async function init() {
-    // Only attempt auto-unlock if we have an encrypted blob
     if (!ENCRYPTED_B64) {
       gate.style.display = 'none';
       content.style.display = 'block';
@@ -267,7 +262,7 @@ layout: default
           reveal(html);
           return;
         } catch (_) {
-          // Cached passphrase no longer valid (content re-encrypted?) — fall through to gate
+          /* cached passphrase no longer valid — fall through to gate */
           localStorage.removeItem(STORAGE_KEY);
           btn.disabled = false;
           input.disabled = false;
