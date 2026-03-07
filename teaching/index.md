@@ -35,3 +35,13 @@ Step-by-step guides to every problem type in the MK LV3-4 Part 1 workbook:
 - [Perimeter](./mk-lv3-4-w4-perimeter) — Rectilinear shapes, L-shaped gardens, identical flowerbeds in arrangements
 - [3D Perimeter](./mk-lv3-4-w4-3d-perimeter) — Ant paths on cube surfaces: unfolding strategy and Pythagorean theorem
 - [Dice](./mk-lv3-4-w4-dice) — Cube nets, opposite faces, rolling and rotation tracking
+
+## MK 4-Pointers LV3-4 — Part 1, Week 1: Logical Reasoning
+
+- [Ordering & Sequences (4-Pointer)](./mk-lv3-4-4pt-w1-ordering-sequences) — Line ordering, arrow-flipping cycles, balance grouping, and ruler marking
+- [Equal & Balance (4-Pointer)](./mk-lv3-4-4pt-w1-equal-balance) — Symbol scale equations, deduction by substitution, pairwise sums
+- [Fun Math (4-Pointer)](./mk-lv3-4-4pt-w1-fun-math) — Magic square errors, parallel scheduling, necklace matching, concentration comparison, minimum moves
+
+## MK 4-Pointers LV3-4 — Part 1, Week 2: Word Problems
+
+- [Basic Word Problems (4-Pointer)](./mk-lv3-4-4pt-w2-basic-word-problem) — Mirror conservation: "take as many as remain" problems with 2 or 3 containers
