@@ -142,20 +142,31 @@ layout: default
 (function () {
   'use strict';
 
+  /* Encrypted blob injected by Jekyll from front matter field `encrypted` */
   const ENCRYPTED_B64 = {{ page.encrypted | jsonify }};
-  const SESSION_KEY = 'site-passphrase';
+
+  const STORAGE_KEY = 'site-passphrase';
+
+  console.log('[protected] blob length:', ENCRYPTED_B64 ? ENCRYPTED_B64.length : 'MISSING');
+  console.log('[protected] crypto.subtle available:', !!(typeof crypto !== 'undefined' && crypto.subtle));
+
+  /* ── Helpers ────────────────────────────────────────────────────────────── */
 
   function b64ToBytes(b64) {
     const bin = atob(b64);
     const bytes = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) { bytes[i] = bin.charCodeAt(i); }
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
     return bytes;
   }
 
   async function deriveKey(passphrase, salt) {
     const enc = new TextEncoder();
     const keyMaterial = await crypto.subtle.importKey(
-      'raw', enc.encode(passphrase), { name: 'PBKDF2' }, false, ['deriveKey']
+      'raw',
+      enc.encode(passphrase),
+      { name: 'PBKDF2' },
+      false,
+      ['deriveKey']
     );
     return crypto.subtle.deriveKey(
       { name: 'PBKDF2', salt: salt, iterations: 100000, hash: 'SHA-256' },
@@ -167,21 +178,29 @@ layout: default
   }
 
   async function decrypt(passphrase) {
-    const blob = b64ToBytes(ENCRYPTED_B64);
-    const salt = blob.slice(0, 16);
-    const iv   = blob.slice(16, 28);
-    const ct   = blob.slice(28);
-    const key  = await deriveKey(passphrase, salt);
-    const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, ct);
+    /* Blob layout: salt[0..15] + iv[16..27] + ciphertext[28..] */
+    const blob   = b64ToBytes(ENCRYPTED_B64);
+    const salt   = blob.slice(0, 16);
+    const iv     = blob.slice(16, 28);
+    const ct     = blob.slice(28);
+
+    const key = await deriveKey(passphrase, salt);
+    const plaintext = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: iv },
+      key,
+      ct
+    );
     return new TextDecoder().decode(plaintext);
   }
 
-  const gate     = document.getElementById('protected-gate');
-  const content  = document.getElementById('protected-content');
-  const input    = document.getElementById('gate-password');
-  const btn      = document.getElementById('gate-submit');
-  const errEl    = document.getElementById('gate-error');
-  const statusEl = document.getElementById('gate-status');
+  /* ── UI ─────────────────────────────────────────────────────────────────── */
+
+  const gate      = document.getElementById('protected-gate');
+  const content   = document.getElementById('protected-content');
+  const input     = document.getElementById('gate-password');
+  const btn       = document.getElementById('gate-submit');
+  const errEl     = document.getElementById('gate-error');
+  const statusEl  = document.getElementById('gate-status');
 
   function showError(msg) {
     errEl.textContent = msg || 'Incorrect passphrase — please try again.';
@@ -199,7 +218,7 @@ layout: default
 
   function reveal(markdown) {
     gate.style.display = 'none';
-    content.innerHTML = (typeof marked !== 'undefined')
+    content.innerHTML = typeof marked !== 'undefined'
       ? marked.parse(markdown)
       : '<pre>' + markdown.replace(/</g, '&lt;') + '</pre>';
     content.style.display = 'block';
@@ -207,18 +226,21 @@ layout: default
 
   async function tryUnlock(passphrase, cache) {
     try {
-      showStatus('Decrypting\u2026');
+      showStatus('Decrypting…');
       btn.disabled = true;
       const html = await decrypt(passphrase);
-      if (cache) { try { sessionStorage.setItem(SESSION_KEY, passphrase); } catch (_) {} }
+      if (cache) {
+        try { localStorage.setItem(STORAGE_KEY, passphrase); } catch (_) {}
+      }
       reveal(html);
     } catch (e) {
+      console.error('[protected] Unlock failed:', e.name, e.message, e);
       if (e instanceof DOMException && e.name === 'OperationError') {
-        showError('Incorrect passphrase \u2014 please try again.');
-      } else if (e instanceof TypeError && String(e.message).indexOf('subtle') >= 0) {
-        showError('Web Crypto unavailable \u2014 page must be served over HTTPS.');
+        showError('Incorrect passphrase — please try again.');
+      } else if (e instanceof TypeError && e.message.includes('subtle')) {
+        showError('Error: Web Crypto API unavailable. This page requires HTTPS.');
       } else {
-        showError('Error: ' + e.name + ': ' + e.message);
+        showError('Error (' + e.name + '): ' + e.message + ' — check browser console.');
       }
     }
   }
@@ -230,9 +252,9 @@ layout: default
       return;
     }
     try {
-      const cached = sessionStorage.getItem(SESSION_KEY);
+      const cached = localStorage.getItem(STORAGE_KEY);
       if (cached) {
-        showStatus('Unlocking\u2026');
+        showStatus('Unlocking…');
         btn.disabled = true;
         input.disabled = true;
         try {
@@ -240,7 +262,8 @@ layout: default
           reveal(html);
           return;
         } catch (_) {
-          sessionStorage.removeItem(SESSION_KEY);
+          /* cached passphrase no longer valid — fall through to gate */
+          localStorage.removeItem(STORAGE_KEY);
           btn.disabled = false;
           input.disabled = false;
           statusEl.style.display = 'none';
