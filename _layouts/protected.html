@@ -145,7 +145,7 @@ layout: default
   // Encrypted blob injected by Jekyll from front matter field `encrypted`
   const ENCRYPTED_B64 = {{ page.encrypted | jsonify }};
 
-  const SESSION_KEY = 'site-passphrase';
+  const STORAGE_KEY = 'site-passphrase';
 
   // Debug: log blob stats on load (harmless — blob is opaque without the key)
   console.log('[protected] blob length:', ENCRYPTED_B64 ? ENCRYPTED_B64.length : 'MISSING');
@@ -232,7 +232,7 @@ layout: default
       btn.disabled = true;
       const html = await decrypt(passphrase);
       if (cache) {
-        try { sessionStorage.setItem(SESSION_KEY, passphrase); } catch (_) {}
+        try { localStorage.setItem(STORAGE_KEY, passphrase); } catch (_) {}
       }
       reveal(html);
     } catch (e) {
@@ -248,7 +248,7 @@ layout: default
     }
   }
 
-  // Auto-unlock if passphrase is cached from this session
+  // Auto-unlock if passphrase is cached in localStorage
   async function init() {
     // Only attempt auto-unlock if we have an encrypted blob
     if (!ENCRYPTED_B64) {
@@ -257,7 +257,7 @@ layout: default
       return;
     }
     try {
-      const cached = sessionStorage.getItem(SESSION_KEY);
+      const cached = localStorage.getItem(STORAGE_KEY);
       if (cached) {
         showStatus('Unlocking…');
         btn.disabled = true;
@@ -268,7 +268,7 @@ layout: default
           return;
         } catch (_) {
           // Cached passphrase no longer valid (content re-encrypted?) — fall through to gate
-          sessionStorage.removeItem(SESSION_KEY);
+          localStorage.removeItem(STORAGE_KEY);
           btn.disabled = false;
           input.disabled = false;
           statusEl.style.display = 'none';
