@@ -1,10 +1,10 @@
 ---
-title: "MK LV3-4: Fun Math"
+title: "MK LV3-4 (5-Pointer): Fun Math"
 parent: Teaching
 nav_order: 4
 ---
 
-# MK LV3-4: Fun Math
+# MK LV3-4 (5-Pointer): Fun Math
 {: .no_toc }
 
 Symbol substitution and number ordering puzzles from the MK 5-Pointers LV3-4 Logical Reasoning workbook.

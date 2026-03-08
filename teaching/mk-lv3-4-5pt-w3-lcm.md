@@ -1,10 +1,10 @@
 ---
-title: "MK LV3-4: LCM"
+title: "MK LV3-4 (5-Pointer): LCM"
 parent: Teaching
 nav_order: 11
 ---
 
-# MK LV3-4: LCM
+# MK LV3-4 (5-Pointer): LCM
 {: .no_toc }
 
 Lowest Common Multiple puzzles from the MK 5-Pointers LV3-4 Week 3 workbook.

@@ -1,10 +1,10 @@
 ---
-title: "MK LV3-4: Divisibility"
+title: "MK LV3-4 (5-Pointer): Divisibility"
 parent: Teaching
 nav_order: 9
 ---
 
-# MK LV3-4: Divisibility
+# MK LV3-4 (5-Pointer): Divisibility
 {: .no_toc }
 
 Divisibility and remainder puzzles from the MK 5-Pointers LV3-4 Week 3 workbook.

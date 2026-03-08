@@ -13,28 +13,28 @@ Ideas, activities, and notes for grade school teachers and parents — covering 
 
 Step-by-step guides to every problem type in the MK LV3-4 Part 1 workbook:
 
-- [Picture Reasoning](./mk-lv3-4-picture-reasoning) — Combination constraints, color adjacency, and linear placement puzzles
-- [Word Reasoning](./mk-lv3-4-word-reasoning) — "Exactly one correct" code-breaking and truth-or-lie deduction
-- [Fun Math](./mk-lv3-4-fun-math) — Symbol substitution optimization and inequality grid problems
+- [Picture Reasoning](./mk-lv3-4-5pt-picture-reasoning) — Combination constraints, color adjacency, and linear placement puzzles
+- [Word Reasoning](./mk-lv3-4-5pt-word-reasoning) — "Exactly one correct" code-breaking and truth-or-lie deduction
+- [Fun Math](./mk-lv3-4-5pt-fun-math) — Symbol substitution optimization and inequality grid problems
 
 ## MK 5-Pointers LV3-4 — Part 2, Week 2: Logical Reasoning
 
-- [Page Problem](./mk-lv3-4-w2-page-problem) — Counting total digits and specific digits in book page numbers
-- [Chicken & Rabbit](./mk-lv3-4-w2-chicken-rabbit) — Simultaneous equations: teams, books, ropes, quizzes
-- [Competitions & Scores](./mk-lv3-4-w2-competitions-scores) — Win/tie/loss systems: maximise and minimise losses; round-robin impossible scores
+- [Page Problem](./mk-lv3-4-5pt-w2-page-problem) — Counting total digits and specific digits in book page numbers
+- [Chicken & Rabbit](./mk-lv3-4-5pt-w2-chicken-rabbit) — Simultaneous equations: teams, books, ropes, quizzes
+- [Competitions & Scores](./mk-lv3-4-5pt-w2-competitions-scores) — Win/tie/loss systems: maximise and minimise losses; round-robin impossible scores
 
 ## MK 5-Pointers LV3-4 — Part 2, Week 3: Number & Operations
 
-- [Fun Calculation](./mk-lv3-4-w3-fun-calculation) — Card flipping, plate balancing, digit partitioning, neighbouring sums, coloured grids
-- [Divisibility](./mk-lv3-4-w3-divisibility) — LCM + remainder conditions; finishing-day problems
-- [Operation without Numbers](./mk-lv3-4-w3-operation-without-numbers) — Coloured-cell simultaneous equations in grids
-- [LCM](./mk-lv3-4-w3-lcm) — Ant lap problems: loop perimeters, LCM, and meeting points
+- [Fun Calculation](./mk-lv3-4-5pt-w3-fun-calculation) — Card flipping, plate balancing, digit partitioning, neighbouring sums, coloured grids
+- [Divisibility](./mk-lv3-4-5pt-w3-divisibility) — LCM + remainder conditions; finishing-day problems
+- [Operation without Numbers](./mk-lv3-4-5pt-w3-operation-without-numbers) — Coloured-cell simultaneous equations in grids
+- [LCM](./mk-lv3-4-5pt-w3-lcm) — Ant lap problems: loop perimeters, LCM, and meeting points
 
 ## MK 5-Pointers LV3-4 — Part 2, Week 4: Geometry
 
-- [Perimeter](./mk-lv3-4-w4-perimeter) — Rectilinear shapes, L-shaped gardens, identical flowerbeds in arrangements
-- [3D Perimeter](./mk-lv3-4-w4-3d-perimeter) — Ant paths on cube surfaces: unfolding strategy and Pythagorean theorem
-- [Dice](./mk-lv3-4-w4-dice) — Cube nets, opposite faces, rolling and rotation tracking
+- [Perimeter](./mk-lv3-4-5pt-w4-perimeter) — Rectilinear shapes, L-shaped gardens, identical flowerbeds in arrangements
+- [3D Perimeter](./mk-lv3-4-5pt-w4-3d-perimeter) — Ant paths on cube surfaces: unfolding strategy and Pythagorean theorem
+- [Dice](./mk-lv3-4-5pt-w4-dice) — Cube nets, opposite faces, rolling and rotation tracking
 
 ## MK 4-Pointers LV3-4 — Part 1, Week 1: Logical Reasoning
 

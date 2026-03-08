@@ -1,10 +1,10 @@
 ---
-title: "MK LV3-4: Competitions & Scores"
+title: "MK LV3-4 (5-Pointer): Competitions & Scores"
 parent: Teaching
 nav_order: 7
 ---
 
-# MK LV3-4: Competitions & Scores
+# MK LV3-4 (5-Pointer): Competitions & Scores
 {: .no_toc }
 
 Win/loss optimisation problems from the MK 5-Pointers LV3-4 Week 2 workbook.

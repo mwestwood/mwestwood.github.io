@@ -1,10 +1,10 @@
 ---
-title: "MK LV3-4: Page Problem"
+title: "MK LV3-4 (5-Pointer): Page Problem"
 parent: Teaching
 nav_order: 5
 ---
 
-# MK LV3-4: Page Problem
+# MK LV3-4 (5-Pointer): Page Problem
 {: .no_toc }
 
 Digit-counting puzzles from the MK 5-Pointers LV3-4 Week 2 workbook.

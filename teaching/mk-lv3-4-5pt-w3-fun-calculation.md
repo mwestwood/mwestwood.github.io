@@ -1,10 +1,10 @@
 ---
-title: "MK LV3-4: Fun Calculation"
+title: "MK LV3-4 (5-Pointer): Fun Calculation"
 parent: Teaching
 nav_order: 8
 ---
 
-# MK LV3-4: Fun Calculation
+# MK LV3-4 (5-Pointer): Fun Calculation
 {: .no_toc }
 
 Creative arithmetic puzzles from the MK 5-Pointers LV3-4 Week 3 workbook.

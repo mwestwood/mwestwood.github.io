@@ -1,10 +1,10 @@
 ---
-title: "MK LV3-4: Picture Reasoning"
+title: "MK LV3-4 (5-Pointer): Picture Reasoning"
 parent: Teaching
 nav_order: 2
 ---
 
-# MK LV3-4: Picture Reasoning
+# MK LV3-4 (5-Pointer): Picture Reasoning
 {: .no_toc }
 
 Combination and placement constraint puzzles from the MK 5-Pointers LV3-4 Logical Reasoning workbook.

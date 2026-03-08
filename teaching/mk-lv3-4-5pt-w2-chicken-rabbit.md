@@ -1,10 +1,10 @@
 ---
-title: "MK LV3-4: Chicken & Rabbit"
+title: "MK LV3-4 (5-Pointer): Chicken & Rabbit"
 parent: Teaching
 nav_order: 6
 ---
 
-# MK LV3-4: Chicken & Rabbit
+# MK LV3-4 (5-Pointer): Chicken & Rabbit
 {: .no_toc }
 
 Classic simultaneous-equation word problems from the MK 5-Pointers LV3-4 Week 2 workbook.

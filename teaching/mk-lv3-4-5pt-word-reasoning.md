@@ -1,10 +1,10 @@
 ---
-title: "MK LV3-4: Word Reasoning"
+title: "MK LV3-4 (5-Pointer): Word Reasoning"
 parent: Teaching
 nav_order: 3
 ---
 
-# MK LV3-4: Word Reasoning
+# MK LV3-4 (5-Pointer): Word Reasoning
 {: .no_toc }
 
 Two logic puzzle types from the MK 5-Pointers LV3-4 Logical Reasoning workbook: "exactly one correct" code-breaking, and truth-or-lie deduction.

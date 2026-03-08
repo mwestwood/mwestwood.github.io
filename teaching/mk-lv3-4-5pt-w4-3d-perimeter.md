@@ -1,10 +1,10 @@
 ---
-title: "MK LV3-4: 3D Perimeter"
+title: "MK LV3-4 (5-Pointer): 3D Perimeter"
 parent: Teaching
 nav_order: 13
 ---
 
-# MK LV3-4: 3D Perimeter
+# MK LV3-4 (5-Pointer): 3D Perimeter
 {: .no_toc }
 
 Surface-path and cube-arrangement perimeter puzzles from the MK 5-Pointers LV3-4 Week 4 workbook.

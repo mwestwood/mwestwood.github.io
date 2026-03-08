@@ -1,10 +1,10 @@
 ---
-title: "MK LV3-4: Dice"
+title: "MK LV3-4 (5-Pointer): Dice"
 parent: Teaching
 nav_order: 14
 ---
 
-# MK LV3-4: Dice
+# MK LV3-4 (5-Pointer): Dice
 {: .no_toc }
 
 Cube net and dice face puzzles from the MK 5-Pointers LV3-4 Week 4 workbook.
