@@ -45,3 +45,14 @@ Step-by-step guides to every problem type in the MK LV3-4 Part 1 workbook:
 ## MK 4-Pointers LV3-4 — Part 1, Week 2: Word Problems
 
 - [Basic Word Problems (4-Pointer)](./mk-lv3-4-4pt-w2-basic-word-problem) — Mirror conservation: "take as many as remain" problems with 2 or 3 containers
+
+## MK 4-Pointers LV3-4 — Part 2, Week 2: Word Problems
+
+- [Line Up (4-Pointer)](./mk-lv3-4-4pt-w2-lineup) — Position-in-a-line, midpoint, two-person distance, and rectangular-array problems
+- [Surplus & Shortage (4-Pointer)](./mk-lv3-4-4pt-w2-surplus-shortage) — Cash-drawer linear models and surplus/shortage distribution problems (includes Week 2 Review)
+
+## MK 4-Pointers LV3-4 — Part 2, Week 3: Geometry
+
+- [Perimeter (4-Pointer)](./mk-lv3-4-4pt-w3-perimeter) — Shape allocation, fence-and-paint with ceiling division, equal-perimeter, and shared-edge problems
+- [Color Cubes (4-Pointer)](./mk-lv3-4-4pt-w3-color-cubes) — Counting painted faces on 3-D cube arrangements using the subtraction method and layer-by-layer analysis
+- [Form Solid Figure (4-Pointer)](./mk-lv3-4-4pt-w3-form-solid-figure) — Piece-fitting and volume subtraction to complete a rectangular prism
