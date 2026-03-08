@@ -56,3 +56,9 @@ Step-by-step guides to every problem type in the MK LV3-4 Part 1 workbook:
 - [Perimeter (4-Pointer)](./mk-lv3-4-4pt-w3-perimeter) — Shape allocation, fence-and-paint with ceiling division, equal-perimeter, and shared-edge problems
 - [Color Cubes (4-Pointer)](./mk-lv3-4-4pt-w3-color-cubes) — Counting painted faces on 3-D cube arrangements using the subtraction method and layer-by-layer analysis
 - [Form Solid Figure (4-Pointer)](./mk-lv3-4-4pt-w3-form-solid-figure) — Piece-fitting and volume subtraction to complete a rectangular prism
+
+## MK 4-Pointers LV3-4 — Part 3, Week 4: Enumeration & Number Operations
+
+- [Enumeration (4-Pointer)](./mk-lv3-4-4pt-w4-enumeration) — Counting arrangements with adjacency constraints, forbidden positions, directed vs. undirected pair counting, and graph path traversal
+- [Maximum & Minimum (4-Pointer)](./mk-lv3-4-4pt-w4-max-min) — Minimising containers (storage and exact-total) and minimising coins with the greedy algorithm
+- [Shapes & Paper Folding (4-Pointer)](./mk-lv3-4-4pt-w4-shapes) — Fold-and-punch hole problems using the mirror formula; includes Week 4 Review
