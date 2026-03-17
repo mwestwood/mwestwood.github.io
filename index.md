@@ -15,6 +15,15 @@ A collection of references, guides, and things worth remembering.
 
 ---
 
-## What's here
+**84 posts** across 8 categories. All sections are password protected.
 
-Notes and references across a few areas &mdash; options trading, teaching, health, and more. Most sections are password protected.
+| Category | Posts | Description |
+|----------|------:|-------------|
+| Options - Learning | 7 | Fundamentals of options strategies — iron condors, mechanics, and examples using SPY |
+| Options Strategies | 15 | Strategy playbooks — covered calls, verticals, the Greeks in action |
+| Options References | 22 | Quick reference sheets for Greeks, spreads, and key concepts |
+| AI | 9 | Claude Code and AI tooling notes for engineering and SRE workflows |
+| Teaching | 26 | Math competition lesson notes and problem walkthroughs |
+| Health | 2 | Sleep foundations and key health themes to remember |
+| Reminders | 2 | Discipline checklists and hard rules |
+| Autism | 1 | Sensory processing notes |
