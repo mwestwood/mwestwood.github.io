@@ -1,12 +1,8 @@
 ---
+layout: protected
 title: Reminders
 nav_order: 8
 has_children: true
 permalink: /reminders/
+encrypted: "rhuxbl4dOjy0vVSZkSLd9QX5fDaYEyuJUZBthRDILornmWZDIXvW1TLHjgkxcUT6dqSy49PIhqUny7IvNrbgChDrawMObNJkgYfSmSZ760hKPslFnlkY/+LR1UKjPNu9Jej7upbQJ52+ORHNjXdHg3PTa3ZbF4HZKr7Kk/1EAuDAE8zUshszmFFdwPaQb+Dw2JtbiUWldXMyzjWZPildV4/aP9xF7SIn2JJjnUPBuGVDnQwqG9zMrNDZVmhZubP2r5urQObzrmgxCmjCtQLaxB0BkKBxcwiRtSoh+AOd0i2oSufpSKkbrX8ktyBq1GI8SkWRu0NDvCznESQGQMs="
 ---
-
-# Reminders
-
-Short, high-impact notes to reset focus, standards, and follow-through.
-
-These posts are built as practical prompts: what matters, what to do next, and how to stay consistent when motivation drops.

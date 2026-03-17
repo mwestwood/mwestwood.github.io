@@ -1,64 +1,8 @@
 ---
+layout: protected
 title: Teaching
 nav_order: 7
 has_children: true
 permalink: /teaching/
+encrypted: "qZC9AQ3zPD2w/UNxWS97Z0NH9eFcH0mcWlthnmhx2oOu9SRMo5EAInSMTDntNkv1pAls69ttE+fkePpYravoFnkZiNtgLWqcoeO9++eERMCZ2EMSHkkqcroumoeON64/4oiHztUk6A0xvMzmlWMZnuIoRBw4AVuZTbtRE2tvNZm7w3Zrxugy/UkoGp7oXpFi5C0IoiziBo9cx17+aR3FSvGABb7b+KRwkWXsh0O8XEPx5posYIP9QlJCrpFDYU6qersaKNSezguU8e2AhYp5sTFWIx/c5/yHk2BFCsEobfG6C4LsJkJ/wC0rB0GWTkHHIM1mZBSlCfXfHxbGotGZPafEZGfXyDjOhOfvaMoNxbXG5GLmqqnyfXiOzsj4PUCsfafflGGAXTwjwPYjmOmZVnXDN757Zzq9Mg/5Jf0m4ZO8mvvqz0H4LwqOIS8YKt4VeVok++9u3WIukSqaGchDvy4xbrEEyyLoII3gKBTGINntTOTwTv9nuJwWgIKtRDNQXzf/JLbGUOUV6it9+kNv50u4Y55xZ2OYxWgT/aKQ5Zw+qj7H88ks/k1q8ABXJgglFlIvZPMfl/QKMc/W9IrpXJ8UEqcsJ/a213p5T2nLxIWzRreFVetlRTKbT+DgIgucu5ESvJvhd/fR3V6uq0eB1x2X/anks5mms/mlE5EChYJ26nmdwBThUwN+sGdAojAWLBnZrsrjQSb18IdfzsOQuzWO7/mcjMDmcg4oo24CsO2Xyx2A9TLJef23JowyvONXAfF9P20Wt7OcRaBjsYBo68OyiLLxKVrfNJmsLKrbaR/sxfDDMZsiewybA37CAeq4tcIhR+HnP7kocqFKrfYpI8dMeS4xvTVwFcpEHzIoPrrxv9sBRt7/DWQC/OyjUvigIg7gxrm2hZjvUJkZXIOxNO8PUzooQlp3vmorkwKqmLOndCAmFLbZrlzMFvLN1QudNIC1dYONPb/ZCSLGlLDaXi7R9H103pxzDm/Dm46kjqMK0RpmarDhFE4Yy+m5Y94I6iKiWNGF3y7oaR98JppITBhRnlQcpsnd3TAfZrRrC/VPU5H6mndpwjr7aYghGoi9JhTwNJ1O/rnOikKz+AwbhyAwf6Pfz1A0tokh/RvD9m7ubG9RsprSe1MaZbzbXGRbuQOQUIRWm2PFthY/AjYrw+IniVN5eZ6AF6oLA7spF4DyQydjWM/C3+f+PqS3OiOfwFH09nVKJDiVeoxfizRHH/ULzGOsS/OZ1R7q7B2bHhk5M3hxsERnK9rFnf5pOuippXzIjKhRcGu009l7IFJPSJEvnUAIUxAn1dUHVCcXUl+lu8rUBvqW73VIGOmMVBZnOvGawexiVCWolDydNsSnrF2Vtn+2YWyt4ndycLJl9EIYcpv0Hgove56MOPx4h/ywzrwKp6BwMiv8BqTKw48EiM42lrB45G4oBrNJvdufI4KvDoE8xIg1o+TFxULNbS1LsCDFKtqvT+1R4ZqhRQCrZhQfXToB5c3vEWt6LpDs62uIOt0kMJJquJziWWqs6HGBn1u+G8iYmTheFkOGBc/FGyeLJCeMb1qUcEiU6NuKZgFOV1zbcQ370NJO0qbRFZn6vSUk8KRgdP7+Duv87D3m6sX4UkmBCaPl59mRAblTN0+ryH8xVKiujVTzxsL1M2gbqS2Wj1GS7GzXvCHj7/PH1quoybjTxGOVEd7X7tdqUsbNSpAO/z6gc4d3OVw/M+Qn6LQALH+mWwcTphOkZe5hONofed4rqbmtwviwK4c9wPd4Te2TIEGnxeWd5Nr7mjz/alDNiLvaGVeUSU73xNtrVzkGgjKBXU9p3dDv05k99CzMRAemEIJS7zpRfgLFMuvJ2m0Oa/Gp5f+5edeFAHJQFTG4LAKNw2f+UtFfhrE0l2dPbRMa3q5OsI+wgcl2BZWTELpKyCqKpyeSwDpMMN/Hho2i61wLZZLgQ2+vgNb+weSSeopVd2oQnyZ5PVElR4U9SLaOP0lN6AhRfSuITHiAxXQWTyk5nOuv5T+3ELMDXSpQM1kpDeznltfjvvPm7c9KwggID855BHrkJvUQexSGUIvLctqfy6gWxlUhqls9ebByhz7eqmp0KS/vhEXZR6BYynzJGLNq6Iq02xxFmCj/SZCwbbYcKCoR+xYLjwXwVBBamkh1k+bSgwN3M/Xjt6PLLbdO0+T8g2e/FX5hd0nN+Shv1m0p/v5woOQCJd1poL5zGuEPIN3l9fb9qyi2KJUbYC5r/blk8iN9qJMqR7T/V0JSvTZVdFvBBA9ErZO4Z+U7xl5co/rL0IG+trPMIpwRxKzaSNfiquCnSrXWLfYkFdyOErzh9e/lliuUBD2L8J3pMfGWdNGxndabZ0ghspeKF1cNVEfwAxVHm+adikXbMX/fcxIxiy53Iegqsh5eNNuHKVRCzsYUL6qUjeJituyf49s49WTp9L/+LC+w0u3yNC8jJIOKpMYYVjdd5TGBLKw2rCI6Gr3MwNQvxphqNapsasyRZ4yVHv+uC9JYAgj47hm53AN5yYiu3U750PNIlJAUXVCVPcWj+oeyhoTFGPTDJ+5X0lxe1KPxEpT4LzUmRIoq8FFUpNdSOAXPgMiEd3sUniq3wen6n3h3a8+rs6F4R0l/bMYZ5/MKgLf+AAt6sV2birBNS51oInU/Z3wZ2D1qPa/iZRSObe54F8ImneBBAqLcHXKxL/5an+LIAxiyHuzgf+YWmv/cxU8kHhnxZxqrn03NWlxXy1wnxeds8ePY5BkjM9kFP/t/UmUWrjSTQ9cb6XzP+Gs0wjCYZJWyJDCESoN/QJcXPOvuCRqqQ2u43z3/ZrZeqpqeq2SfIDhQWu8VXBD4jogVWNAeu2yH0/eATK3dNykTGRh75FCBbvn2AFXQ9RNH5+FPmneFDgdDBvwIQY1C6nadL0Vguk/4+RjD0/wbtBfgDEFMeCj/fjykAxw5OX7sN5iN/ZVE9BBi9oYAemBJNRLeuK7s8NYv1B2RZ20oK5rPqE078LizqtAd/kxoCbyKaH1K30Zu8oweX3kz+t8C7ikCglqUxPVtO5JAxiAHXMcE4aV7NeoGfauMEZKAPRIOl0EQjQgk9THzqcwcsQkzZtXIfofBNBgjFV216m/Z1skK05M/+hGMGv27S3nQy79ZIOwf0Tz1RIaHrbFcQt+Hb0UGb2wNzk27SQA6vn/RYkJC6UcHWxBK2qL1oPwUK3nJEnTMEmEPofVe+0Bj7395q6L+DTRHJ90tNQ2mrkPTS2+bPx7lt+F/CeqPhHi8nfE8Qd9OvkylQYADHKRJFMCni0JAHznztD7tHfNoOG4H9tU5DBmn3+VX6UA+Pnarf/5+Gyg5GiDzdF6AW2Z+NDltlSnwWKjsUspQVa1QnSECk3Ys4LXer2Rm3hNg+3cCh8EV6IFINHXCxjA3PBgJoHGOl7A3FeT5Nx1QmtG/CPpsx+06j3lntwNAbch3Op//L5vJR9LPOxD06ksRzWEQoIGcwUCBijwdnQXmbXSqQ7r5phkpgJFlXFJR6YRIn5pY3D1Y1/cOKO/wEPQV/AGyrNdgvnMsdknqQEGwsflMg9vvLORZXYE3zeoajt6tZ9kg0w8jp9TPp5Ng2PbZ5S/W3fEbFF+lRF0ylk64hB/675H7PmikdBkq33t9IQJgznQOWTZMoxvKqFqdSNTj1nl4AdgdJC2SI8MHBT72IC8IY7XAaA9Z5v9vzcd62BCmJCF38MZrGBvYMRIUEk2+xhFyUypJRCtjubcXJtCtvUAWX0Hj1Bv8mZ9hMSD+rfw6XX/GeO5a78lLOsOVfpvYfa9ElTUizCVssVCZeofvaSyp0SQrhQFTopt8z+qcwfmeiy6EXkgpPuNM+omVCTgNmo7P8iV4BufV37H+UiCuZiz8robe3SAX8mzxXyy0aZJuX3cxw7NJpxc+k7KATzitoBfwu9ynw4+Q4vo97rAYOPmHTYSvZO8ZhJv/l3vLUHBiZgePYERFwpelPSosuzgtfhYTMQTxUbCO3LFCbK7DuPexlKhaT02xsKYyeYk/wIlx9ZynM8PkSMtumSUzVgYXQp0vx0ZzgF6RXtTajyMCuHLdpu0KzlGQEj7iDeHtlrYUcF3f8LOp1NQupxD6uiqxYbKvWZVgH9cKGM0lB4hhNVU2ve+/eT3ZtzqPZWLbFUo3c+taCO7kLBhxXzJFfXZMVotMMdZcL31E+gt2akmUojOm1+INvw9xbv6lf63wb/5ABDx9LiE7RslSCftu+FqiIlBTd9VdxXvtt0UmBgHEo6FyjEMfiDivorJ+M+WaiuxuRGPmZsIFsINjBxxrtKbF5pc4/4A1iTPW9bM4B763O7mYr0PUKZU8WYLYXfAReeKyPMXI6z2vrMXpkcNjgXME3IdwOX579fE1nwlo5ZCaXL2cpb7Zd0wsDpmxy8NWnv2HwhRLOaqRaygL3ULh28iMc2jQte/BP/5Vv55HP1q6CWIchVYvJCC3yJ2d5IawgzZrJhpaqtbI3Ahu8aebiA8XNso8D6XKEwrcgH+ftZDgPtT3oruW3KZhk7Zsb9lCd/rO7LzLeagfSbU+gIxp8hblYPH4oTVDhPI6m7rtReYo0GX74MFTLI6TNojypfnQ3bh/v1Yvb/EQTePvn6EVotuxRER4BbFZdOk+mNid7j0xS08sgOkFJEhR7J4m7q/WK/mo8h8uZenbN5tYNGMpDYa5Z6x78aosjls2TWwiGNCDFdAb6VksXl5qRCp48i5Z878ek60MFWAvF4KQ3jEBbSZQfAx0H9pAl/DyO14P/al8WIxVLkROsXTJ8e36gQxECUmjeLOLFtNJ3JX0rR/eA56LRqkQ9+H0Nmsx9wnthrUb8EsJsE/9uZFesVj+RJGDl8fCw3H7WOG7a3EVImEaWv5QtxOqYV5owISpfX2P9uBYRIO4cBsYJD344aVsUKamUi0Yhafpv0AVuBJ2gC7+TxAIH8aQBGrweHphpNHhVjWL9p7rYFBA4uW+a18Ei9Y3rGdlZCYX3sz0Bwkfc2/BPEpQaUVRoB5fgt9JtMUqtr9Q8pZWtwm63tO5js0lgnVwTpUJLu+wfdLL5XZKsGSNmUhmujt/1KVKCbYxj1BuKDEFzndJUN2ITPKFAVhhFMDxiRUSOVv2EUhu2rFYsmf/IURts0H+ShvLAg2nLvyqleHUxkG0OoWxVQ+mnEOUubRCirtpnaLFC9bFXm6vE5bWuhsmOtI/tI/hGUfWmFVmfx85TSnYbByTfkNIrsiyImuANdXnjSblWqNPnCuO1qNSZRyjoLcpZEB232pi00WtaRS2+1Ftvek/tWNUFbNllknZ6reGHLEVpoafxWIx2qgTNFeHLae+aEstUhd4MwGI+EUnN9tZWK/pM2cOiN++5mtshfjUhPiIQeTBTb7ZoZxShn9zI3aW4CpdxtI/DutpjN/KFAg0UgOR7QiDassS0/SBCjr3DYMo4E5uQfrONmA5taGPV36W7eEgoxm9vm0dKzrIIoqIV8dnNm3HHPYqH7eXErEhEJuxNRFSisOJZNyfqUTpXI77ffNRYMkEHIHBr5uo/NN1rUYbUGL9gGQNOZDA9KVxKj8KDbERc24gLuT1UHDrGn5UTYVldX8xyRNqp7q44e6f+zTT+dlv0K0YrAwBZWIiPxOisRJD+A=="
 ---
-
-# Teaching
-
-Ideas, activities, and notes for grade school teachers and parents — covering math, literacy, science, and classroom strategies.
-
-## MK 5-Pointers LV3-4 — Part 1: Logical Reasoning
-
-Step-by-step guides to every problem type in the MK LV3-4 Part 1 workbook:
-
-- [Picture Reasoning](./mk-lv3-4-5pt-picture-reasoning) — Combination constraints, color adjacency, and linear placement puzzles
-- [Word Reasoning](./mk-lv3-4-5pt-word-reasoning) — "Exactly one correct" code-breaking and truth-or-lie deduction
-- [Fun Math](./mk-lv3-4-5pt-fun-math) — Symbol substitution optimization and inequality grid problems
-
-## MK 5-Pointers LV3-4 — Part 2, Week 2: Logical Reasoning
-
-- [Page Problem](./mk-lv3-4-5pt-w2-page-problem) — Counting total digits and specific digits in book page numbers
-- [Chicken & Rabbit](./mk-lv3-4-5pt-w2-chicken-rabbit) — Simultaneous equations: teams, books, ropes, quizzes
-- [Competitions & Scores](./mk-lv3-4-5pt-w2-competitions-scores) — Win/tie/loss systems: maximise and minimise losses; round-robin impossible scores
-
-## MK 5-Pointers LV3-4 — Part 2, Week 3: Number & Operations
-
-- [Fun Calculation](./mk-lv3-4-5pt-w3-fun-calculation) — Card flipping, plate balancing, digit partitioning, neighbouring sums, coloured grids
-- [Divisibility](./mk-lv3-4-5pt-w3-divisibility) — LCM + remainder conditions; finishing-day problems
-- [Operation without Numbers](./mk-lv3-4-5pt-w3-operation-without-numbers) — Coloured-cell simultaneous equations in grids
-- [LCM](./mk-lv3-4-5pt-w3-lcm) — Ant lap problems: loop perimeters, LCM, and meeting points
-
-## MK 5-Pointers LV3-4 — Part 2, Week 4: Geometry
-
-- [Perimeter](./mk-lv3-4-5pt-w4-perimeter) — Rectilinear shapes, L-shaped gardens, identical flowerbeds in arrangements
-- [3D Perimeter](./mk-lv3-4-5pt-w4-3d-perimeter) — Ant paths on cube surfaces: unfolding strategy and Pythagorean theorem
-- [Dice](./mk-lv3-4-5pt-w4-dice) — Cube nets, opposite faces, rolling and rotation tracking
-
-## MK 4-Pointers LV3-4 — Part 1, Week 1: Logical Reasoning
-
-- [Ordering & Sequences (4-Pointer)](./mk-lv3-4-4pt-w1-ordering-sequences) — Line ordering, arrow-flipping cycles, balance grouping, and ruler marking
-- [Equal & Balance (4-Pointer)](./mk-lv3-4-4pt-w1-equal-balance) — Symbol scale equations, deduction by substitution, pairwise sums
-- [Fun Math (4-Pointer)](./mk-lv3-4-4pt-w1-fun-math) — Magic square errors, parallel scheduling, necklace matching, concentration comparison, minimum moves
-
-## MK 4-Pointers LV3-4 — Part 1, Week 2: Word Problems
-
-- [Basic Word Problems (4-Pointer)](./mk-lv3-4-4pt-w2-basic-word-problem) — Mirror conservation: "take as many as remain" problems with 2 or 3 containers
-
-## MK 4-Pointers LV3-4 — Part 2, Week 2: Word Problems
-
-- [Line Up (4-Pointer)](./mk-lv3-4-4pt-w2-lineup) — Position-in-a-line, midpoint, two-person distance, and rectangular-array problems
-- [Surplus & Shortage (4-Pointer)](./mk-lv3-4-4pt-w2-surplus-shortage) — Cash-drawer linear models and surplus/shortage distribution problems (includes Week 2 Review)
-
-## MK 4-Pointers LV3-4 — Part 2, Week 3: Geometry
-
-- [Perimeter (4-Pointer)](./mk-lv3-4-4pt-w3-perimeter) — Shape allocation, fence-and-paint with ceiling division, equal-perimeter, and shared-edge problems
-- [Color Cubes (4-Pointer)](./mk-lv3-4-4pt-w3-color-cubes) — Counting painted faces on 3-D cube arrangements using the subtraction method and layer-by-layer analysis
-- [Form Solid Figure (4-Pointer)](./mk-lv3-4-4pt-w3-form-solid-figure) — Piece-fitting and volume subtraction to complete a rectangular prism
-
-## MK 4-Pointers LV3-4 — Part 3, Week 4: Enumeration & Number Operations
-
-- [Enumeration (4-Pointer)](./mk-lv3-4-4pt-w4-enumeration) — Counting arrangements with adjacency constraints, forbidden positions, directed vs. undirected pair counting, and graph path traversal
-- [Maximum & Minimum (4-Pointer)](./mk-lv3-4-4pt-w4-max-min) — Minimising containers (storage and exact-total) and minimising coins with the greedy algorithm
-- [Shapes & Paper Folding (4-Pointer)](./mk-lv3-4-4pt-w4-shapes) — Fold-and-punch hole problems using the mirror formula; includes Week 4 Review

@@ -1,13 +1,8 @@
 ---
+layout: protected
 title: Health
 nav_order: 5
 has_children: true
 permalink: /health/
+encrypted: "VDBVHCcoRE1LlHTdEjSpeChRDV5/xo/iVSI0QKqdKG7JGgG0SsT50BFZQRyhEwoSDRp03Tdxx2rVtv8EYr8UTXRVF1hqI+O0LCgOIgGB4BOron1QpZjW5kLkioOWl9T9Ppahz+YhUCICA7CshsVN6d5389Dxdo6zWGDwfxwjOO18HtjGZhYvZ8kuVb07OXIkitI6t6DiISofO15ZsUGETYqVbtXjI1kL4F2ovJBingaU0FjUuXNAsnDLfke4pYwRb7K1p+7lEM1gbCkwPaq7XR0dR7N09Y6WnpDAn22qxRYokOQe0DX2eq9OM/VHlIK79g10zqyrDd/hQ5zh6gQfV9FBxZYEMWFuu26sU4m/bxnD4fA="
 ---
-
-# Health
-
-Notes and reflections on health, wellness, and learning about how the body and mind work.
-
-{: .note }
-These posts share personal learning and are not medical advice. Always consult a qualified professional for your health decisions.
