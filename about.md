@@ -5,20 +5,13 @@ nav_order: 2
 permalink: /about/
 ---
 
-# About me
+# About
 
-Hi, I'm mwestwood.
-
-{: .note }
-Update this page with your own bio, background, and contact information.
+A personal site for notes, references, and other things worth keeping around.
 
 ## Background
 
-Tell people a bit about yourself here &mdash; your background, what you work on, and what you're interested in.
-
-## Contact
-
-- GitHub: [github.com/mwestwood](https://github.com/mwestwood)
+Software, trading, and a few other rabbit holes. This site is mostly for personal use.
 
 ---
 

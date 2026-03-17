@@ -1,9 +1,8 @@
 # Site settings
-title: mwestwood
-description: Personal site of mwestwood
+title: Notes
+description: Personal notes and references
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://mwestwood.github.io" # the base hostname & protocol for your site
-repository: mwestwood/mwestwood.github.io # for github-metadata
 
 permalink: pretty
 
@@ -56,11 +55,6 @@ enable_copy_code_button: true
 # Enable or disable heading anchors
 heading_anchors: true
 
-# Aux links for the upper right navigation
-aux_links:
-  "GitHub":
-    - "https://github.com/mwestwood"
-
 # Makes Aux links open in a new tab. Default is false
 aux_links_new_tab: true
 
@@ -81,7 +75,7 @@ liquid:
 back_to_top: true
 back_to_top_text: "Back to top"
 
-footer_content: 'mwestwood &mdash; built with <a href="https://jekyllrb.com">Jekyll</a> and <a href="https://just-the-docs.com">Just the Docs</a>'
+footer_content: 'Personal notes site'
 
 # Footer last edited timestamp
 last_edit_timestamp: false
@@ -110,7 +104,6 @@ callouts:
 
 plugins:
   - jekyll-seo-tag
-  - jekyll-github-metadata
   - jekyll-include-cache
   - jekyll-sitemap
 
