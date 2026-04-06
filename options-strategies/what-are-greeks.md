@@ -1,7 +1,239 @@
 ---
-layout: protected
 title: What Are the Greeks?
 parent: Options Strategies
 nav_order: 1.5
-encrypted: "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"
 ---
+
+# What Are the Greeks?
+{: .no_toc }
+
+When you buy or sell an option, its price doesn't move the same way a stock does. A stock goes up $1 and you gain $1. An option? It might gain $0.50. Or $0.80. Or actually *lose* value even though the stock moved your way. The Greeks explain why.
+{: .fs-6 .fw-300 }
+
+## Table of contents
+{: .no_toc .text-delta }
+
+1. TOC
+{:toc}
+
+---
+
+## The Dashboard Analogy
+
+Think of an option as a car with a full dashboard.
+
+- The **speedometer** shows how fast the option price is moving right now relative to the stock.
+- The **accelerator** shows how quickly that speed is changing.
+- The **fuel gauge** shows how much time value you have left.
+- The **thermometer** shows how sensitive you are to the "weather" (market volatility).
+- The **altitude gauge** shows a small effect from background conditions (interest rates).
+
+Each of these is a Greek. Together, they answer the question every options trader needs to answer:
+
+> **"What does the stock need to do — and how quickly — for this trade to work?"**
+
+---
+
+## The Five Greeks
+
+| Greek | Symbol | Measures |
+|:---|:---:|:---|
+| **Delta** | Δ | How much the option moves per $1 stock move |
+| **Theta** | θ | How much value the option loses per day (time decay) |
+| **Gamma** | γ | How fast Delta itself is changing |
+| **Vega** | ν | How much the option moves per 1% change in volatility |
+| **Rho** | ρ | How much the option moves per 1% change in interest rates |
+
+The first four matter a lot for most retail traders. Rho matters mainly if you hold very long-dated options during a period of rapidly changing interest rates.
+
+---
+
+## Delta (Δ) — The Speedometer
+
+**Plain English:** For every $1 the stock moves, your option moves this much.
+
+- Calls: Delta between 0 and +1 (they gain when the stock rises)
+- Puts: Delta between -1 and 0 (they gain when the stock falls)
+
+**Example:**
+You own a call with Delta 0.50. The stock rises $2. Your option gains approximately **$1.00** (0.50 × $2).
+
+**The three things Delta tells you:**
+
+1. **Price sensitivity** — how much your option will move per $1
+2. **Approximate probability** — a Delta 0.35 call has roughly a 35% chance of expiring in the money
+3. **Share equivalent** — a 0.50 Delta call acts like owning 50 shares of the stock
+
+{: .note }
+> Delta changes constantly as the stock moves. That rate of change is what **Gamma** measures.
+
+[Full Delta post →]({% link options-strategies/delta.md %})
+
+---
+
+## Theta (θ) — The Fuel Gauge
+
+**Plain English:** Your option loses this many dollars per day from time decay alone, even if the stock doesn't move.
+
+Theta is almost always negative for option *buyers* — it's a daily cost. For option *sellers*, time decay is a benefit.
+
+**Example:**
+You buy an option with Theta −0.06. Each day that passes costs you approximately $6 per contract ($0.06 × 100 shares), assuming nothing else changes.
+
+**The critical thing to know:** Theta is *not* a straight line. It accelerates. An option with 90 days left decays slowly; the same option in its final two weeks before expiration can decay 3–5× faster per day.
+
+**Who benefits:**
+- Option **buyers** need the stock to move *enough and fast enough* to overcome daily Theta erosion
+- Option **sellers** collect Theta — they want the stock to sit still while time quietly erodes the premium they sold
+
+{: .highlight }
+> Theta is the silent enemy of option buyers. Even if you're right about direction, being too slow means Theta wins.
+
+[Full Theta post →]({% link options-strategies/theta.md %})
+
+---
+
+## Gamma (γ) — The Accelerator
+
+**Plain English:** Gamma tells you how fast your Delta is changing. If Delta is your current speed, Gamma is how hard you're pressing the accelerator.
+
+**Example:**
+You own a call with Delta 0.40 and Gamma 0.10. The stock rises $1.
+- Your new Delta = 0.40 + 0.10 = **0.50**
+
+Now each $1 move earns you 50 cents instead of 40 cents. As the stock keeps rising, your Delta keeps growing, and your gains accelerate.
+
+**Long options (buyers):** Positive Gamma. Gains accelerate when right, losses decelerate when wrong. This is called *positive convexity* and it's one of the core advantages of buying options.
+
+**Short options (sellers):** Negative Gamma. Losses accelerate when the stock moves against you. This is the hidden danger of selling options naked.
+
+{: .warning }
+> Gamma is highest for at-the-money options in the final days before expiration. This is why short option positions are most dangerous right near expiry — even a small move can cause large, fast-accelerating losses.
+
+[Full Gamma post →]({% link options-strategies/gamma.md %})
+
+---
+
+## Vega (ν) — The Thermometer
+
+**Plain English:** Vega tells you how much your option's price changes for every 1 percentage point change in *implied volatility* (IV).
+
+Implied volatility is the market's expectation of how much a stock will move in the future. It's not what the stock *has* done — it's what traders expect it *will* do. When uncertainty is high (before earnings, major news, market crashes), IV rises. When things calm down, IV falls.
+
+**Example:**
+You own a call with Vega 0.12. Implied volatility rises from 30% to 32% (+2 percentage points). Your option gains approximately $0.24 per share ($24 per contract).
+
+**The IV crush problem (very important!):**
+Before a company's earnings, IV typically rises because nobody knows what the results will be. Once earnings are announced, that uncertainty evaporates — IV collapses. This is called an **IV crush**.
+
+A trader who buys options just before earnings might be right about the direction of the stock move, but still lose money if the IV crush deflates their option's value faster than the stock move inflates it.
+
+{: .important }
+> **Buying options into earnings** is a common trap for beginners. Even when the stock moves your way, a sharp drop in implied volatility (IV crush) can wipe out the gain and more.
+
+**Who benefits:**
+- Option **buyers** benefit from rising IV (Vega is positive for them)
+- Option **sellers** benefit from falling IV (Vega is negative for them — they love IV crush)
+
+**Checking IV before you trade:**
+Before buying options, check whether IV is high or low *relative to its historical range* for that stock. Buying when IV is at a 52-week high is like paying a huge premium that could collapse even if you're right about direction.
+
+---
+
+## Rho (ρ) — The Altitude Gauge
+
+**Plain English:** Rho measures how much your option's price changes for every 1 percentage point change in interest rates.
+
+Most of the time, Rho is the quietest Greek at the table. For short-dated options (under 60 days), Rho is tiny and usually irrelevant.
+
+**Where it matters:**
+- **Long-dated options (LEAPS)** — 1-2 year options have meaningful Rho exposure
+- **Rapidly changing rate environments** — during 2022–2023, the Fed raised rates from near 0% to over 5%, which notably affected LEAPS holders
+
+**The intuition:**
+When interest rates rise, calls become slightly more expensive (higher carry cost means owning a call instead of stock is relatively more attractive). Puts become slightly cheaper. When rates fall, the reverse.
+
+For most retail traders holding 30-60 day options, Rho is background noise. Start thinking about it when holding LEAPS.
+
+---
+
+## How the Greeks Interact
+
+The Greeks don't live in isolation. The most important interactions:
+
+### Theta vs. Gamma — The Fundamental Trade-off
+
+This is the heart of options trading. **You cannot have positive Gamma AND positive Theta at the same time.**
+
+```
+BUYING OPTIONS              SELLING OPTIONS
+━━━━━━━━━━━━━━━━━━━         ━━━━━━━━━━━━━━━━━━━━
++ Gamma  (big moves help)   + Theta  (time earns you money)
+− Theta  (time costs you)   − Gamma  (big moves hurt you)
+```
+
+Every options strategy is, at its core, a negotiation between these two forces.
+
+### Vega and Theta Are Linked
+
+When implied volatility is high, options are expensive. This means both Vega and Theta are elevated. Premium sellers (who earn Theta) are most profitable when they enter trades with high IV — they collect more premium, and they also benefit when IV falls back to normal (their Vega exposure works in their favor).
+
+### Delta and Time
+
+As expiration approaches, Delta becomes more extreme — in-the-money options converge to Delta 1.00, and out-of-the-money options converge to Delta 0.00. The binary outcome becomes clearer.
+
+---
+
+## Greek Profiles by Strategy
+
+| Strategy | Delta | Gamma | Theta | Vega |
+|:---|:---:|:---:|:---:|:---:|
+| Long call | + | + | − | + |
+| Long put | − | + | − | + |
+| Short call | − | − | + | − |
+| Short put | + | − | + | − |
+| Bull call spread | + | + | − (reduced) | + (reduced) |
+| Bear call spread | − | − | + | − |
+| Bull put spread | + | − | + | − |
+| Bear put spread | − | + | − (reduced) | + (reduced) |
+
+{: .note }
+> "Spreads" (one long + one short) reduce all the Greeks compared to naked single-leg positions. This is the main reason traders use spreads: they are *defined-risk* with reduced exposure to every Greek.
+
+---
+
+## Practical Summary: What to Check Before Every Trade
+
+Before entering any options trade, ask yourself:
+
+1. **Delta** — What direction am I betting on? How much does the stock need to move?
+2. **Theta** — How many days do I have? Is Theta decay sustainable or will it kill the trade before the stock moves?
+3. **Gamma** — Am I near expiration? Is there an event (earnings, data release) that could cause a sudden sharp move?
+4. **Vega** — Is implied volatility high or low right now? Am I buying expensive options or selling rich ones?
+5. **Rho** — (Only if holding LEAPS or rates are volatile) Am I exposed to interest rate changes?
+
+{: .highlight }
+> The most common beginner mistake: buying a cheap-looking option without checking whether high IV (Vega) will collapse after the expected event, or whether Theta will eat the trade before the stock makes its move.
+
+---
+
+## Go Deeper
+
+Each Greek has its own detailed post with examples and trade walk-throughs:
+
+- [Delta — How Much Will My Option Move?]({% link options-strategies/delta.md %})
+- [Theta — The Silent Drain on Your Option]({% link options-strategies/theta.md %})
+- [Gamma — Why Your Delta Keeps Changing]({% link options-strategies/gamma.md %})
+
+---
+
+## See the Greeks in Action
+
+Once you understand each Greek individually, the best way to cement the knowledge is to see them applied inside real strategies:
+
+- [Vertical Call Spreads]({% link options-strategies/vertical-call-spread.md %}) — how Delta, Theta, and Gamma behave inside bull and bear call spreads
+- [Vertical Put Spreads]({% link options-strategies/vertical-put-spread.md %}) — the same analysis for bull and bear put spreads
+- [Vertical Spreads — Visual Cheat Sheet]({% link options-strategies/vertical-spreads-cheatsheet.md %}) — all four strategies with Greeks at a glance
+
+{: .highlight }
+> **The fastest way to build Greek intuition:** paper-trade a few spreads and track each Greek daily. When the stock moves, watch Delta change. When time passes, watch Theta drain. When you *feel* the Greeks move your P&L, the theory becomes permanent.

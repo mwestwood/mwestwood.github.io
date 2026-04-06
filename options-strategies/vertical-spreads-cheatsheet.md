@@ -1,7 +1,82 @@
 ---
-layout: protected
 title: Vertical Spreads — Visual Cheat Sheet
 parent: Options Strategies
 nav_order: 7
-encrypted: "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"
 ---
+
+# Vertical Spreads — Visual Cheat Sheet
+
+A single-page reference covering all four vertical spread strategies: what to buy, what to sell, key numbers, P&L shapes, and Greeks at a glance.
+
+---
+
+## How to Read the Cheat Sheet
+
+Each card shows one strategy. Here's what each section means:
+
+- **STRUCTURE** — The two legs of the trade. *BUY* = you pay premium, *SELL* = you collect premium.
+- **KEY NUMBERS** — Max profit, max loss, and breakeven formula (with dollar examples).
+- **P&L DIAGRAM** — The green zone is profit territory; red zone is loss. The solid line shows the trade's outcome at expiration. The vertical line marked **B/E** is the breakeven stock price.
+- **GREEKS** — Whether Delta, Theta, and Gamma help or hurt you.
+
+---
+
+## The Cheat Sheet
+
+![Vertical Spreads Cheat Sheet](/assets/images/vertical-spreads-cheatsheet.svg)
+
+---
+
+## Quick Pattern Recognition
+
+Once you've studied the chart, the four strategies collapse into two simple patterns:
+
+### The Bullish Pattern (Bull Call and Bull Put)
+
+Both bullish spreads have the same P&L shape: flat loss on the left (stock is low), rising slope through the breakeven, flat profit on the right (stock is high).
+
+The difference is *how you enter*:
+- **Bull Call = Debit** (you pay upfront, theta hurts you, you need the stock to move)
+- **Bull Put = Credit** (you collect upfront, theta helps you, you just need the stock to not fall)
+
+### The Bearish Pattern (Bear Call and Bear Put)
+
+Both bearish spreads have the inverse shape: flat profit on the left (low stock price), falling slope through breakeven, flat loss on the right (high stock price).
+
+Again, the entry differs:
+- **Bear Call = Credit** (collect upfront, theta helps, stock just needs to stay flat or fall)
+- **Bear Put = Debit** (pay upfront, theta hurts, stock must actually fall)
+
+---
+
+## The Two Most Important Rules
+
+{: .important }
+> **Rule 1 — Know your breakeven before you enter.**
+> Every spread has a specific stock price where you break even. If you don't know that number, you don't know what the stock needs to do for you to win.
+
+{: .warning }
+> **Rule 2 — Don't hold credit spreads into the final week.**
+> Credit spreads (Bull Put, Bear Call) have **positive theta** — time is on your side. But as expiration approaches, **gamma spikes**. A stock that was safely away from your short strike can violently breach it in the final days. Most experienced traders close credit spreads at 50–75% of max profit rather than holding to expiration.
+
+---
+
+## Formula Reference
+
+| Spread | Max Profit | Max Loss | Breakeven |
+|:---|:---|:---|:---|
+| Bull Call | Width − Debit | Debit paid | Lower strike + Debit |
+| Bear Call | Credit received | Width − Credit | Lower strike + Credit |
+| Bull Put | Credit received | Width − Credit | Higher strike − Credit |
+| Bear Put | Width − Debit | Debit paid | Higher strike − Debit |
+
+**Where "Width" = Upper Strike − Lower Strike**
+
+---
+
+## Related Posts
+
+- [Vertical Call Spreads]({% link options-strategies/vertical-call-spread.md %}) — detailed explanation with full examples
+- [Vertical Put Spreads]({% link options-strategies/vertical-put-spread.md %}) — detailed explanation with full examples
+- [What Are the Greeks?]({% link options-strategies/what-are-greeks.md %}) — Delta, Theta, Gamma, and Vega explained
+- [Delta]({% link options-strategies/delta.md %}), [Theta]({% link options-strategies/theta.md %}), [Gamma]({% link options-strategies/gamma.md %}) — deep dives on each Greek
