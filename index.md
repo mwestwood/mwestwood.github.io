@@ -15,13 +15,14 @@ A collection of references, guides, and things worth remembering.
 
 ---
 
-**95 posts** across 9 categories. All sections are password protected.
+**101 posts** across 10 categories. All sections are password protected.
 
 | Category | Posts | Description |
 |----------|------:|-------------|
 | Options - Learning | 7 | Fundamentals of options strategies — iron condors, mechanics, and examples using SPY |
 | Options Strategies | 15 | Strategy playbooks — covered calls, verticals, the Greeks in action |
 | Options References | 22 | Quick reference sheets for Greeks, spreads, and key concepts |
+| Options - Advanced | 6 | Gamma exposure (GEX), dealer positioning, and vol regime analysis |
 | AI | 9 | Claude Code and AI tooling notes for engineering and SRE workflows |
 | Teaching | 26 | Math competition lesson notes and problem walkthroughs |
 | Stocks | 11 | Top 10 companies per sector — returns, 52W range, and investment notes |
