@@ -15,7 +15,7 @@ A collection of references, guides, and things worth remembering.
 
 ---
 
-**101 posts** across 10 categories. All sections are password protected.
+**105 posts** across 11 categories. All sections are password protected.
 
 | Category | Posts | Description |
 |----------|------:|-------------|
@@ -23,6 +23,7 @@ A collection of references, guides, and things worth remembering.
 | Options Strategies | 15 | Strategy playbooks — covered calls, verticals, the Greeks in action |
 | Options References | 22 | Quick reference sheets for Greeks, spreads, and key concepts |
 | Options - Advanced | 6 | Gamma exposure (GEX), dealer positioning, and vol regime analysis |
+| SPX Strategies | 4 | SPX vs SPY, why pros trade SPX, and full strategy playbook |
 | AI | 9 | Claude Code and AI tooling notes for engineering and SRE workflows |
 | Teaching | 26 | Math competition lesson notes and problem walkthroughs |
 | Stocks | 11 | Top 10 companies per sector — returns, 52W range, and investment notes |
