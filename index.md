@@ -15,7 +15,7 @@ A collection of references, guides, and things worth remembering.
 
 ---
 
-**105 posts** across 11 categories. All sections are password protected.
+**110 posts** across 11 categories. All sections are password protected.
 
 | Category | Posts | Description |
 |----------|------:|-------------|
@@ -28,5 +28,5 @@ A collection of references, guides, and things worth remembering.
 | Teaching | 26 | Math competition lesson notes and problem walkthroughs |
 | Stocks | 11 | Top 10 companies per sector — returns, 52W range, and investment notes |
 | Health | 2 | Sleep foundations and key health themes to remember |
-| Reminders | 2 | Discipline checklists and hard rules |
+| Reminders | 7 | Discipline checklists, hard rules, and On My Duty |
 | Autism | 1 | Sensory processing notes |
