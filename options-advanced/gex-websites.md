@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Options
 title: GEX Websites and Tools
 parent: Options - Advanced
 nav_order: 4

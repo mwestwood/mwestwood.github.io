@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Trading
 title: Interest Rates and Stocks
 parent: Other Factors
 nav_order: 3

@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Trading
 title: Healthcare
 parent: Stocks
 nav_order: 4

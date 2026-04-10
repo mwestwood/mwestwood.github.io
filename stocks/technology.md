@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Trading
 title: Technology
 parent: Stocks
 nav_order: 1

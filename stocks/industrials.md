@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Trading
 title: Industrials
 parent: Stocks
 nav_order: 8

@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Options
 title: Theta — The Silent Drain on Your Option
 parent: Options Strategies
 nav_order: 3

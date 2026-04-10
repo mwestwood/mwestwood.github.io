@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Options
 title: Key GEX Levels
 parent: Options - Advanced
 nav_order: 3

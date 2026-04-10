@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Options
 title: "Market Indexes Explained: Points, Headlines, and What They Actually Mean"
 parent: Options Strategies
 nav_order: 11

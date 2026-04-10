@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Options
 title: Options Platform Landscape — Overview
 parent: Options References
 nav_order: 1

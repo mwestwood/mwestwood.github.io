@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Trading
 title: Kelly Criterion
 parent: Stocks
 nav_order: 11

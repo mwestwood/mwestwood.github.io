@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Trading
 title: Jobs Report and Stocks
 parent: Other Factors
 nav_order: 4

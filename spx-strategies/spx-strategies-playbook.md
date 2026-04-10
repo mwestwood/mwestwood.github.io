@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Trading
 title: SPX Trading Strategies Playbook
 parent: SPX Strategies
 nav_order: 3

@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Options
 title: "The Fear & Greed Index: What Each Indicator Means"
 parent: Options Strategies
 nav_order: 13

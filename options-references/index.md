@@ -1,7 +1,9 @@
 ---
 layout: protected
+grand_parent: Trading
+parent: Options
 title: Options References
-nav_order: 6
+nav_order: 3
 has_children: true
 permalink: /options-references/
 encrypted: "ni6lBA21D8OV2B+exOG25oQMyqN/F53neomE5e8iSdUxstBtwqhwPO+FdU1Cme4B1F4MiJ6Ba/eISX5cZsfJP0wZB5vCrj0/Z0ua9DWeOW5UfIs7tIPuQHZRNdVVOKbnbjQwsMc1m/tLCna4gya4VPR7SYKySbZ9X19F5dwgSMNhFXmRkWEpLEkLZAQqyepxLNEr53X4dzSfP4bW2HhakBhE7mNAec6VJcOGoDrOJrvH64z0nk2Ov9ogL44U4uurx5h6Z+t604+tGq9dMPy/uUKuKEr6dnF2f4fihorzOQGp7l4uPZASIsz2APHkP4dn2aDX5SWx/JDGrCD6MD8MfICmAyLtLSqT762jHyVgyq18BuQ4u4ll4oQNeviUP4qajRlMNtFaRmItZvW5OnixJCV/jr/zbffnsYD3fgxD4suIYBIcQ3d9QZdoK8ekLZOzhK6c68U46O0x6CBIEsn3U4MUmRrgBPLYJkDuq8d6JMYtqdbs7IL2x9g="

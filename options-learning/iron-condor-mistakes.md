@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Options
 title: Common Iron Condor Mistakes
 parent: Options - Learning
 nav_order: 7

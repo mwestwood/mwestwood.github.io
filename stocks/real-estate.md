@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Trading
 title: Real Estate
 parent: Stocks
 nav_order: 9

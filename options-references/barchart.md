@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Options
 title: Barchart
 parent: Options References
 nav_order: 13

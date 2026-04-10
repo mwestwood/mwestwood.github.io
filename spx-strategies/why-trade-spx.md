@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Trading
 title: Why Most Traders Choose SPX
 parent: SPX Strategies
 nav_order: 2

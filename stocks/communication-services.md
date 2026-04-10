@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Trading
 title: Communication Services
 parent: Stocks
 nav_order: 2

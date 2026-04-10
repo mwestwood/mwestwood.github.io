@@ -1,4 +1,5 @@
 ---
+grand_parent: Options
 title: What Are the Greeks?
 parent: Options Strategies
 nav_order: 1.5

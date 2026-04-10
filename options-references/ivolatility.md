@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Options
 title: IVolatility
 parent: Options References
 nav_order: 11

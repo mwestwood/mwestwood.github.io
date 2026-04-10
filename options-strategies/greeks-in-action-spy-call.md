@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Options
 title: Greeks in Action — Long SPY Call Walk-Through
 parent: Options Strategies
 nav_order: 8

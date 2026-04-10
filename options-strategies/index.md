@@ -1,7 +1,9 @@
 ---
 layout: protected
+grand_parent: Trading
+parent: Options
 title: Options Strategies
-nav_order: 3
+nav_order: 2
 has_children: true
 permalink: /options-strategies/
 encrypted: "Lw3SWBv3AReE7n0Eyj4wdfSfnHZOhNnnDwBZ+2eNT+7IXRHumrPSLxefnv7E8whzp4T+aAr2AKHLntVpB2yjbIPd2SYoKYFXj/h8C56Qnc1cXdsrXsfc27DBAEw3GyJtje012v7zstZuFYhI1lfSDYgJKtnmuv9vDTnUT1Sc0ZRxTWsfvwSwGHGDRHc2Qydqg+nxv1I7YCA8dxENUjFHVsSl18jgt85a7fEh1kEzcYii1v69ZQuxWRl4OAgEH2wkuPdPWL0BEU6Zyxea3l9bMNIuActNa+lNWs7QXuWdzpdJa7sNrHQoFxKzD1evYiuvN4VkPjGlbUB4wGUM/3bblc7ustcTx6lIGq/HNvOaSj9vsDQu+pzA/zg+YlSoAVMTJGItzqftI/HFTm0f9zWd"

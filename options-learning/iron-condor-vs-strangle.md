@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Options
 title: Iron Condor vs. Short Strangle
 parent: Options - Learning
 nav_order: 6

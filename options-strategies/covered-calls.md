@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Options
 title: Understanding Covered Calls
 parent: Options Strategies
 nav_order: 1

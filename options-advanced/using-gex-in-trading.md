@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Options
 title: Using GEX in Your Trading
 parent: Options - Advanced
 nav_order: 5

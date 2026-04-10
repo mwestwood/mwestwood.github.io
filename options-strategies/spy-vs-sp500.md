@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Options
 title: "SPY vs the S&P 500: Index vs ETF"
 parent: Options Strategies
 nav_order: 12

@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Options
 title: Positive vs Negative Gamma Environments
 parent: Options - Advanced
 nav_order: 2

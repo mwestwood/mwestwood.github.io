@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Trading
 title: PPI and PCE and Stocks
 parent: Other Factors
 nav_order: 2

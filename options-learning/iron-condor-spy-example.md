@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Options
 title: Iron Condor on SPY — Full Example
 parent: Options - Learning
 nav_order: 2

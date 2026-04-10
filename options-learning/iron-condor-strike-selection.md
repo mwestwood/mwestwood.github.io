@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Options
 title: Choosing Strikes for an Iron Condor
 parent: Options - Learning
 nav_order: 3

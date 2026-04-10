@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Options
 title: "5 SPY Put Spreads: What You're Really Risking"
 parent: Options Strategies
 nav_order: 9

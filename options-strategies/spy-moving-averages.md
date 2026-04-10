@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Options
 title: "SPY and Moving Averages: Reading the Trend"
 parent: Options Strategies
 nav_order: 14

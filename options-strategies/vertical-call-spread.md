@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Options
 title: Vertical Call Spreads
 parent: Options Strategies
 nav_order: 5

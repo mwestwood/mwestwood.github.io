@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Trading
 title: Retail Sales and ISM and Stocks
 parent: Other Factors
 nav_order: 6

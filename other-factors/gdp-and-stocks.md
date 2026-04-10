@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Trading
 title: GDP and Stocks
 parent: Other Factors
 nav_order: 5

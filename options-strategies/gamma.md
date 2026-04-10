@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Options
 title: Gamma — Why Your Delta Keeps Changing
 parent: Options Strategies
 nav_order: 4

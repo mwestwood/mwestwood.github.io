@@ -1,4 +1,5 @@
 ---
+grand_parent: Options
 title: Vertical Spreads — Visual Cheat Sheet
 parent: Options Strategies
 nav_order: 7

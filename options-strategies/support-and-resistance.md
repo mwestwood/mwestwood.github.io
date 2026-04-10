@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Options
 title: "Support and Resistance: The Floor and Ceiling of Price"
 parent: Options Strategies
 nav_order: 15

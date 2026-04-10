@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Options
 title: Managing an Iron Condor
 parent: Options - Learning
 nav_order: 5

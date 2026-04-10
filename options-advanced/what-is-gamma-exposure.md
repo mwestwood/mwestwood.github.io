@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Options
 title: What Is Gamma Exposure (GEX)
 parent: Options - Advanced
 nav_order: 1

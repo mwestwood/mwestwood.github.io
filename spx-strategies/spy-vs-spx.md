@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Trading
 title: SPY vs SPX — Know the Difference
 parent: SPX Strategies
 nav_order: 1

@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Options
 title: Delta — How Much Will My Option Move?
 parent: Options Strategies
 nav_order: 2

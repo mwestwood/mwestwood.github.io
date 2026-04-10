@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Options
 title: Spread Assignment Risk Explained
 parent: Options Strategies
 nav_order: 10

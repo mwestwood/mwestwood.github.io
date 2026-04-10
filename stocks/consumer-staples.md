@@ -1,5 +1,6 @@
 ---
 layout: protected
+grand_parent: Trading
 title: Consumer Staples
 parent: Stocks
 nav_order: 6
