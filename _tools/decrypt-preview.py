@@ -3,8 +3,11 @@
 import sys, re, base64, hashlib
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-PASSPHRASE = sys.argv[1] if len(sys.argv) > 1 else "REDACTED"
-FILES = sys.argv[2:] if len(sys.argv) > 2 else []
+if len(sys.argv) < 2:
+    print("Usage: python3 _tools/decrypt-preview.py <passphrase> [file ...]", file=sys.stderr)
+    sys.exit(1)
+PASSPHRASE = sys.argv[1]
+FILES = sys.argv[2:]
 
 def derive_key(passphrase, salt):
     return hashlib.pbkdf2_hmac('sha256', passphrase.encode(), salt, 100_000, dklen=32)
