@@ -40,13 +40,13 @@ exclude:
 # Enable or disable the site search
 search_enabled: true
 search:
-  heading_level: 2
+  heading_level: 3
   previews: 2
-  preview_words_before: 3
-  preview_words_after: 3
+  preview_words_before: 8
+  preview_words_after: 8
   tokenizer_separator: /[\s/]+/
   rel_url: true
-  button: false
+  button: true
   focus_shortcut_key: "k"
 
 # For copy button on code
@@ -62,7 +62,7 @@ aux_links_new_tab: true
 nav_enabled: true
 
 # Sort order for navigation links
-nav_sort: case_sensitive
+nav_sort: case_insensitive
 
 # Show navigation error report
 nav_error_report: false
@@ -74,6 +74,8 @@ liquid:
 # Footer content
 back_to_top: true
 back_to_top_text: "Back to top"
+
+author: mwestwood
 
 footer_content: 'Personal notes site'
 

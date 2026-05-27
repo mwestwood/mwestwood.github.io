@@ -1,1 +1,11 @@
 // custom SCSS (or CSS) goes here
+
+// Typography — Inter for all body text
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  line-height: 1.7;
+}
+
+p {
+  margin-bottom: 1.1em;
+}
