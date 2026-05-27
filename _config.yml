@@ -84,7 +84,7 @@ last_edit_timestamp: false
 gh_edit_link: false
 
 # Color scheme: "dark", "light"/nil (default), or a custom scheme
-color_scheme: nil
+color_scheme: dark
 
 callouts:
   highlight:
