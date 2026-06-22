@@ -325,3 +325,4 @@ python3 _tools/encrypt-batch.py "passphrase" category/
 - **Never use relative links** inside encrypted content (use absolute `/category/slug/` paths)
 - **Never install unsupported Jekyll plugins** — GitHub Pages only allows whitelisted gems
 - **Never use PIL/Pillow** — not available; use raw Python `struct` + `zlib` for PNG generation
+- **Never use the site owner's name** anywhere — not in content, post bodies, commit messages, file names, this file, or any other output. Write in the second person ("you") instead.
