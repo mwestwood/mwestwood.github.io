@@ -12,3 +12,9 @@ node_modules/
 tmp/
 Gemfile.lock
 .claude/
+__pycache__/
+
+# Plaintext vocabulary source — kept local only. The encrypted pages it
+# generates (teaching/vocabulary/*.md) ARE committed; the plaintext is not,
+# matching the site's "never commit unencrypted content" rule.
+_tools/vocab_data.py

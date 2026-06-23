@@ -242,10 +242,72 @@ layout: default
          a single wrapped paragraph. See CLAUDE.md §7. */
       content.innerHTML = marked.parse(markdown, { gfm: true, breaks: true });
       content.style.display = 'block';
+      enhanceVocab();
     }).catch(function () {
       content.innerHTML = '<pre>' + markdown.replace(/</g, '&lt;') + '</pre>';
       content.style.display = 'block';
     });
+  }
+
+  /* On /teaching/vocabulary/ pages: build a floating table of contents from the
+     section (H2) headings, wire up smooth-scroll + scrollspy, and honour any
+     #word anchor that was followed in from the index (the content only exists
+     after decryption, so the browser's own anchor jump happens too early). */
+  function enhanceVocab() {
+    if (!/\/teaching\/vocabulary\//.test(location.pathname)) return;
+    document.body.classList.add('vocab-page');
+
+    var heads = content.querySelectorAll('h2[id]');
+    if (heads.length > 1) {
+      var old = document.getElementById('vocab-toc');
+      if (old) old.remove();
+
+      var nav = document.createElement('nav');
+      nav.id = 'vocab-toc';
+      nav.className = 'floating-toc';
+      nav.setAttribute('aria-label', 'On this page');
+
+      var html = '<p class="floating-toc-title">On this page</p><ul>';
+      for (var i = 0; i < heads.length; i++) {
+        html += '<li><a href="#' + heads[i].id + '">' + heads[i].textContent + '</a></li>';
+      }
+      nav.innerHTML = html + '</ul>';
+      document.body.appendChild(nav);
+
+      var links = nav.querySelectorAll('a');
+      nav.addEventListener('click', function (e) {
+        var a = e.target.closest('a');
+        if (!a) return;
+        e.preventDefault();
+        var el = document.getElementById(a.getAttribute('href').slice(1));
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          history.replaceState(null, '', a.getAttribute('href'));
+        }
+      });
+
+      if ('IntersectionObserver' in window) {
+        var byId = {};
+        for (var j = 0; j < links.length; j++) {
+          byId[links[j].getAttribute('href').slice(1)] = links[j];
+        }
+        var obs = new IntersectionObserver(function (entries) {
+          for (var k = 0; k < entries.length; k++) {
+            if (entries[k].isIntersecting) {
+              for (var m = 0; m < links.length; m++) links[m].classList.remove('active');
+              var a = byId[entries[k].target.id];
+              if (a) a.classList.add('active');
+            }
+          }
+        }, { rootMargin: '-10% 0px -80% 0px' });
+        for (var n = 0; n < heads.length; n++) obs.observe(heads[n]);
+      }
+    }
+
+    if (location.hash) {
+      var target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+      if (target) setTimeout(function () { target.scrollIntoView(); }, 60);
+    }
   }
 
   async function tryUnlock(passphrase, cache) {
