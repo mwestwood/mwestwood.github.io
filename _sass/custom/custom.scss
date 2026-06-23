@@ -1,11 +1,435 @@
-// custom SCSS (or CSS) goes here
+// ============================================================================
+//  Custom theme overrides — readability + polish on top of Just the Docs (dark)
+//  Loaded LAST in the cascade, so everything here wins.
+// ============================================================================
 
-// Typography — Inter for all body text
+// --- Accent palette -------------------------------------------------------
+// One warm accent for emphasis + structure, one cool accent for links.
+// Exposed as CSS variables so they're trivial to retune later.
+:root {
+  --accent:        #e2b04a; // warm amber — emphasis, rules, structure marks
+  --accent-soft:   rgba(226, 176, 74, 0.14);
+  --accent-line:   rgba(226, 176, 74, 0.45);
+  --link:          #6ba8ff; // cool blue — hyperlinks
+  --link-hover:    #9cc4ff;
+  --ink:           #e8e6ea; // primary reading text (brighter than theme default)
+  --ink-soft:      #b8b5bf; // secondary text
+  --surface:       #2d2c33; // raised card surface
+  --surface-line:  #3c3a44; // hairline borders
+}
+
+// ============================================================================
+//  Base typography
+// ============================================================================
+
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   line-height: 1.7;
+  // Subtle depth so the page never reads as a flat slab.
+  background-color: #232228;
+  background-image:
+    radial-gradient(900px 480px at 78% -8%, rgba(226, 176, 74, 0.06), transparent 70%),
+    radial-gradient(720px 420px at 8% 0%, rgba(107, 168, 255, 0.05), transparent 70%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-p {
-  margin-bottom: 1.1em;
+// The reading column: larger, calmer, higher-contrast text.
+.main-content {
+  color: var(--ink);
+  font-size: 1.0625rem; // ~17px
+  line-height: 1.78;
+  letter-spacing: 0.003em;
+
+  p {
+    margin-bottom: 1.15em;
+  }
+
+  // Lead-in: the opening paragraph reads bigger, like a magazine deck.
+  // Content convention is `# Title` / `---` / opening paragraph, so the lead
+  // is the <p> right after the title's rule (with a plain `h1 + p` fallback).
+  h1 + hr + p,
+  h1 + p {
+    font-size: 1.18rem;
+    line-height: 1.7;
+    color: var(--ink);
+  }
+
+  // The `---` immediately under the title is redundant with the accent rule
+  // drawn below the H1 — hide it so the title block reads as one clean unit.
+  h1 + hr {
+    display: none;
+  }
+}
+
+// Comfortable text selection in the accent colour.
+::selection {
+  background: rgba(226, 176, 74, 0.28);
+  color: #fff;
+}
+
+// ============================================================================
+//  Layout — turn the nav into a clean fixed rail, centre the reading column
+// ============================================================================
+//
+//  Out of the box, Just the Docs expands the sidebar to ~450px on wide screens
+//  and right-aligns the nav inside it. Because the sidebar is the same colour
+//  as the page, that empty half reads as dead space — the "wide unused gutters"
+//  problem. Here we pin the rail to a fixed width, give it a distinct surface,
+//  and centre the content column in the space beside it with balanced margins.
+
+.side-bar {
+  background-color: #1f1e24; // a touch deeper than the page — a real panel
+  border-right: 1px solid var(--surface-line);
+}
+
+// lg breakpoint = $content-width (55rem) + $nav-width (16.5rem) = 71.5rem
+@media (min-width: 71.5rem) {
+  .side-bar {
+    width: 16.5rem;        // fixed rail instead of expanding to ~28rem
+    min-width: 16.5rem;
+  }
+
+  .side-bar + .main {
+    // Sit the column after the rail, then centre it in the remaining width.
+    margin-left: calc(16.5rem + (100% - 71.5rem) / 2);
+  }
+}
+
+// ============================================================================
+//  Headings — clear hierarchy with quiet structural marks
+// ============================================================================
+
+.main-content {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: #f3f1f5;
+    letter-spacing: -0.01em;
+  }
+
+  h1 {
+    font-weight: 700;
+    font-size: 2.35rem;
+    line-height: 1.15;
+    margin-top: 0.6em;
+    margin-bottom: 0.5em;
+    background: linear-gradient(92deg, #ffffff 0%, #d7d3dd 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  // Accent rule under the page title for a confident "header" feel.
+  // (Content is wrapped in <main> / #protected-content, so this can't rely on
+  // a direct-child combinator — every page has a single title h1.)
+  h1::after {
+    content: "";
+    display: block;
+    width: 3.25rem;
+    height: 3px;
+    margin-top: 0.55rem;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+  }
+
+  h2 {
+    font-weight: 650;
+    font-size: 1.6rem;
+    line-height: 1.25;
+    margin-top: 2em;
+    padding-bottom: 0.3em;
+    border-bottom: 1px solid var(--surface-line);
+  }
+
+  h3 {
+    font-weight: 600;
+    font-size: 1.28rem;
+    margin-top: 1.7em;
+    color: #efe7d8; // faint warm tint to separate from h2
+  }
+
+  h4 {
+    color: var(--accent);
+    font-size: 0.82rem;
+  }
+}
+
+// ============================================================================
+//  Blockquotes — the heart of this site's voice. Make them land.
+// ============================================================================
+
+.main-content blockquote {
+  position: relative;
+  margin: 1.6em 0;
+  padding: 0.9em 1.25em 0.9em 1.5rem;
+  border: 1px solid var(--surface-line);
+  border-left: 4px solid var(--accent);
+  border-radius: 0 var(--border-radius, 8px) var(--border-radius, 8px) 0;
+  background: linear-gradient(90deg, var(--accent-soft), rgba(45, 44, 51, 0.55));
+  color: #f1ede4;
+  font-size: 1.12rem;
+  line-height: 1.6;
+
+  p {
+    margin-bottom: 0.6em;
+  }
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+
+  // A climactic ***line*** inside a quote glows in the accent colour.
+  strong em,
+  em strong {
+    color: var(--accent);
+    font-style: italic;
+    font-weight: 700;
+  }
+}
+
+// ============================================================================
+//  Emphasis
+// ============================================================================
+
+.main-content {
+  strong {
+    color: #fbf8f2;
+    font-weight: 700;
+  }
+
+  // ***maximum emphasis*** — the single climactic idea — gets the accent.
+  strong em,
+  em strong {
+    color: var(--accent);
+    font-weight: 700;
+    font-style: italic;
+  }
+}
+
+// ============================================================================
+//  Horizontal rules — a fading hairline instead of a hard line
+// ============================================================================
+
+.main-content hr {
+  height: 1px;
+  margin: 2.4em 0;
+  border: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--surface-line) 12%,
+    var(--accent-line) 50%,
+    var(--surface-line) 88%,
+    transparent
+  );
+}
+
+// ============================================================================
+//  Links
+// ============================================================================
+
+.main-content a:not(.btn) {
+  color: var(--link);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(107, 168, 255, 0.3);
+  transition: color 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    color: var(--link-hover);
+    border-bottom-color: var(--link-hover);
+  }
+}
+
+// ============================================================================
+//  Lists — accent bullets / counters, readable checklists
+// ============================================================================
+
+.main-content {
+  ul > li::before {
+    color: var(--accent) !important;
+  }
+
+  ol > li::before {
+    color: var(--accent) !important;
+    font-weight: 600;
+  }
+
+  li {
+    margin-bottom: 0.35em;
+  }
+
+  // GFM task lists
+  .task-list-item-checkbox {
+    width: 1.05em;
+    height: 1.05em;
+    accent-color: var(--accent);
+    vertical-align: -0.15em;
+  }
+}
+
+// ============================================================================
+//  Inline code + code blocks
+// ============================================================================
+
+.main-content {
+  code {
+    background: rgba(226, 176, 74, 0.12);
+    color: #f3d79a;
+    padding: 0.12em 0.4em;
+    border-radius: 5px;
+    font-size: 0.86em;
+  }
+
+  pre {
+    border: 1px solid var(--surface-line);
+    border-radius: var(--border-radius, 8px);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+
+    code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+    }
+  }
+
+  div.highlighter-rouge,
+  figure.highlight {
+    border-radius: var(--border-radius, 8px);
+  }
+}
+
+// ============================================================================
+//  Tables — quiet zebra striping + accented header
+// ============================================================================
+
+.main-content table {
+  border-radius: var(--border-radius, 8px);
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--surface-line);
+
+  thead {
+    background: rgba(226, 176, 74, 0.1);
+
+    th {
+      color: #f3e7cf;
+      font-weight: 600;
+      border-bottom: 2px solid var(--accent-line);
+    }
+  }
+
+  tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.022);
+  }
+}
+
+// ============================================================================
+//  Sidebar — make the active page and site title feel intentional
+// ============================================================================
+
+.site-title {
+  font-weight: 700 !important;
+  letter-spacing: -0.01em;
+}
+
+.nav-list .nav-list-item .nav-list-link.active {
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+// ============================================================================
+//  Password gate — a polished unlock card
+// ============================================================================
+
+#protected-gate {
+  min-height: 58vh !important;
+}
+
+.gate-card {
+  background: var(--surface) !important;
+  border: 1px solid var(--surface-line) !important;
+  border-radius: 16px !important;
+  padding: 2.75rem 2.25rem !important;
+  box-shadow:
+    0 18px 50px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.02) inset !important;
+  position: relative;
+  overflow: hidden;
+
+  // Soft accent glow across the top edge.
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+}
+
+.gate-lock {
+  font-size: 2.25rem !important;
+  filter: drop-shadow(0 4px 12px rgba(226, 176, 74, 0.25));
+}
+
+.gate-title {
+  color: #f3f1f5 !important;
+  font-size: 1.35rem !important;
+  letter-spacing: -0.01em;
+}
+
+#gate-password {
+  background: #232228 !important;
+  border: 1px solid var(--surface-line) !important;
+  border-radius: 9px !important;
+  color: var(--ink) !important;
+  padding: 0.6rem 0.85rem !important;
+
+  &:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px rgba(226, 176, 74, 0.18) !important;
+  }
+}
+
+#gate-submit {
+  background: linear-gradient(180deg, #ecc063, var(--accent)) !important;
+  color: #2a2206 !important;
+  border-radius: 9px !important;
+  font-weight: 700 !important;
+  padding: 0.6rem 1.3rem !important;
+  box-shadow: 0 6px 16px rgba(226, 176, 74, 0.28);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 9px 22px rgba(226, 176, 74, 0.36);
+    opacity: 1 !important;
+  }
+}
+
+// ============================================================================
+//  Callouts — lift them off the page a touch
+// ============================================================================
+
+.main-content .callout {
+  border-radius: var(--border-radius, 8px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+// ============================================================================
+//  Responsive tightening
+// ============================================================================
+
+@media (max-width: 50rem) {
+  .main-content {
+    font-size: 1rem;
+    line-height: 1.72;
+
+    h1 { font-size: 1.95rem; }
+    h2 { font-size: 1.4rem; }
+    h3 { font-size: 1.18rem; }
+  }
 }

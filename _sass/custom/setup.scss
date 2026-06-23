@@ -1,1 +1,13 @@
 // custom setup code goes here
+// These run BEFORE the theme modules, so they override Just the Docs
+// `!default` variables before the layout/typography CSS consumes them.
+
+// Give the reading column more room on wide screens (was 50rem).
+// Wide enough to use the empty side gutters, narrow enough to stay readable.
+$content-width: 55rem;
+
+// Softer, more modern rounding across cards, code blocks, tables, buttons.
+$border-radius: 8px;
+
+// Slightly roomier base rhythm for long-form reading.
+$content-line-height: 1.75;
