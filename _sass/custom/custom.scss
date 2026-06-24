@@ -576,6 +576,27 @@ body {
 }
 
 // ============================================================================
+//  Word index (A–Z on the Vocabulary landing page) — flow into columns
+// ============================================================================
+
+.main-content .word-index ul {
+  column-width: 11rem;
+  column-gap: 1.75rem;
+  margin-top: 0.5rem;
+  padding-left: 0;
+  list-style: none;
+}
+
+.main-content .word-index li {
+  break-inside: avoid;
+  margin-bottom: 0.3rem;
+}
+
+.main-content .word-index li::before {
+  content: none; // drop the accent bullet for a clean column list
+}
+
+// ============================================================================
 //  Responsive tightening
 // ============================================================================
 

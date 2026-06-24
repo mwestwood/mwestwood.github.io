@@ -220,6 +220,8 @@ def build_index(total):
     # --- Index of words (A–Z) ----------------------------------------------
     b.append('<h2 id="index-of-words">Index of words (A&ndash;Z)</h2>')
     b.append("")
+    b.append('<div class="word-index">')
+    b.append("")
     all_words = []
     for g in data.GROUPS:
         for w in g["words"]:
@@ -227,6 +229,8 @@ def build_index(total):
     all_words.sort(key=lambda t: t[0].lower())
     for word, level in all_words:
         b.append("- %s &middot; *%s*" % (word_link(level, word), level))
+    b.append("")
+    b.append("</div>")
     b.append("")
 
     text = fm + "\n" + "\n".join(b).rstrip() + "\n"
