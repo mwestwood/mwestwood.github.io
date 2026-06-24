@@ -257,7 +257,7 @@ layout: default
     if (!/\/teaching\/vocabulary\//.test(location.pathname)) return;
     document.body.classList.add('vocab-page');
 
-    var heads = content.querySelectorAll('h2[id]');
+    var heads = Array.prototype.slice.call(content.querySelectorAll('h2[id]'));
     if (heads.length > 1) {
       var old = document.getElementById('vocab-toc');
       if (old) old.remove();
@@ -267,15 +267,43 @@ layout: default
       nav.className = 'floating-toc';
       nav.setAttribute('aria-label', 'On this page');
 
-      var html = '<p class="floating-toc-title">On this page</p><ul>';
-      for (var i = 0; i < heads.length; i++) {
-        html += '<li><a href="#' + heads[i].id + '">' + heads[i].textContent + '</a></li>';
+      /* Level pages tag each H2 with data-kind/data-toc, so the ToC can split
+         into collapsible "Word families" / "Roots" sections and stay short.
+         The index page (no data-kind) falls back to a flat list. */
+      var categorized = heads.some(function (h) { return h.dataset && h.dataset.kind; });
+
+      function linkFor(h) {
+        var label = (h.dataset && h.dataset.toc) ? h.dataset.toc : h.textContent;
+        return '<li><a href="#' + h.id + '">' + label + '</a></li>';
       }
-      nav.innerHTML = html + '</ul>';
+      function section(title, items, open) {
+        if (!items.length) return '';
+        return '<details class="toc-cat"' + (open ? ' open' : '') + '>' +
+          '<summary><span class="toc-cat-name">' + title + '</span>' +
+          '<span class="toc-count">' + items.length + '</span></summary>' +
+          '<ul>' + items.map(linkFor).join('') + '</ul></details>';
+      }
+
+      var html = '<p class="floating-toc-title">On this page</p>';
+      if (categorized) {
+        var fams = heads.filter(function (h) { return h.dataset.kind !== 'root'; });
+        var roots = heads.filter(function (h) { return h.dataset.kind === 'root'; });
+        var firstIsRoot = heads[0].dataset.kind === 'root';
+        html += section('Word families', fams, !firstIsRoot);
+        html += section('Roots', roots, firstIsRoot);
+      } else {
+        html += '<ul>' + heads.map(linkFor).join('') + '</ul>';
+      }
+      nav.innerHTML = html;
       document.body.appendChild(nav);
 
-      var links = nav.querySelectorAll('a');
+      var links = Array.prototype.slice.call(nav.querySelectorAll('a'));
+      var byId = {};
+      links.forEach(function (a) { byId[a.getAttribute('href').slice(1)] = a; });
+
+      var userToggled = false;
       nav.addEventListener('click', function (e) {
+        if (e.target.closest('summary')) { userToggled = true; return; }
         var a = e.target.closest('a');
         if (!a) return;
         e.preventDefault();
@@ -286,21 +314,29 @@ layout: default
         }
       });
 
-      if ('IntersectionObserver' in window) {
-        var byId = {};
-        for (var j = 0; j < links.length; j++) {
-          byId[links[j].getAttribute('href').slice(1)] = links[j];
+      function setActive(id) {
+        var a = byId[id];
+        if (!a) return;
+        for (var i = 0; i < links.length; i++) links[i].classList.remove('active');
+        a.classList.add('active');
+        if (categorized && !userToggled) {
+          var det = a.closest('details');
+          var cats = nav.querySelectorAll('details.toc-cat');
+          for (var c = 0; c < cats.length; c++) cats[c].open = (cats[c] === det);
         }
+        var ul = a.closest('ul');
+        if (ul && ul.scrollHeight > ul.clientHeight + 4) {
+          ul.scrollTop = a.offsetTop - ul.clientHeight / 2;
+        }
+      }
+
+      if ('IntersectionObserver' in window) {
         var obs = new IntersectionObserver(function (entries) {
           for (var k = 0; k < entries.length; k++) {
-            if (entries[k].isIntersecting) {
-              for (var m = 0; m < links.length; m++) links[m].classList.remove('active');
-              var a = byId[entries[k].target.id];
-              if (a) a.classList.add('active');
-            }
+            if (entries[k].isIntersecting) setActive(entries[k].target.id);
           }
         }, { rootMargin: '-10% 0px -80% 0px' });
-        for (var n = 0; n < heads.length; n++) obs.observe(heads[n]);
+        heads.forEach(function (h) { obs.observe(h); });
       }
     }
 

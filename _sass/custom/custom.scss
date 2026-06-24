@@ -506,6 +506,62 @@ body {
   }
 }
 
+// Collapsible category sections keep the ToC short on long pages.
+.floating-toc details.toc-cat {
+  margin: 0;
+  border-top: 1px solid var(--surface-line);
+}
+
+.floating-toc details.toc-cat:first-of-type {
+  border-top: 0;
+}
+
+.floating-toc summary {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  list-style: none;
+  padding: 0.45rem 0.4rem;
+  color: var(--ink);
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.floating-toc summary::-webkit-details-marker { display: none; }
+
+.floating-toc summary::before {
+  content: "\25B8"; // ▸
+  color: var(--accent);
+  margin-right: 0.4rem;
+  font-size: 0.85em;
+  transition: transform 0.15s ease;
+}
+
+.floating-toc details[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.floating-toc .toc-cat-name { flex: 1; }
+
+.floating-toc .toc-count {
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.floating-toc details > ul {
+  position: relative; // offset parent for the scrollspy auto-scroll
+  margin: 0 0 0.4rem;
+  max-height: 42vh; // keep an open category compact even with many items
+  overflow-y: auto;
+}
+
+.floating-toc details a {
+  padding-left: 1.2rem;
+  font-size: 0.82rem;
+}
+
 // On wide screens, sit the reading column just after the rail and reserve a
 // right gutter for the floating ToC (vocabulary pages only).
 @media (min-width: 78rem) {

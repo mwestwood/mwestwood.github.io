@@ -83,10 +83,31 @@ def card_md(word):
     return "\n".join(lines)
 
 
+def is_root(group):
+    return group.get("kind") == "root"
+
+
+def order_groups(groups):
+    """Word-family groups first, then root groups (stable within each)."""
+    return [g for g in groups if not is_root(g)] + [g for g in groups if is_root(g)]
+
+
+def toc_label(group):
+    """Short label for the floating table of contents."""
+    if is_root(group):
+        return "%s = %s" % (group["root"], group["root_means"])
+    title = group["title"]
+    prefix = "Words that mean "
+    return title[len(prefix):] if title.startswith(prefix) else title
+
+
 def group_md(group):
     out = []
     gid = "grp-" + slug(group["title"])
-    out.append('<h2 id="%s">%s</h2>' % (gid, group["title"]))
+    kind = "root" if is_root(group) else "family"
+    label = toc_label(group).replace('"', "&quot;")
+    out.append('<h2 id="%s" data-kind="%s" data-toc="%s">%s</h2>'
+               % (gid, kind, label, group["title"]))
     out.append("")
     out.append(group["blurb"])
     out.append("")
@@ -108,7 +129,7 @@ def front_matter(fields):
 
 
 def build_level(level):
-    groups = [g for g in data.GROUPS if g["level"] == level]
+    groups = order_groups([g for g in data.GROUPS if g["level"] == level])
     fm = front_matter({
         "title": LEVEL_TITLE[level],
         "parent": "Vocabulary",
@@ -187,7 +208,7 @@ def build_index(total):
     b.append('<h2 id="index-of-groups">Index of groups</h2>')
     b.append("")
     for level in LEVELS:
-        groups = [g for g in data.GROUPS if g["level"] == level]
+        groups = order_groups([g for g in data.GROUPS if g["level"] == level])
         if not groups:
             continue
         b.append("**%s**" % LEVEL_TITLE[level])
