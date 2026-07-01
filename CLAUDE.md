@@ -302,6 +302,21 @@ python3 _tools/reformat-reminders.py "passphrase" reminders/
 
 The reformat script pattern: decrypt → transform markdown → re-encrypt → write.
 
+### Rebuild the Vocabulary Arcade (interactive game page)
+
+```bash
+python3 _tools/build-vocab-arcade.py "passphrase"
+```
+
+Generates `teaching/vocabulary/arcade.md` (`layout: protected-game`) from
+`_tools/vocab_data.py` — the word bank is packed as JSON and encrypted into
+front matter. The game engine (levels → themes → games UI) is public code in
+`_layouts/protected-game.html`; editing the games never requires
+re-encryption, only word changes do. Do not expect `encrypt-batch.py` to
+handle this page — it forces `layout: protected` (it skips arcade.md anyway
+because the body is empty). Player progress (XP/stars) lives in localStorage
+under `vocab-arcade-v1`.
+
 ### Inspect encrypted content without changing it
 
 ```bash

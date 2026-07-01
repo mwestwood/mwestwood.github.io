@@ -1,0 +1,1326 @@
+---
+layout: default
+---
+
+<style>
+  /* ── Password gate (same look as protected.html) ─────────────────────── */
+  #protected-gate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 40vh;
+    padding: 2rem 1rem;
+  }
+  .gate-card {
+    background: var(--sidebar-color, #f5f6fa);
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 8px;
+    padding: 2.5rem 2rem;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .gate-lock { font-size: 2.5rem; margin-bottom: 0.75rem; line-height: 1; }
+  .gate-title {
+    font-size: 1.25rem; font-weight: 600;
+    color: var(--body-text-color, #27262b); margin: 0 0 0.5rem 0;
+  }
+  .gate-subtitle {
+    font-size: 0.875rem; color: var(--body-text-color, #5c5962);
+    opacity: 0.75; margin: 0 0 1.5rem 0;
+  }
+  .gate-input-row { display: flex; gap: 0.5rem; width: 100%; }
+  #gate-password {
+    flex: 1; padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color, #d0d0d0); border-radius: 4px;
+    font-size: 1rem; background: var(--body-background-color, #fff);
+    color: var(--body-text-color, #27262b); outline: none;
+    transition: border-color 0.15s;
+  }
+  #gate-password:focus { border-color: var(--links-color, #7253ed); }
+  #gate-submit {
+    padding: 0.5rem 1.1rem; background: var(--links-color, #7253ed);
+    color: #fff; border: none; border-radius: 4px; font-size: 0.95rem;
+    font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+  #gate-submit:hover { opacity: 0.88; }
+  #gate-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+  #gate-error {
+    margin-top: 0.85rem; font-size: 0.875rem; color: #c0392b;
+    min-height: 1.25rem; display: none;
+  }
+  #gate-status {
+    margin-top: 0.85rem; font-size: 0.875rem;
+    color: var(--body-text-color, #5c5962); opacity: 0.7;
+    min-height: 1.25rem; display: none;
+  }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+
+  /* ── Arcade ──────────────────────────────────────────────────────────── */
+  #arcade-root { display: none; }
+
+  .va { --acc: #7253ed; --good: #4ade80; --bad: #f87171;
+        --card: rgba(255,255,255,0.05); --line: rgba(255,255,255,0.12);
+        max-width: 780px; }
+  .va, .va * { box-sizing: border-box; }
+  .va button { font-family: inherit; }
+
+  .va-top {
+    display: flex; align-items: center; gap: 0.6rem;
+    margin-bottom: 1rem; flex-wrap: wrap;
+  }
+  .va-back {
+    background: var(--card); border: 1px solid var(--line);
+    color: inherit; border-radius: 999px; padding: 0.3rem 0.85rem;
+    font-size: 0.85rem; cursor: pointer;
+  }
+  .va-back:hover { border-color: var(--acc); }
+  .va-crumb { font-weight: 700; font-size: 1.05rem; }
+  .va-spacer { flex: 1; }
+  .va-pill {
+    font-size: 0.8rem; padding: 0.25rem 0.7rem; border-radius: 999px;
+    background: var(--card); border: 1px solid var(--line); white-space: nowrap;
+  }
+  .va-pill.acc { border-color: var(--acc); color: var(--acc); font-weight: 600; }
+
+  .va-hero { text-align: center; margin: 0.5rem 0 1.6rem; }
+  .va-hero h1 { margin: 0 0 0.3rem; font-size: 2rem; }
+  .va-hero p { margin: 0; opacity: 0.7; font-size: 0.95rem; }
+
+  .va-levels { display: grid; gap: 0.9rem; }
+  .va-level {
+    display: flex; align-items: center; gap: 1rem; width: 100%;
+    text-align: left; background: var(--card); border: 1px solid var(--line);
+    border-radius: 14px; padding: 1.1rem 1.25rem; color: inherit;
+    cursor: pointer; transition: transform 0.12s, border-color 0.12s;
+  }
+  .va-level:hover { transform: translateY(-2px); border-color: var(--lc); }
+  .va-level .em { font-size: 2.2rem; }
+  .va-level .body { flex: 1; min-width: 0; }
+  .va-level .name { font-weight: 700; font-size: 1.15rem; }
+  .va-level .tag { font-size: 0.85rem; opacity: 0.65; margin-top: 0.1rem; }
+  .va-level .meta { font-size: 0.78rem; opacity: 0.55; margin-top: 0.35rem; }
+  .va-level .side { text-align: right; font-size: 0.85rem; white-space: nowrap; }
+  .va-level .stars { color: #facc15; font-weight: 700; }
+  .va-level .xp { opacity: 0.65; margin-top: 0.25rem; }
+
+  .va-bar {
+    height: 6px; border-radius: 3px; background: rgba(255,255,255,0.09);
+    overflow: hidden; margin-top: 0.5rem;
+  }
+  .va-bar i { display: block; height: 100%; background: var(--lc, var(--acc));
+              border-radius: 3px; transition: width 0.4s; }
+
+  .va-tabs { display: flex; gap: 0.5rem; margin: 0 0 0.9rem; flex-wrap: wrap; }
+  .va-tab {
+    border: 1px solid var(--line); background: var(--card); color: inherit;
+    border-radius: 999px; padding: 0.3rem 0.9rem; font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .va-tab.on { background: var(--acc); border-color: var(--acc); color: #fff;
+               font-weight: 600; }
+  .va-search {
+    flex: 1; min-width: 140px; border: 1px solid var(--line);
+    background: var(--card); color: inherit; border-radius: 999px;
+    padding: 0.3rem 0.9rem; font-size: 0.85rem; outline: none;
+  }
+  .va-search:focus { border-color: var(--acc); }
+
+  .va-grid {
+    display: grid; gap: 0.7rem;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+  .va-theme {
+    text-align: left; background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 0.85rem 1rem; color: inherit; cursor: pointer;
+    transition: transform 0.12s, border-color 0.12s;
+    display: flex; flex-direction: column; gap: 0.4rem;
+  }
+  .va-theme:hover { transform: translateY(-2px); border-color: var(--acc); }
+  .va-theme .kind { font-size: 0.72rem; opacity: 0.6;
+                    display: flex; justify-content: space-between; }
+  .va-theme .kind .st { color: #facc15; font-weight: 700; opacity: 1; }
+  .va-theme .name { font-weight: 650; font-size: 0.95rem; line-height: 1.35; }
+  .va-theme .words { font-size: 0.78rem; opacity: 0.55; line-height: 1.4; }
+  .va-theme.mix { border-style: dashed; }
+
+  .va-blurb { opacity: 0.75; font-size: 0.92rem; margin: 0.2rem 0 1rem; }
+  .va-chiprow { display: flex; gap: 0.45rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
+  .va-chip {
+    background: var(--card); border: 1px solid var(--line); color: inherit;
+    border-radius: 999px; padding: 0.25rem 0.75rem; font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .va-chip:hover { border-color: var(--acc); }
+
+  .va-games { display: grid; gap: 0.7rem;
+              grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+  .va-game {
+    text-align: left; background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 1rem; color: inherit; cursor: pointer;
+    transition: transform 0.12s, border-color 0.12s;
+  }
+  .va-game:hover { transform: translateY(-2px); border-color: var(--acc); }
+  .va-game .em { font-size: 1.6rem; }
+  .va-game .name { font-weight: 700; margin-top: 0.3rem; }
+  .va-game .desc { font-size: 0.82rem; opacity: 0.65; margin-top: 0.2rem;
+                   line-height: 1.4; }
+  .va-game .st { font-size: 0.8rem; color: #facc15; margin-top: 0.4rem;
+                 min-height: 1em; }
+
+  /* play screens */
+  .va-hud { display: flex; align-items: center; gap: 0.5rem;
+            margin-bottom: 0.6rem; flex-wrap: wrap; }
+  .va-hud .va-pill.hot { border-color: #fb923c; color: #fb923c;
+                         animation: vaPulse 0.35s; }
+  .va-qlabel { text-align: center; font-size: 0.82rem; letter-spacing: 0.08em;
+               text-transform: uppercase; opacity: 0.55; margin: 1.1rem 0 0.5rem; }
+  .va-q { text-align: center; margin-bottom: 1.3rem; }
+  .va-q .word { font-size: 2rem; font-weight: 800; }
+  .va-q .say { opacity: 0.6; font-size: 0.9rem; margin-top: 0.15rem; }
+  .va-q .mean { font-size: 1.15rem; line-height: 1.55; max-width: 560px;
+                margin: 0 auto; }
+  .va-say-btn {
+    background: none; border: none; cursor: pointer; font-size: 1.1rem;
+    vertical-align: middle; padding: 0 0.2rem; opacity: 0.7;
+  }
+  .va-say-btn:hover { opacity: 1; }
+
+  .va-opts { display: grid; gap: 0.6rem; max-width: 560px; margin: 0 auto; }
+  .va-opt {
+    width: 100%; text-align: left; background: var(--card);
+    border: 1.5px solid var(--line); border-radius: 12px;
+    padding: 0.75rem 1rem; color: inherit; font-size: 0.98rem;
+    line-height: 1.45; cursor: pointer; transition: border-color 0.12s;
+    display: flex; gap: 0.7rem; align-items: baseline;
+  }
+  .va-opt:hover:not(:disabled) { border-color: var(--acc); }
+  .va-opt:disabled { cursor: default; opacity: 0.9; }
+  .va-opt .key { font-size: 0.72rem; opacity: 0.45; border: 1px solid var(--line);
+                 border-radius: 4px; padding: 0 0.35rem; flex: none; }
+  .va-opt.good { border-color: var(--good);
+                 background: rgba(74, 222, 128, 0.13); }
+  .va-opt.bad { border-color: var(--bad); background: rgba(248, 113, 113, 0.13);
+                animation: vaShake 0.3s; }
+  .va-after { text-align: center; font-size: 0.88rem; opacity: 0.75;
+              margin-top: 1rem; min-height: 1.4em; max-width: 560px;
+              margin-left: auto; margin-right: auto; }
+
+  /* flashcards */
+  .va-flip { perspective: 1200px; cursor: pointer; max-width: 560px;
+             margin: 0 auto; }
+  .va-flip-inner { position: relative; height: 380px;
+                   transform-style: preserve-3d; transition: transform 0.5s; }
+  .va-flip.flipped .va-flip-inner { transform: rotateY(180deg); }
+  .va-face {
+    position: absolute; inset: 0; backface-visibility: hidden;
+    -webkit-backface-visibility: hidden; border-radius: 16px;
+    border: 1px solid var(--line); background: var(--card); padding: 1.4rem;
+  }
+  .va-face.front { display: flex; flex-direction: column; align-items: center;
+                   justify-content: center; text-align: center; }
+  .va-face.back { transform: rotateY(180deg); overflow: auto;
+                  font-size: 0.93rem; line-height: 1.55; }
+  .va-face .hint { position: absolute; bottom: 0.8rem; font-size: 0.75rem;
+                   opacity: 0.4; }
+  .va-face.back h4 { margin: 0 0 0.2rem; font-size: 0.78rem; letter-spacing: 0.06em;
+                     text-transform: uppercase; opacity: 0.55; }
+  .va-face.back .sec { margin-bottom: 0.8rem; }
+  .va-flash-btns { display: flex; gap: 0.7rem; justify-content: center;
+                   margin-top: 1.1rem; }
+
+  .va-btn {
+    background: var(--acc); border: 1px solid var(--acc); color: #fff;
+    border-radius: 10px; padding: 0.6rem 1.4rem; font-size: 0.95rem;
+    font-weight: 600; cursor: pointer;
+  }
+  .va-btn:hover { opacity: 0.9; }
+  .va-btn.ghost { background: var(--card); border-color: var(--line);
+                  color: inherit; }
+  .va-btn.ghost:hover { border-color: var(--acc); opacity: 1; }
+
+  /* memory */
+  .va-mem { display: grid; gap: 0.6rem; grid-template-columns: repeat(4, 1fr);
+            max-width: 640px; margin: 0 auto; }
+  @media (max-width: 560px) { .va-mem { grid-template-columns: repeat(2, 1fr); } }
+  .va-mem-card { perspective: 800px; cursor: pointer; height: 110px; }
+  .va-mem-in { position: relative; width: 100%; height: 100%;
+               transform-style: preserve-3d; transition: transform 0.35s; }
+  .va-mem-card.up .va-mem-in { transform: rotateY(180deg); }
+  .va-mem-face {
+    position: absolute; inset: 0; backface-visibility: hidden;
+    -webkit-backface-visibility: hidden; border-radius: 10px;
+    border: 1.5px solid var(--line); display: flex; align-items: center;
+    justify-content: center; padding: 0.45rem; text-align: center;
+  }
+  .va-mem-face.f { background: var(--card); font-size: 1.5rem; }
+  .va-mem-face.b { background: rgba(255,255,255,0.08);
+                   transform: rotateY(180deg); font-size: 0.8rem;
+                   line-height: 1.3; overflow: hidden; }
+  .va-mem-face.b .w { font-weight: 800; font-size: 1.05rem; }
+  .va-mem-card.won .va-mem-face.b { border-color: var(--good);
+                                    background: rgba(74,222,128,0.13);
+                                    animation: vaPop 0.4s; }
+
+  /* results */
+  .va-results { text-align: center; padding: 1.5rem 0; }
+  .va-results .big { font-size: 3rem; }
+  .va-results h2 { margin: 0.4rem 0 1rem; }
+  .va-starrow { font-size: 2.7rem; letter-spacing: 0.4rem; margin: 0.4rem 0 1rem; }
+  .va-starrow span { opacity: 0.22; display: inline-block; }
+  .va-starrow span.on { opacity: 1; color: #facc15; animation: vaPop 0.5s both; }
+  .va-starrow span.on:nth-child(2) { animation-delay: 0.18s; }
+  .va-starrow span.on:nth-child(3) { animation-delay: 0.36s; }
+  .va-statrow { display: flex; gap: 0.6rem; justify-content: center;
+                flex-wrap: wrap; margin-bottom: 1.4rem; }
+  .va-resbtns { display: flex; gap: 0.7rem; justify-content: center;
+                flex-wrap: wrap; }
+
+  .va-burst { position: fixed; inset: 0; pointer-events: none; z-index: 999;
+              overflow: hidden; }
+  .va-burst span { position: absolute; top: -6vh; font-size: 1.4rem;
+                   animation: vaFall linear forwards; }
+
+  @keyframes vaFall { to { transform: translateY(115vh) rotate(680deg); } }
+  @keyframes vaShake {
+    20% { transform: translateX(-5px); } 40% { transform: translateX(5px); }
+    60% { transform: translateX(-3px); } 80% { transform: translateX(3px); }
+  }
+  @keyframes vaPop {
+    0% { transform: scale(0.3); } 70% { transform: scale(1.25); }
+    100% { transform: scale(1); }
+  }
+  @keyframes vaPulse { 50% { transform: scale(1.18); } }
+</style>
+
+<!-- Password gate -->
+<div id="protected-gate">
+  <div class="gate-card">
+    <div class="gate-lock" aria-hidden="true">🔒</div>
+    <p class="gate-title">{{ page.title | default: "Protected Page" }}</p>
+    <p class="gate-subtitle">This page is password-protected. Enter the passphrase to unlock.</p>
+    <div class="gate-input-row">
+      <label for="gate-password" class="sr-only">Passphrase</label>
+      <input id="gate-password" type="password" placeholder="Passphrase" autocomplete="off" autofocus />
+      <button id="gate-submit">Unlock</button>
+    </div>
+    <div id="gate-error" role="alert" aria-live="polite">Incorrect passphrase — please try again.</div>
+    <div id="gate-status" role="status" aria-live="polite">Decrypting…</div>
+  </div>
+</div>
+
+<div id="arcade-root"><div class="va" id="va"></div></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* Encrypted blob injected by Jekyll from front matter field `encrypted` */
+  const ENCRYPTED_B64 = {{ page.encrypted | jsonify }};
+
+  const STORAGE_KEY = 'mwestwood-passphrase';
+
+  /* ── Gate (same crypto as protected.html) ───────────────────────────── */
+
+  function b64ToBytes(b64) {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+
+  async function deriveKey(passphrase, salt) {
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw', enc.encode(passphrase), { name: 'PBKDF2' }, false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: salt, iterations: 100000, hash: 'SHA-256' },
+      keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+  }
+
+  async function decrypt(passphrase) {
+    const blob = b64ToBytes(ENCRYPTED_B64);
+    const salt = blob.slice(0, 16);
+    const iv = blob.slice(16, 28);
+    const ct = blob.slice(28);
+    const key = await deriveKey(passphrase, salt);
+    const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, ct);
+    return new TextDecoder().decode(plaintext);
+  }
+
+  const gate = document.getElementById('protected-gate');
+  const rootWrap = document.getElementById('arcade-root');
+  const input = document.getElementById('gate-password');
+  const btn = document.getElementById('gate-submit');
+  const errEl = document.getElementById('gate-error');
+  const statusEl = document.getElementById('gate-status');
+
+  function showError(msg) {
+    errEl.textContent = msg || 'Incorrect passphrase — please try again.';
+    errEl.style.display = 'block';
+    statusEl.style.display = 'none';
+    btn.disabled = false;
+    input.select();
+  }
+
+  function showStatus(msg) {
+    statusEl.textContent = msg;
+    statusEl.style.display = 'block';
+    errEl.style.display = 'none';
+  }
+
+  function reveal(text) {
+    let data;
+    try { data = JSON.parse(text); }
+    catch (e) { showError('Data error: could not parse word bank.'); return; }
+    gate.style.display = 'none';
+    rootWrap.style.display = 'block';
+    Arcade.boot(data);
+  }
+
+  async function tryUnlock(passphrase, cache) {
+    try {
+      showStatus('Decrypting…');
+      btn.disabled = true;
+      const text = await decrypt(passphrase);
+      if (cache) {
+        try { localStorage.setItem(STORAGE_KEY, passphrase); } catch (_) {}
+      }
+      reveal(text);
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'OperationError') {
+        showError('Incorrect passphrase — please try again.');
+      } else if (e instanceof TypeError && e.message.includes('subtle')) {
+        showError('Error: Web Crypto API unavailable. This page requires HTTPS.');
+      } else {
+        showError('Error (' + e.name + '): ' + e.message);
+      }
+    }
+  }
+
+  async function init() {
+    if (!ENCRYPTED_B64) { showError('No encrypted data on this page.'); return; }
+    try {
+      const cached = localStorage.getItem(STORAGE_KEY);
+      if (cached) {
+        showStatus('Unlocking…');
+        btn.disabled = true;
+        input.disabled = true;
+        try {
+          const text = await decrypt(cached);
+          reveal(text);
+          return;
+        } catch (_) {
+          localStorage.removeItem(STORAGE_KEY);
+          btn.disabled = false;
+          input.disabled = false;
+          statusEl.style.display = 'none';
+        }
+      }
+    } catch (_) {}
+  }
+
+  btn.addEventListener('click', function () {
+    const pw = input.value;
+    if (!pw) { input.focus(); return; }
+    tryUnlock(pw, true);
+  });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') btn.click();
+  });
+
+  /* ═══════════════════════ Vocabulary Arcade ═══════════════════════════ */
+
+  const Arcade = (function () {
+
+    const el = document.getElementById('va');
+
+    const LMETA = {
+      basic:        { name: 'Basic', emoji: '🌱', color: '#4ade80',
+                      tag: 'Strong everyday words' },
+      intermediate: { name: 'Intermediate', emoji: '🚀', color: '#fbbf24',
+                      tag: 'Essay-grade words' },
+      advanced:     { name: 'Advanced', emoji: '🏆', color: '#a78bfa',
+                      tag: 'Words that make teachers reread' }
+    };
+    const LEVELS = ['basic', 'intermediate', 'advanced'];
+
+    const GAMES = [
+      { id: 'flash', name: 'Flashcards', emoji: '🃏', starred: false,
+        desc: 'Flip, learn, repeat until every card is yours.' },
+      { id: 'quiz', name: 'Meaning Match', emoji: '🎯', starred: true,
+        desc: 'Pick the right meaning — or the right word.' },
+      { id: 'syn', name: 'Synonym Sprint', emoji: '⚡', starred: true,
+        desc: '45 seconds. Grab every synonym you can.' },
+      { id: 'ant', name: 'Antonym Attack', emoji: '🙃', starred: true,
+        desc: 'Pick the opposite — and dodge the look-alike trap.' },
+      { id: 'mem', name: 'Memory Flip', emoji: '🧠', starred: true,
+        desc: 'Match each word to its meaning in as few moves as you can.' },
+      { id: 'root', name: 'Root Rally', emoji: '🌿', starred: true, rootOnly: true,
+        desc: 'Spot the root hiding inside each word.' }
+    ];
+
+    /* ── helpers ──────────────────────────────────────────────────────── */
+
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    /* tiny markdown: **bold**, *italic*, `code` (data uses nothing else) */
+    function md(s) {
+      return esc(s)
+        .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+        .replace(/\*(.+?)\*/g, '<i>$1</i>')
+        .replace(/`(.+?)`/g, '<code>$1</code>');
+    }
+    function plain(s) {
+      return String(s == null ? '' : s).replace(/[*`_]/g, '');
+    }
+    function shuffle(a) {
+      a = a.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = a[i]; a[i] = a[j]; a[j] = t;
+      }
+      return a;
+    }
+    function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+    function splitList(s) {
+      return String(s || '').split(',').map(function (x) { return x.trim(); })
+        .filter(Boolean);
+    }
+    function slugify(s) {
+      return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    }
+    function speak(text) {
+      try {
+        if (!window.speechSynthesis) return;
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.rate = 0.85;
+        speechSynthesis.speak(u);
+      } catch (_) {}
+    }
+    function shortMean(w) {
+      let m = plain(w.mean).split(/[;(—]/)[0].trim();
+      if (m.length > 64) m = m.slice(0, 61).replace(/\s+\S*$/, '') + '…';
+      return m;
+    }
+
+    /* ── progress (localStorage) ──────────────────────────────────────── */
+
+    const PKEY = 'vocab-arcade-v1';
+    let P = null;
+    try { P = JSON.parse(localStorage.getItem(PKEY) || 'null'); } catch (_) {}
+    if (!P || typeof P !== 'object') P = {};
+    P.xp = P.xp || {};       /* per level */
+    P.stars = P.stars || {}; /* themeId|gameId -> 0..3 */
+    P.done = P.done || {};   /* themeId|flash -> true */
+    function save() {
+      try { localStorage.setItem(PKEY, JSON.stringify(P)); } catch (_) {}
+    }
+    function starKey(t, g) { return t.id + '|' + g; }
+    function themeStars(t) {
+      let n = 0;
+      GAMES.forEach(function (g) {
+        if (g.starred) n += P.stars[starKey(t, g.id)] || 0;
+      });
+      return n;
+    }
+    function themeMaxStars(t) {
+      return 3 * (4 + (t.kind === 'root' ? 1 : 0));
+    }
+    function levelStars(l) {
+      let n = 0;
+      D[l].themes.forEach(function (t) { n += themeStars(t); });
+      return n;
+    }
+    function levelMaxStars(l) {
+      let n = 0;
+      D[l].themes.forEach(function (t) { n += themeMaxStars(t); });
+      return n;
+    }
+
+    /* ── data prep ────────────────────────────────────────────────────── */
+
+    let D = null; /* per-level: { themes, words, synPool, antPool, roots } */
+
+    function prep(data) {
+      D = {};
+      LEVELS.forEach(function (l) {
+        D[l] = { themes: [], words: [], synPool: [], antPool: [], roots: [] };
+      });
+      const seen = {};
+      data.groups.forEach(function (g) {
+        const L = D[g.level];
+        if (!L) return;
+        let id = g.level + '-' + slugify(g.title);
+        while (seen[id]) id += '-x';
+        seen[id] = true;
+        const t = {
+          id: id, level: g.level, kind: g.kind, title: g.title,
+          blurb: g.blurb || '', root: g.root || null,
+          rootMeans: g.root_means || null, words: g.words
+        };
+        L.themes.push(t);
+        g.words.forEach(function (w) {
+          w._t = t;
+          w._syn = splitList(w.syn);
+          w._ant = splitList(w.ant);
+          L.words.push(w);
+          w._syn.forEach(function (v) { L.synPool.push({ v: v, w: w }); });
+          w._ant.forEach(function (v) { L.antPool.push({ v: v, w: w }); });
+        });
+        if (g.kind === 'root') {
+          L.roots.push({ root: g.root, means: g.root_means, theme: t });
+        }
+      });
+    }
+
+    /* ── state / navigation ───────────────────────────────────────────── */
+
+    const S = { level: null, theme: null, tab: 'all', q: '', game: null,
+                sess: null, timer: null };
+
+    function clearTimer() {
+      if (S.timer) { clearInterval(S.timer); S.timer = null; }
+    }
+    function render(html) {
+      clearTimer();
+      el.innerHTML = html;
+      const y = el.getBoundingClientRect().top + window.pageYOffset - 80;
+      if (window.pageYOffset > y) window.scrollTo(0, Math.max(0, y));
+    }
+    function setAccent(color) { el.style.setProperty('--acc', color); }
+    function on(sel, ev, fn) {
+      el.querySelectorAll(sel).forEach(function (n) {
+        n.addEventListener(ev, fn);
+      });
+    }
+
+    /* ── screen: home / level select ──────────────────────────────────── */
+
+    function goHome() {
+      S.level = null; S.theme = null; S.sess = null;
+      setAccent('#7253ed');
+      let cards = '';
+      LEVELS.forEach(function (l) {
+        const m = LMETA[l];
+        const st = levelStars(l), mx = levelMaxStars(l);
+        const pct = mx ? Math.round(100 * st / mx) : 0;
+        cards +=
+          '<button class="va-level" data-l="' + l + '" style="--lc:' + m.color + '">' +
+            '<span class="em">' + m.emoji + '</span>' +
+            '<span class="body">' +
+              '<div class="name">' + m.name + '</div>' +
+              '<div class="tag">' + m.tag + '</div>' +
+              '<div class="meta">' + D[l].themes.length + ' themes · ' +
+                 D[l].words.length + ' words</div>' +
+              '<div class="va-bar"><i style="width:' + pct + '%"></i></div>' +
+            '</span>' +
+            '<span class="side">' +
+              '<div class="stars">★ ' + st + '<span style="opacity:.5;font-weight:400"> / ' + mx + '</span></div>' +
+              '<div class="xp">⚡ ' + (P.xp[l] || 0) + ' XP</div>' +
+            '</span>' +
+          '</button>';
+      });
+      render(
+        '<div class="va-hero">' +
+          '<h1>🕹️ Vocabulary Arcade</h1>' +
+          '<p>Pick a level, pick a theme, pick a game. Earn stars and XP as the words stick.</p>' +
+        '</div>' +
+        '<div class="va-levels">' + cards + '</div>'
+      );
+      on('.va-level', 'click', function (e) {
+        goLevel(e.currentTarget.dataset.l);
+      });
+    }
+
+    /* ── screen: theme select ─────────────────────────────────────────── */
+
+    function themeCard(t) {
+      const st = themeStars(t);
+      const kindLabel = t.kind === 'root' ? '🌿 Root family' : '🫂 Word family';
+      const preview = t.words.map(function (w) { return w.w; }).join(' · ');
+      return '<button class="va-theme" data-t="' + t.id + '">' +
+        '<span class="kind"><span>' + kindLabel + '</span>' +
+          '<span class="st">' + (st ? '★ ' + st : '☆') +
+          '<span style="opacity:.5;font-weight:400"> / ' + themeMaxStars(t) + '</span></span></span>' +
+        '<span class="name">' + md(t.title) + '</span>' +
+        '<span class="words">' + esc(preview) + '</span>' +
+      '</button>';
+    }
+
+    function goLevel(l) {
+      S.level = l; S.theme = null; S.sess = null;
+      const m = LMETA[l];
+      setAccent(m.color);
+      const L = D[l];
+      const q = S.q.toLowerCase();
+      const themes = L.themes.filter(function (t) {
+        if (S.tab === 'family' && t.kind !== 'meaning') return false;
+        if (S.tab === 'root' && t.kind !== 'root') return false;
+        if (q && t.title.toLowerCase().indexOf(q) < 0 &&
+            !t.words.some(function (w) { return w.w.toLowerCase().indexOf(q) >= 0; }))
+          return false;
+        return true;
+      });
+      function tab(id, label) {
+        return '<button class="va-tab' + (S.tab === id ? ' on' : '') +
+               '" data-tab="' + id + '">' + label + '</button>';
+      }
+      render(
+        '<div class="va-top">' +
+          '<button class="va-back" data-nav="home">‹ Levels</button>' +
+          '<span class="va-crumb">' + m.emoji + ' ' + m.name + '</span>' +
+          '<span class="va-spacer"></span>' +
+          '<span class="va-pill">★ ' + levelStars(l) + '</span>' +
+          '<span class="va-pill">⚡ ' + (P.xp[l] || 0) + ' XP</span>' +
+        '</div>' +
+        '<div class="va-tabs">' +
+          tab('all', 'All') + tab('family', '🫂 Word families') +
+          tab('root', '🌿 Roots') +
+          '<input class="va-search" placeholder="Find a theme or word…" value="' + esc(S.q) + '">' +
+        '</div>' +
+        '<div class="va-grid">' +
+          '<button class="va-theme mix" data-t="__mix">' +
+            '<span class="kind"><span>🎲 Practice</span><span></span></span>' +
+            '<span class="name">Shuffle Mix</span>' +
+            '<span class="words">10 random words from the whole level — no stars, pure practice</span>' +
+          '</button>' +
+          themes.map(themeCard).join('') +
+        '</div>' +
+        (themes.length ? '' : '<p style="opacity:.6;margin-top:1rem">No themes match.</p>')
+      );
+      on('.va-back', 'click', goHome);
+      on('.va-tab', 'click', function (e) {
+        S.tab = e.currentTarget.dataset.tab; goLevel(l);
+      });
+      const search = el.querySelector('.va-search');
+      search.addEventListener('input', function () {
+        S.q = search.value;
+        goLevel(l);
+        const s2 = el.querySelector('.va-search');
+        s2.focus();
+        s2.setSelectionRange(s2.value.length, s2.value.length);
+      });
+      on('.va-theme', 'click', function (e) {
+        const id = e.currentTarget.dataset.t;
+        if (id === '__mix') {
+          goTheme(makeMix(l));
+        } else {
+          goTheme(L.themes.find(function (t) { return t.id === id; }));
+        }
+      });
+    }
+
+    function makeMix(l) {
+      return {
+        id: '__mix', level: l, kind: 'mix', title: '🎲 Shuffle Mix',
+        blurb: 'Ten random words from the whole ' + LMETA[l].name.toLowerCase() +
+               ' level. Practice only — stars are earned inside real themes.',
+        root: null, words: shuffle(D[l].words).slice(0, 10)
+      };
+    }
+
+    /* ── screen: game select ──────────────────────────────────────────── */
+
+    function rootWordsOf(t) {
+      return t.words.filter(function (w) { return w._t.kind === 'root'; });
+    }
+
+    function goTheme(t) {
+      S.theme = t; S.sess = null;
+      const chips = t.words.map(function (w) {
+        return '<button class="va-chip" data-w="' + esc(w.w) + '" title="' +
+               esc(w.say) + '">' + esc(w.w) + ' 🔈</button>';
+      }).join('');
+      const canRoot = rootWordsOf(t).length >= 4;
+      const games = GAMES.filter(function (g) {
+        return !g.rootOnly || canRoot;
+      }).map(function (g) {
+        let st = '';
+        if (t.id !== '__mix') {
+          if (g.starred) {
+            const n = P.stars[starKey(t, g.id)] || 0;
+            st = '★'.repeat(n) + '<span style="opacity:.3">' + '★'.repeat(3 - n) + '</span>';
+          } else if (P.done[starKey(t, 'flash')]) {
+            st = '✓ learned';
+          }
+        }
+        return '<button class="va-game" data-g="' + g.id + '">' +
+          '<div class="em">' + g.emoji + '</div>' +
+          '<div class="name">' + g.name + '</div>' +
+          '<div class="desc">' + g.desc + '</div>' +
+          '<div class="st">' + st + '</div>' +
+        '</button>';
+      }).join('');
+      render(
+        '<div class="va-top">' +
+          '<button class="va-back" data-nav="level">‹ Themes</button>' +
+          '<span class="va-crumb">' + md(t.title) + '</span>' +
+        '</div>' +
+        '<p class="va-blurb">' + md(t.blurb) + '</p>' +
+        '<div class="va-chiprow">' + chips + '</div>' +
+        '<div class="va-games">' + games + '</div>'
+      );
+      on('.va-back', 'click', function () { goLevel(t.level); });
+      on('.va-chip', 'click', function (e) { speak(e.currentTarget.dataset.w); });
+      on('.va-game', 'click', function (e) { startGame(e.currentTarget.dataset.g); });
+    }
+
+    /* ── question builders ────────────────────────────────────────────── */
+
+    function distractorWords(w, n) {
+      const pool = D[S.level].words.filter(function (o) {
+        return o !== w && o._t !== w._t && o.w !== w.w && o.mean !== w.mean;
+      });
+      const same = shuffle(pool.filter(function (o) { return o.pos === w.pos; }));
+      const diff = shuffle(pool.filter(function (o) { return o.pos !== w.pos; }));
+      return same.concat(diff).slice(0, n);
+    }
+
+    function optRow(list, correctIdx) {
+      return shuffle(list.map(function (o, i) {
+        return { html: o, ok: i === correctIdx };
+      }));
+    }
+
+    function quizQs(t) {
+      const both = t.words.length <= 6;
+      const qs = [];
+      t.words.forEach(function (w) {
+        const dirs = both ? ['w2m', 'm2w'] : [pick(['w2m', 'm2w'])];
+        dirs.forEach(function (dir) {
+          const others = distractorWords(w, 3);
+          if (others.length < 3) return;
+          if (dir === 'w2m') {
+            qs.push({
+              label: 'What does it mean?',
+              prompt: '<div class="word">' + esc(w.w) +
+                ' <button class="va-say-btn" data-say="' + esc(w.w) + '">🔈</button></div>' +
+                '<div class="say">' + esc(w.say) + ' · ' + esc(w.pos) + '</div>',
+              options: optRow([w].concat(others).map(function (o) { return md(o.mean); }), 0),
+              after: '💡 ' + md(w.story)
+            });
+          } else {
+            qs.push({
+              label: 'Which word is it?',
+              prompt: '<div class="mean">' + md(w.mean) + '</div>',
+              options: optRow([w].concat(others).map(function (o) { return esc(o.w); }), 0),
+              after: '💡 ' + md(w.story)
+            });
+          }
+        });
+      });
+      return shuffle(qs);
+    }
+
+    function synOptions(w, kind) {
+      /* kind 'syn': correct from w._syn, trap from w._ant, fillers from pool
+         kind 'ant': correct from w._ant, trap from w._syn, fillers from pool */
+      const mine = kind === 'syn' ? w._syn : w._ant;
+      const trapList = kind === 'syn' ? w._ant : w._syn;
+      const pool = kind === 'syn' ? D[S.level].synPool : D[S.level].antPool;
+      if (!mine.length) return null;
+      const correct = pick(mine);
+      const bothMine = {};
+      w._syn.concat(w._ant).concat([w.w]).forEach(function (v) {
+        bothMine[v.toLowerCase()] = true;
+      });
+      const used = {}; used[correct.toLowerCase()] = true;
+      const opts = [correct];
+      if (trapList.length) {
+        const trap = pick(trapList);
+        if (!used[trap.toLowerCase()]) { opts.push(trap); used[trap.toLowerCase()] = true; }
+      }
+      const fillers = shuffle(pool);
+      for (let i = 0; i < fillers.length && opts.length < 4; i++) {
+        const f = fillers[i];
+        const lo = f.v.toLowerCase();
+        if (f.w === w || bothMine[lo] || used[lo]) continue;
+        opts.push(f.v); used[lo] = true;
+      }
+      if (opts.length < 4) return null;
+      return optRow(opts.map(esc), 0);
+    }
+
+    function antQs(t) {
+      const passes = t.words.length <= 5 ? 2 : 1;
+      const qs = [];
+      for (let p = 0; p < passes; p++) {
+        t.words.forEach(function (w) {
+          const options = synOptions(w, 'ant');
+          if (!options) return;
+          qs.push({
+            label: 'Pick the OPPOSITE of',
+            prompt: '<div class="word">' + esc(w.w) + '</div>' +
+                    '<div class="say">' + esc(w.say) + ' · ' + esc(w.pos) + '</div>',
+            options: options,
+            after: '🙃 Opposites of <b>' + esc(w.w) + '</b>: ' + esc(w.ant)
+          });
+        });
+      }
+      return shuffle(qs);
+    }
+
+    function rootQs(t) {
+      const words = rootWordsOf(t);
+      const allRoots = D[S.level].roots;
+      const qs = [];
+      words.forEach(function (w) {
+        const myRoot = w._t;
+        const otherRoots = shuffle(allRoots.filter(function (r) {
+          return r.theme !== myRoot;
+        })).slice(0, 3);
+        if (otherRoots.length < 3) return;
+        function rootLabel(root, means) {
+          return '<b>' + esc(root) + '</b> <span style="opacity:.6">— ' +
+                 esc(means) + '</span>';
+        }
+        qs.push({
+          label: 'Which root is hiding inside…',
+          prompt: '<div class="word">' + esc(w.w) + '</div>' +
+                  '<div class="say">' + esc(w.say) + '</div>',
+          options: optRow(
+            [rootLabel(myRoot.root, myRoot.rootMeans)].concat(
+              otherRoots.map(function (r) { return rootLabel(r.root, r.means); })), 0),
+          after: '🌿 ' + md(w.story)
+        });
+        /* reverse direction: root -> word */
+        const otherWords = shuffle(D[S.level].words.filter(function (o) {
+          return o._t.kind === 'root' && o._t !== myRoot;
+        })).slice(0, 3);
+        if (otherWords.length === 3) {
+          qs.push({
+            label: 'Which word is built from…',
+            prompt: '<div class="word" style="font-size:1.5rem">' +
+                    esc(myRoot.root) + '</div>' +
+                    '<div class="say">meaning “' + esc(myRoot.rootMeans) + '”</div>',
+            options: optRow([w].concat(otherWords).map(function (o) {
+              return esc(o.w);
+            }), 0),
+            after: '🌿 <b>' + esc(w.w) + '</b>: ' + md(w.mean)
+          });
+        }
+      });
+      return shuffle(qs);
+    }
+
+    /* ── quiz-style game loop ─────────────────────────────────────────── */
+
+    function startGame(gid) {
+      S.game = gid;
+      const t = S.theme;
+      if (gid === 'flash') return flashStart(t);
+      if (gid === 'mem') return memStart(t);
+      if (gid === 'syn') return sprintStart(t);
+      let qs = [];
+      if (gid === 'quiz') qs = quizQs(t);
+      if (gid === 'ant') qs = antQs(t);
+      if (gid === 'root') qs = rootQs(t);
+      if (!qs.length) return;
+      S.sess = { gid: gid, qs: qs, i: 0, score: 0, correct: 0, streak: 0,
+                 best: 0, answered: false };
+      renderQ();
+    }
+
+    function hud(mid) {
+      const s = S.sess;
+      return '<div class="va-hud">' +
+        '<button class="va-back" data-nav="quit">✕</button>' +
+        '<span class="va-pill">' + mid + '</span>' +
+        '<span class="va-spacer"></span>' +
+        '<span class="va-pill' + (s.streak >= 3 ? ' hot' : '') + '">🔥 ' +
+          s.streak + '</span>' +
+        '<span class="va-pill acc">⚡ ' + s.score + '</span>' +
+      '</div>';
+    }
+
+    function progressBar(frac) {
+      return '<div class="va-bar" style="margin-bottom:.4rem"><i style="width:' +
+             Math.round(frac * 100) + '%"></i></div>';
+    }
+
+    function renderQ() {
+      const s = S.sess;
+      if (s.i >= s.qs.length) return finishQuiz();
+      const q = s.qs[s.i];
+      s.answered = false;
+      const opts = q.options.map(function (o, i) {
+        return '<button class="va-opt" data-i="' + i + '">' +
+          '<span class="key">' + (i + 1) + '</span><span>' + o.html + '</span>' +
+        '</button>';
+      }).join('');
+      render(
+        hud((s.i + 1) + ' / ' + s.qs.length) +
+        progressBar(s.i / s.qs.length) +
+        '<div class="va-qlabel">' + q.label + '</div>' +
+        '<div class="va-q">' + q.prompt + '</div>' +
+        '<div class="va-opts">' + opts + '</div>' +
+        '<div class="va-after"></div>'
+      );
+      on('[data-nav="quit"]', 'click', function () { goTheme(S.theme); });
+      on('.va-say-btn', 'click', function (e) {
+        e.stopPropagation(); speak(e.currentTarget.dataset.say);
+      });
+      on('.va-opt', 'click', function (e) { answer(+e.currentTarget.dataset.i); });
+    }
+
+    function answer(i) {
+      const s = S.sess;
+      if (s.answered) return;
+      s.answered = true;
+      const q = s.qs[s.i];
+      const btns = el.querySelectorAll('.va-opt');
+      btns.forEach(function (b) { b.disabled = true; });
+      const okIdx = q.options.findIndex(function (o) { return o.ok; });
+      const ok = q.options[i].ok;
+      if (ok) {
+        btns[i].classList.add('good');
+        s.streak++;
+        if (s.streak > s.best) s.best = s.streak;
+        s.correct++;
+        s.score += 10 + 2 * Math.min(s.streak - 1, 5);
+      } else {
+        btns[i].classList.add('bad');
+        btns[okIdx].classList.add('good');
+        s.streak = 0;
+      }
+      const hudPills = el.querySelectorAll('.va-hud .va-pill');
+      hudPills[1].textContent = '🔥 ' + s.streak;
+      hudPills[1].classList.toggle('hot', s.streak >= 3);
+      hudPills[2].textContent = '⚡ ' + s.score;
+      el.querySelector('.va-after').innerHTML = q.after || '';
+      setTimeout(function () {
+        if (S.sess !== s) return;
+        s.i++;
+        if (s.gid === 'syn') { nextSprintQ(); } else { renderQ(); }
+      }, ok ? 900 : 1900);
+    }
+
+    function finishQuiz() {
+      const s = S.sess;
+      const acc = s.qs.length ? s.correct / s.qs.length : 0;
+      const stars = acc >= 0.9 ? 3 : acc >= 0.65 ? 2 : 1;
+      results({
+        stars: stars, score: s.score,
+        line: s.correct + ' / ' + s.qs.length + ' correct · best streak 🔥' + s.best
+      });
+    }
+
+    /* ── synonym sprint (timed) ───────────────────────────────────────── */
+
+    function sprintStart(t) {
+      const usable = t.words.filter(function (w) { return w._syn.length; });
+      if (!usable.length) return;
+      S.sess = { gid: 'syn', queue: shuffle(usable), qi: 0, qs: [], i: 0,
+                 score: 0, correct: 0, asked: 0, streak: 0, best: 0,
+                 left: 45, answered: false };
+      nextSprintQ(); /* renders and starts the clock via restartClock() */
+    }
+
+    function nextSprintQ() {
+      const s = S.sess;
+      if (!s || s.left <= 0) return;
+      let q = null, guard = 0;
+      while (!q && guard++ < 20) {
+        const w = s.queue[s.qi % s.queue.length];
+        s.qi++;
+        const options = synOptions(w, 'syn');
+        if (options) {
+          q = {
+            label: 'Grab a synonym of', options: options,
+            prompt: '<div class="word">' + esc(w.w) + '</div>' +
+                    '<div class="say">' + esc(w.say) + ' · ' + esc(w.pos) + '</div>',
+            after: ''
+          };
+        }
+      }
+      if (!q) return;
+      s.qs = [q]; s.i = 0; s.answered = false;
+      const opts = q.options.map(function (o, i) {
+        return '<button class="va-opt" data-i="' + i + '">' +
+          '<span class="key">' + (i + 1) + '</span><span>' + o.html + '</span>' +
+        '</button>';
+      }).join('');
+      render(
+        '<div class="va-hud">' +
+          '<button class="va-back" data-nav="quit">✕</button>' +
+          '<span class="va-pill" data-clock>⏱ ' + s.left + 's</span>' +
+          '<span class="va-spacer"></span>' +
+          '<span class="va-pill' + (s.streak >= 3 ? ' hot' : '') + '">🔥 ' + s.streak + '</span>' +
+          '<span class="va-pill acc">⚡ ' + s.score + '</span>' +
+        '</div>' +
+        '<div class="va-qlabel">' + q.label + '</div>' +
+        '<div class="va-q">' + q.prompt + '</div>' +
+        '<div class="va-opts">' + opts + '</div>' +
+        '<div class="va-after"></div>'
+      );
+      /* render() cleared the interval — restart ticking */
+      restartClock();
+      on('[data-nav="quit"]', 'click', function () { goTheme(S.theme); });
+      on('.va-opt', 'click', function (e) {
+        if (!s.answered) s.asked++;
+        answer(+e.currentTarget.dataset.i);
+      });
+    }
+
+    function restartClock() {
+      clearTimer();
+      S.timer = setInterval(function () {
+        const s = S.sess;
+        if (!s || s.gid !== 'syn') { clearTimer(); return; }
+        s.left--;
+        const t2 = el.querySelector('[data-clock]');
+        if (t2) t2.textContent = '⏱ ' + s.left + 's';
+        if (s.left <= 0) {
+          clearTimer();
+          const stars = s.correct >= 12 ? 3 : s.correct >= 7 ? 2 : 1;
+          results({
+            stars: stars, score: s.score,
+            line: s.correct + ' synonyms in 45s · best streak 🔥' + s.best
+          });
+        }
+      }, 1000);
+    }
+
+    /* ── flashcards ───────────────────────────────────────────────────── */
+
+    function flashStart(t) {
+      S.sess = { gid: 'flash', deck: shuffle(t.words), got: 0,
+                 total: t.words.length };
+      flashRender();
+    }
+
+    function flashRender() {
+      const s = S.sess;
+      if (!s.deck.length) {
+        P.done[starKey(S.theme, 'flash')] = true;
+        P.xp[S.level] = (P.xp[S.level] || 0) + 2 * s.total;
+        save();
+        return results({
+          stars: 0, score: 2 * s.total,
+          line: 'Deck complete — all ' + s.total + ' words flipped to ✅',
+          title: 'Deck cleared! ✨'
+        });
+      }
+      const w = s.deck[0];
+      const ex = pick(w.ex || ['']);
+      render(
+        '<div class="va-hud">' +
+          '<button class="va-back" data-nav="quit">✕</button>' +
+          '<span class="va-pill">🃏 ' + s.got + ' / ' + s.total + ' learned</span>' +
+          '<span class="va-spacer"></span>' +
+          '<span class="va-pill">' + s.deck.length + ' to go</span>' +
+        '</div>' +
+        progressBar(s.got / s.total) +
+        '<div class="va-flip" id="flip">' +
+          '<div class="va-flip-inner">' +
+            '<div class="va-face front">' +
+              '<div style="font-size:.85rem;opacity:.55">' + esc(w.say) + '</div>' +
+              '<div style="font-size:2.4rem;font-weight:800;margin:.3rem 0">' +
+                esc(w.w) +
+                ' <button class="va-say-btn" data-say="' + esc(w.w) + '">🔈</button></div>' +
+              '<div style="opacity:.55;font-style:italic">' + esc(w.pos) + '</div>' +
+              '<div class="hint">tap to flip</div>' +
+            '</div>' +
+            '<div class="va-face back">' +
+              '<div class="sec"><h4>Meaning</h4>' + md(w.mean) + '</div>' +
+              '<div class="sec"><h4>💡 Story</h4>' + md(w.story) + '</div>' +
+              (ex ? '<div class="sec"><h4>✏️ Example</h4>' + md(ex) + '</div>' : '') +
+              '<div class="sec"><h4>🟢 Similar</h4>' + esc(w.syn) + '</div>' +
+              '<div class="sec"><h4>🔴 Opposite</h4>' + esc(w.ant) + '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="va-flash-btns">' +
+          '<button class="va-btn ghost" data-a="again">🔁 Again</button>' +
+          '<button class="va-btn" data-a="got">✅ Got it</button>' +
+        '</div>'
+      );
+      const flip = el.querySelector('#flip');
+      flip.addEventListener('click', function () {
+        flip.classList.toggle('flipped');
+      });
+      on('.va-say-btn', 'click', function (e) {
+        e.stopPropagation(); speak(e.currentTarget.dataset.say);
+      });
+      on('[data-nav="quit"]', 'click', function () { goTheme(S.theme); });
+      on('[data-a="again"]', 'click', function () {
+        s.deck.push(s.deck.shift());
+        flashRender();
+      });
+      on('[data-a="got"]', 'click', function () {
+        s.deck.shift();
+        s.got++;
+        flashRender();
+      });
+    }
+
+    /* ── memory flip ──────────────────────────────────────────────────── */
+
+    function memStart(t) {
+      const words = shuffle(t.words).slice(0, 4);
+      let cards = [];
+      words.forEach(function (w, i) {
+        cards.push({ pid: i, html: '<span class="w">' + esc(w.w) + '</span>' });
+        cards.push({ pid: i, html: esc(shortMean(w)) });
+      });
+      cards = shuffle(cards);
+      S.sess = { gid: 'mem', cards: cards, open: [], lock: false, moves: 0,
+                 matched: 0, pairs: words.length };
+      const grid = cards.map(function (c, i) {
+        return '<div class="va-mem-card" data-i="' + i + '">' +
+          '<div class="va-mem-in">' +
+            '<div class="va-mem-face f">❔</div>' +
+            '<div class="va-mem-face b">' + c.html + '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+      render(
+        '<div class="va-hud">' +
+          '<button class="va-back" data-nav="quit">✕</button>' +
+          '<span class="va-pill">🧠 Match word ↔ meaning</span>' +
+          '<span class="va-spacer"></span>' +
+          '<span class="va-pill" data-moves>Moves: 0</span>' +
+        '</div>' +
+        '<div class="va-mem">' + grid + '</div>'
+      );
+      on('[data-nav="quit"]', 'click', function () { goTheme(S.theme); });
+      on('.va-mem-card', 'click', function (e) { memFlip(e.currentTarget); });
+    }
+
+    function memFlip(node) {
+      const s = S.sess;
+      if (s.lock || node.classList.contains('up') ||
+          node.classList.contains('won')) return;
+      node.classList.add('up');
+      s.open.push(node);
+      if (s.open.length < 2) return;
+      s.moves++;
+      const m = el.querySelector('[data-moves]');
+      if (m) m.textContent = 'Moves: ' + s.moves;
+      const a = s.open[0], b = s.open[1];
+      const pa = s.cards[+a.dataset.i].pid, pb = s.cards[+b.dataset.i].pid;
+      if (pa === pb) {
+        a.classList.add('won'); b.classList.add('won');
+        s.open = [];
+        s.matched++;
+        if (s.matched === s.pairs) {
+          const stars = s.moves <= s.pairs + 1 ? 3 : s.moves <= s.pairs + 4 ? 2 : 1;
+          const score = 30 + Math.max(0, (s.pairs + 6 - s.moves)) * 5;
+          setTimeout(function () {
+            results({ stars: stars, score: score,
+                      line: 'All pairs found in ' + s.moves + ' moves' });
+          }, 700);
+        }
+      } else {
+        s.lock = true;
+        setTimeout(function () {
+          if (S.sess !== s) return;
+          a.classList.remove('up'); b.classList.remove('up');
+          s.open = []; s.lock = false;
+        }, 950);
+      }
+    }
+
+    /* ── results ──────────────────────────────────────────────────────── */
+
+    function results(r) {
+      clearTimer();
+      S.sess = null;
+      const t = S.theme, gid = S.game;
+      const isMix = t.id === '__mix';
+      const game = GAMES.find(function (g) { return g.id === gid; });
+      let newBest = false;
+      if (!isMix && game.starred && r.stars > 0) {
+        const k = starKey(t, gid);
+        if (r.stars > (P.stars[k] || 0)) { P.stars[k] = r.stars; newBest = true; }
+      }
+      if (gid !== 'flash') {
+        P.xp[S.level] = (P.xp[S.level] || 0) + r.score;
+      }
+      save();
+      const titles = r.title ? [r.title] :
+        r.stars === 3 ? ['Legendary! 🏆', 'Flawless-ish! 💎', 'On fire! 🔥'] :
+        r.stars === 2 ? ['Strong run! 💪', 'Almost perfect! 🎯'] :
+        ['Warmed up! 🌤️', 'Good start — run it back! 🔁'];
+      let starRow = '';
+      if (game.starred) {
+        starRow = '<div class="va-starrow">' +
+          [1, 2, 3].map(function (n) {
+            return '<span class="' + (n <= r.stars ? 'on' : '') + '">★</span>';
+          }).join('') + '</div>';
+      }
+      render(
+        '<div class="va-results">' +
+          '<div class="big">' + game.emoji + '</div>' +
+          '<h2>' + pick(titles) + '</h2>' +
+          starRow +
+          '<div class="va-statrow">' +
+            '<span class="va-pill acc">⚡ +' + r.score + ' XP</span>' +
+            '<span class="va-pill">' + esc(r.line) + '</span>' +
+            (newBest ? '<span class="va-pill" style="border-color:#facc15;color:#facc15">New best! 🎉</span>' : '') +
+            (isMix ? '<span class="va-pill">practice mode — no stars</span>' : '') +
+          '</div>' +
+          '<div class="va-resbtns">' +
+            '<button class="va-btn" data-a="replay">🔁 Play again</button>' +
+            '<button class="va-btn ghost" data-a="games">🎮 More games</button>' +
+            '<button class="va-btn ghost" data-a="themes">📚 Themes</button>' +
+          '</div>' +
+        '</div>'
+      );
+      if (r.stars === 3 || newBest) confetti();
+      on('[data-a="replay"]', 'click', function () { startGame(gid); });
+      on('[data-a="games"]', 'click', function () { goTheme(t); });
+      on('[data-a="themes"]', 'click', function () { goLevel(S.level); });
+    }
+
+    function confetti() {
+      const box = document.createElement('div');
+      box.className = 'va-burst';
+      const em = ['🎉', '⭐', '✨', '🎊', '💫', '🏅'];
+      let spans = '';
+      for (let i = 0; i < 34; i++) {
+        spans += '<span style="left:' + (Math.random() * 100) + 'vw;' +
+          'animation-duration:' + (2 + Math.random() * 2) + 's;' +
+          'animation-delay:' + (Math.random() * 0.8) + 's">' +
+          pick(em) + '</span>';
+      }
+      box.innerHTML = spans;
+      document.body.appendChild(box);
+      setTimeout(function () { box.remove(); }, 5000);
+    }
+
+    /* ── keyboard: 1–4 answers current question ───────────────────────── */
+
+    document.addEventListener('keydown', function (e) {
+      if (!S.sess || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
+      const n = parseInt(e.key, 10);
+      if (n >= 1 && n <= 4) {
+        const btns = el.querySelectorAll('.va-opt:not(:disabled)');
+        if (btns[n - 1]) btns[n - 1].click();
+      }
+    });
+
+    return {
+      boot: function (data) {
+        prep(data);
+        goHome();
+      }
+    };
+  })();
+
+  init();
+})();
+</script>
