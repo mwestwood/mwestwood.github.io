@@ -317,6 +317,38 @@ handle this page — it forces `layout: protected` (it skips arcade.md anyway
 because the body is empty). Player progress (XP/stars) lives in localStorage
 under `vocab-arcade-v1`.
 
+### Rebuild WH Question Quest (interactive game page)
+
+```bash
+python3 _tools/build-wh-quest.py "passphrase"
+```
+
+Generates `autism/wh-quest.md` (`layout: protected-wh`) from
+`_tools/wh_data.py` — WH-comprehension questions, number stories, and the
+50 US states/capitals are packed as JSON and encrypted into front matter.
+Built to teach WH-questions (who/what/where/why/how) to a young autistic
+learner who loves numbers, so keep its design rules when editing:
+
+- **Question worlds** — every WH word has a fixed color + icon
+  (speech-therapy convention); level 1 questions use cross-category foils
+  (a WHO question offers a person, a thing, a place — teaches
+  "who = person"), level 2 uses same-category foils.
+- **Autism-friendly engine** (in `_layouts/protected-wh.html`): no timers,
+  nothing auto-advances (big Next button), identical layout every question,
+  questions auto-read via speechSynthesis (toggleable), quiet sine-tone
+  sounds (toggleable), no failure state — a second miss reveals the answer
+  with the teaching line and still awards a point.
+- **Numbers are the reward**: explicit-arithmetic point count-ups, number
+  facts on the Number Friends badges, "how many" questions, math tie-ins in
+  stories, and a 10-level Math Power-Up (through 4-digit ops, division,
+  squares/cubes, square roots, decimals, fractions).
+- In story rounds the full story text stays visible beside each question.
+
+The game engine is public code in `_layouts/protected-wh.html`; editing the
+games never requires re-encryption, only content changes in `wh_data.py` do.
+`encrypt-batch.py` skips this page (empty body). Player progress
+(points/stars) lives in localStorage under `wh-quest-v1`.
+
 ### Inspect encrypted content without changing it
 
 ```bash
