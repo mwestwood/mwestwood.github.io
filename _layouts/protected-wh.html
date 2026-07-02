@@ -1,0 +1,1500 @@
+---
+layout: default
+---
+
+<style>
+  /* ── Password gate (same look as protected.html) ─────────────────────── */
+  #protected-gate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 40vh;
+    padding: 2rem 1rem;
+  }
+  .gate-card {
+    background: var(--sidebar-color, #f5f6fa);
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 8px;
+    padding: 2.5rem 2rem;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .gate-lock { font-size: 2.5rem; margin-bottom: 0.75rem; line-height: 1; }
+  .gate-title {
+    font-size: 1.25rem; font-weight: 600;
+    color: var(--body-text-color, #27262b); margin: 0 0 0.5rem 0;
+  }
+  .gate-subtitle {
+    font-size: 0.875rem; color: var(--body-text-color, #5c5962);
+    opacity: 0.75; margin: 0 0 1.5rem 0;
+  }
+  .gate-input-row { display: flex; gap: 0.5rem; width: 100%; }
+  #gate-password {
+    flex: 1; padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color, #d0d0d0); border-radius: 4px;
+    font-size: 1rem; background: var(--body-background-color, #fff);
+    color: var(--body-text-color, #27262b); outline: none;
+    transition: border-color 0.15s;
+  }
+  #gate-password:focus { border-color: var(--links-color, #7253ed); }
+  #gate-submit {
+    padding: 0.5rem 1.1rem; background: var(--links-color, #7253ed);
+    color: #fff; border: none; border-radius: 4px; font-size: 0.95rem;
+    font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+  #gate-submit:hover { opacity: 0.88; }
+  #gate-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+  #gate-error {
+    margin-top: 0.85rem; font-size: 0.875rem; color: #c0392b;
+    min-height: 1.25rem; display: none;
+  }
+  #gate-status {
+    margin-top: 0.85rem; font-size: 0.875rem;
+    color: var(--body-text-color, #5c5962); opacity: 0.7;
+    min-height: 1.25rem; display: none;
+  }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+
+  /* ── WH Question Quest ───────────────────────────────────────────────── */
+  #quest-root { display: none; }
+
+  .wq { --good: #4ade80; --bad: #f87171;
+        --card: rgba(255,255,255,0.05); --line: rgba(255,255,255,0.14);
+        max-width: 760px; }
+  .wq, .wq * { box-sizing: border-box; }
+  .wq button { font-family: inherit; }
+
+  .wq-top {
+    display: flex; align-items: center; gap: 0.6rem;
+    margin-bottom: 1rem; flex-wrap: wrap;
+  }
+  .wq-back {
+    background: var(--card); border: 1px solid var(--line);
+    color: inherit; border-radius: 999px; padding: 0.45rem 1.1rem;
+    font-size: 1rem; cursor: pointer;
+  }
+  .wq-back:hover { border-color: #facc15; }
+  .wq-spacer { flex: 1; }
+  .wq-pill {
+    font-size: 0.95rem; padding: 0.35rem 0.85rem; border-radius: 999px;
+    background: var(--card); border: 1px solid var(--line);
+    white-space: nowrap; color: inherit; cursor: default;
+  }
+  .wq-pill.pts { border-color: #facc15; color: #facc15; font-weight: 700;
+                 font-size: 1.05rem; }
+  .wq-pill.pop { animation: wqPop 0.4s; }
+  button.wq-pill { cursor: pointer; }
+  button.wq-pill.off { opacity: 0.45; }
+
+  .wq-hero { text-align: center; margin: 0.4rem 0 1.4rem; }
+  .wq-hero h1 { margin: 0 0 0.3rem; font-size: 1.9rem; }
+  .wq-hero p { margin: 0; opacity: 0.7; font-size: 1rem; }
+
+  /* number friends shelf */
+  .wq-friends { display: flex; gap: 0.4rem; justify-content: center;
+                flex-wrap: wrap; margin: 0 0 1.5rem; }
+  .wq-friend {
+    width: 3.3rem; padding: 0.4rem 0.1rem; text-align: center;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 10px; font-size: 1.05rem; line-height: 1.3;
+  }
+  .wq-friend .nm { font-size: 0.55rem; opacity: 0.75; display: block;
+                   margin-top: 0.15rem; }
+  .wq-friend.locked { opacity: 0.35; }
+  .wq-friend.new { border-color: #facc15; animation: wqPop 0.5s; }
+
+  .wq-sect { font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase;
+             opacity: 0.55; margin: 1.4rem 0 0.6rem; }
+
+  .wq-worlds { display: grid; gap: 0.7rem;
+               grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+  .wq-world {
+    display: flex; align-items: center; gap: 0.8rem; text-align: left;
+    background: var(--card); border: 1px solid var(--line);
+    border-left: 6px solid var(--wc, var(--line));
+    border-radius: 14px; padding: 0.95rem 1rem; color: inherit;
+    cursor: pointer; transition: transform 0.12s, border-color 0.12s;
+  }
+  .wq-world:hover { transform: translateY(-2px); border-color: var(--wc); }
+  .wq-world .em { font-size: 2.1rem; }
+  .wq-world .name { font-weight: 800; font-size: 1.2rem; color: var(--wc); }
+  .wq-world .tag { font-size: 0.82rem; opacity: 0.7; margin-top: 0.1rem; }
+  .wq-world .st { font-size: 0.9rem; color: #facc15; margin-top: 0.25rem;
+                  min-height: 1em; letter-spacing: 0.1em; }
+
+  .wq-acts { display: grid; gap: 0.7rem;
+             grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+
+  /* story / level picker cards */
+  .wq-cards { display: grid; gap: 0.7rem;
+              grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+  .wq-card {
+    text-align: left; background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 0.95rem 1rem; color: inherit; cursor: pointer;
+    transition: transform 0.12s, border-color 0.12s;
+  }
+  .wq-card:hover { transform: translateY(-2px); border-color: #facc15; }
+  .wq-card .em { font-size: 1.9rem; }
+  .wq-card .name { font-weight: 700; margin-top: 0.3rem; font-size: 1.02rem; }
+  .wq-card .desc { font-size: 0.85rem; opacity: 0.65; margin-top: 0.2rem;
+                   line-height: 1.45; }
+  .wq-card .st { font-size: 0.9rem; color: #facc15; margin-top: 0.35rem;
+                 min-height: 1em; letter-spacing: 0.1em; }
+
+  /* play screen */
+  .wq-prog { display: flex; gap: 0.35rem; justify-content: center;
+             margin: 0.2rem 0 1rem; }
+  .wq-dot { width: 0.85rem; height: 0.85rem; border-radius: 50%;
+            background: rgba(255,255,255,0.12); }
+  .wq-dot.done { background: var(--good); }
+  .wq-dot.now { background: #facc15; transform: scale(1.25); }
+
+  .wq-whbadge {
+    display: inline-block; font-weight: 800; border-radius: 8px;
+    padding: 0.05rem 0.5rem; color: #1a1a1e; background: var(--wc, #facc15);
+  }
+  .wq-scene { text-align: center; font-size: 3.4rem; line-height: 1.25;
+              margin: 0.8rem 0 0.4rem; letter-spacing: 0.3rem; }
+  .wq-q { text-align: center; font-size: 1.45rem; font-weight: 700;
+          line-height: 1.5; max-width: 620px; margin: 0 auto 0.4rem; }
+  .wq-q .blank { color: var(--wc, #facc15); border-bottom: 3px dashed;
+                 padding: 0 0.4rem; letter-spacing: 0.15em; }
+  .wq-say {
+    display: block; margin: 0.4rem auto 1rem; background: var(--card);
+    border: 1px solid var(--line); color: inherit; border-radius: 999px;
+    padding: 0.4rem 1.2rem; font-size: 1rem; cursor: pointer;
+  }
+  .wq-say:hover { border-color: #facc15; }
+
+  .wq-anslabel { text-align: center; font-size: 0.82rem; letter-spacing: 0.08em;
+                 text-transform: uppercase; opacity: 0.55; margin: 0.8rem 0 0.4rem; }
+  .wq-anscard {
+    text-align: center; font-size: 1.25rem; font-weight: 700;
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 0.8rem 1rem; max-width: 420px; margin: 0 auto 1rem;
+  }
+  .wq-anscard .em { font-size: 1.9rem; margin-right: 0.5rem; }
+
+  .wq-opts { display: grid; gap: 0.7rem; max-width: 560px; margin: 0 auto; }
+  .wq-opt {
+    width: 100%; display: flex; align-items: center; gap: 0.9rem;
+    text-align: left; background: var(--card);
+    border: 2px solid var(--line); border-radius: 14px;
+    padding: 0.85rem 1.1rem; color: inherit; font-size: 1.15rem;
+    font-weight: 600; line-height: 1.4; cursor: pointer;
+    transition: border-color 0.12s;
+  }
+  .wq-opt .em { font-size: 2.1rem; flex: none; }
+  .wq-opt:hover:not(:disabled) { border-color: #facc15; }
+  .wq-opt:disabled { cursor: default; }
+  .wq-opt.good { border-color: var(--good);
+                 background: rgba(74, 222, 128, 0.14); animation: wqPop 0.4s; }
+  .wq-opt.dim { opacity: 0.35; }
+  .wq-opt.miss { border-color: var(--bad); animation: wqNudge 0.35s; }
+
+  /* WH chips (detective) */
+  .wq-opts.chips { grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+                   max-width: 620px; }
+  .wq-opt.chip { justify-content: center; text-align: center;
+                 font-weight: 800; font-size: 1.05rem; padding: 0.8rem 0.4rem;
+                 border-color: var(--wc); color: var(--wc);
+                 flex-direction: column; gap: 0.15rem; }
+  .wq-opt.chip .em { font-size: 1.5rem; }
+  .wq-opt.chip.good { background: rgba(74, 222, 128, 0.14);
+                      border-color: var(--good); }
+
+  /* math options: big number squares */
+  .wq-opts.nums { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+                  max-width: 520px; }
+  .wq-opt.num { justify-content: center; font-size: 1.7rem; font-weight: 800;
+                padding: 1rem 0.4rem; }
+
+  .wq-feedback { text-align: center; margin-top: 1.1rem; min-height: 2.2rem;
+                 font-size: 1.15rem; font-weight: 700; }
+  .wq-feedback .praise { color: var(--good); font-size: 1.3rem; }
+  .wq-feedback .again { color: #facc15; }
+  .wq-teach { text-align: center; opacity: 0.85; font-size: 1rem;
+              font-weight: 400; margin-top: 0.4rem; line-height: 1.5;
+              max-width: 560px; margin-left: auto; margin-right: auto; }
+  .wq-next {
+    display: block; margin: 1.2rem auto 0; background: var(--good);
+    border: none; color: #14321f; border-radius: 999px;
+    padding: 0.7rem 2.6rem; font-size: 1.2rem; font-weight: 800;
+    cursor: pointer; animation: wqPop 0.4s;
+  }
+  .wq-next:hover { opacity: 0.9; }
+
+  /* story intro */
+  .wq-storycard {
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+    padding: 1.4rem 1.5rem; max-width: 620px; margin: 0 auto; text-align: center;
+  }
+  .wq-storycard .em { font-size: 3.4rem; }
+  .wq-storycard h2 { margin: 0.4rem 0 0.8rem; font-size: 1.5rem; }
+  .wq-storycard .txt { font-size: 1.2rem; line-height: 1.8; text-align: left; }
+
+  /* story panel shown next to each story question */
+  .wq-storymini {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 0.75rem 1rem 0.85rem;
+    font-size: 1.02rem; line-height: 1.7; max-width: 620px;
+    margin: 0.4rem auto 0.9rem;
+  }
+  .wq-storymini .ttl {
+    font-weight: 700; font-size: 0.85rem; letter-spacing: 0.06em;
+    text-transform: uppercase; opacity: 0.65; margin-bottom: 0.35rem;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  .wq-storymini .ttl button {
+    background: none; border: 1px solid var(--line); border-radius: 999px;
+    color: inherit; cursor: pointer; font-size: 0.8rem; padding: 0.1rem 0.6rem;
+  }
+  .wq-storymini .ttl button:hover { border-color: #facc15; }
+
+  /* states & capitals browse list */
+  .wq-states { display: grid; gap: 0.5rem;
+               grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  .wq-state {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 10px; padding: 0.6rem 0.8rem; line-height: 1.4;
+  }
+  .wq-state .s { font-weight: 700; }
+  .wq-state .c { opacity: 0.75; font-size: 0.9rem; }
+  .wq-state .c::before { content: '⭐ '; }
+
+  /* results */
+  .wq-results { text-align: center; padding: 1.2rem 0 2rem; }
+  .wq-results .em { font-size: 3.6rem; }
+  .wq-results h2 { margin: 0.4rem 0 0.8rem; }
+  .wq-starrow { font-size: 2.8rem; letter-spacing: 0.4rem; margin: 0.4rem 0 1rem; }
+  .wq-starrow span { opacity: 0.22; display: inline-block; }
+  .wq-starrow span.on { opacity: 1; color: #facc15; animation: wqPop 0.5s both; }
+  .wq-starrow span.on:nth-child(2) { animation-delay: 0.18s; }
+  .wq-starrow span.on:nth-child(3) { animation-delay: 0.36s; }
+  .wq-mathline { font-size: 1.5rem; font-weight: 800; margin: 0.8rem 0;
+                 color: #facc15; }
+  .wq-unlock { font-size: 1.1rem; margin: 0.8rem auto; max-width: 460px;
+               background: var(--card); border: 1px solid #facc15;
+               border-radius: 12px; padding: 0.8rem 1rem;
+               animation: wqPop 0.5s; }
+  .wq-unlock .em { font-size: 2rem; }
+  .wq-resbtns { display: flex; gap: 0.7rem; justify-content: center;
+                flex-wrap: wrap; margin-top: 1.2rem; }
+  .wq-bigbtn {
+    background: var(--card); border: 1px solid var(--line); color: inherit;
+    border-radius: 999px; padding: 0.7rem 1.8rem; font-size: 1.1rem;
+    font-weight: 700; cursor: pointer;
+  }
+  .wq-bigbtn:hover { border-color: #facc15; }
+  .wq-bigbtn.go { background: #facc15; border-color: #facc15; color: #1a1a1e; }
+
+  .wq-burst { position: fixed; inset: 0; pointer-events: none; z-index: 999;
+              overflow: hidden; }
+  .wq-burst span { position: absolute; top: -6vh; font-size: 1.5rem;
+                   animation: wqFall linear forwards; }
+
+  @keyframes wqFall { to { transform: translateY(115vh) rotate(680deg); } }
+  @keyframes wqPop {
+    0% { transform: scale(0.3); } 70% { transform: scale(1.22); }
+    100% { transform: scale(1); }
+  }
+  @keyframes wqNudge {
+    25% { transform: translateX(-4px); } 75% { transform: translateX(4px); }
+  }
+
+  @media (max-width: 500px) {
+    .wq-scene { font-size: 2.7rem; }
+    .wq-q { font-size: 1.25rem; }
+    .wq-opt { font-size: 1.05rem; }
+  }
+</style>
+
+<!-- Password gate -->
+<div id="protected-gate">
+  <div class="gate-card">
+    <div class="gate-lock" aria-hidden="true">🔒</div>
+    <p class="gate-title">{{ page.title | default: "Protected Page" }}</p>
+    <p class="gate-subtitle">This page is password-protected. Enter the passphrase to unlock.</p>
+    <div class="gate-input-row">
+      <label for="gate-password" class="sr-only">Passphrase</label>
+      <input id="gate-password" type="password" placeholder="Passphrase" autocomplete="off" autofocus />
+      <button id="gate-submit">Unlock</button>
+    </div>
+    <div id="gate-error" role="alert" aria-live="polite">Incorrect passphrase — please try again.</div>
+    <div id="gate-status" role="status" aria-live="polite">Decrypting…</div>
+  </div>
+</div>
+
+<div id="quest-root"><div class="wq" id="wq"></div></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* Encrypted blob injected by Jekyll from front matter field `encrypted` */
+  const ENCRYPTED_B64 = {{ page.encrypted | jsonify }};
+
+  const STORAGE_KEY = 'mwestwood-passphrase';
+
+  /* ── Gate (same crypto as protected.html) ───────────────────────────── */
+
+  function b64ToBytes(b64) {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+
+  async function deriveKey(passphrase, salt) {
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw', enc.encode(passphrase), { name: 'PBKDF2' }, false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: salt, iterations: 100000, hash: 'SHA-256' },
+      keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+  }
+
+  async function decrypt(passphrase) {
+    const blob = b64ToBytes(ENCRYPTED_B64);
+    const salt = blob.slice(0, 16);
+    const iv = blob.slice(16, 28);
+    const ct = blob.slice(28);
+    const key = await deriveKey(passphrase, salt);
+    const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, ct);
+    return new TextDecoder().decode(plaintext);
+  }
+
+  const gate = document.getElementById('protected-gate');
+  const rootWrap = document.getElementById('quest-root');
+  const input = document.getElementById('gate-password');
+  const btn = document.getElementById('gate-submit');
+  const errEl = document.getElementById('gate-error');
+  const statusEl = document.getElementById('gate-status');
+
+  function showError(msg) {
+    errEl.textContent = msg || 'Incorrect passphrase — please try again.';
+    errEl.style.display = 'block';
+    statusEl.style.display = 'none';
+    btn.disabled = false;
+    input.select();
+  }
+
+  function showStatus(msg) {
+    statusEl.textContent = msg;
+    statusEl.style.display = 'block';
+    errEl.style.display = 'none';
+  }
+
+  function reveal(text) {
+    let data;
+    try { data = JSON.parse(text); }
+    catch (e) { showError('Data error: could not parse question bank.'); return; }
+    gate.style.display = 'none';
+    rootWrap.style.display = 'block';
+    Quest.boot(data);
+  }
+
+  async function tryUnlock(passphrase, cache) {
+    try {
+      showStatus('Decrypting…');
+      btn.disabled = true;
+      const text = await decrypt(passphrase);
+      if (cache) {
+        try { localStorage.setItem(STORAGE_KEY, passphrase); } catch (_) {}
+      }
+      reveal(text);
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'OperationError') {
+        showError('Incorrect passphrase — please try again.');
+      } else if (e instanceof TypeError && e.message.includes('subtle')) {
+        showError('Error: Web Crypto API unavailable. This page requires HTTPS.');
+      } else {
+        showError('Error (' + e.name + '): ' + e.message);
+      }
+    }
+  }
+
+  async function init() {
+    if (!ENCRYPTED_B64) { showError('No encrypted data on this page.'); return; }
+    try {
+      const cached = localStorage.getItem(STORAGE_KEY);
+      if (cached) {
+        showStatus('Unlocking…');
+        btn.disabled = true;
+        input.disabled = true;
+        try {
+          const text = await decrypt(cached);
+          reveal(text);
+          return;
+        } catch (_) {
+          localStorage.removeItem(STORAGE_KEY);
+          btn.disabled = false;
+          input.disabled = false;
+          statusEl.style.display = 'none';
+        }
+      }
+    } catch (_) {}
+  }
+
+  btn.addEventListener('click', function () {
+    const pw = input.value;
+    if (!pw) { input.focus(); return; }
+    tryUnlock(pw, true);
+  });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') btn.click();
+  });
+
+  /* ═══════════════════════ WH Question Quest ═══════════════════════════
+     Design notes (autism-friendly, age 6):
+     - Same screen layout for every question; the child controls pacing
+       with one big NEXT button — nothing auto-advances.
+     - No timers anywhere.
+     - Every WH word has a fixed color + icon (speech-therapy convention).
+     - Questions are read aloud automatically (toggleable).
+     - Wrong answer #1: the option gently dims and he tries again.
+       Wrong answer #2: the correct answer lights up with the teaching line.
+     - Sounds are short, quiet sine tones; wrong answers get a soft low
+       "boop", never a harsh buzzer. Sound is toggleable.
+     - Rewards are NUMBERS: a big points counter that counts up with
+       explicit arithmetic ("37 + 12 = 49") and Number Friend badges,
+       each tied to a real number fact (a dice has 6 sides, an octopus
+       has 8 arms…).
+  ═══════════════════════════════════════════════════════════════════════ */
+
+  const Quest = (function () {
+
+    const el = document.getElementById('wq');
+
+    const WH = {
+      who:   { name: 'WHO',   emoji: '🧑', color: '#60a5fa',
+               tag: 'asks about a person',
+               teach: 'WHO asks about a PERSON.' },
+      what:  { name: 'WHAT',  emoji: '📦', color: '#4ade80',
+               tag: 'asks about a thing or action',
+               teach: 'WHAT asks about a THING or an ACTION.' },
+      where: { name: 'WHERE', emoji: '📍', color: '#fb923c',
+               tag: 'asks about a place',
+               teach: 'WHERE asks about a PLACE.' },
+      why:   { name: 'WHY',   emoji: '💡', color: '#c084fc',
+               tag: 'asks for a reason',
+               teach: 'WHY asks for a REASON. The answer starts with BECAUSE.' },
+      how:   { name: 'HOW',   emoji: '🛠️', color: '#f472b6',
+               tag: 'asks the way — or how many',
+               teach: 'HOW asks about the WAY we do something — or HOW MANY.' }
+    };
+    const WH_ORDER = ['who', 'what', 'where', 'why', 'how'];
+
+    const FRIENDS = [
+      { n: 0,  e: '0️⃣🦸', name: 'Zero the Hero',   fact: 'Zero means nothing at all — but he saves every big number!' },
+      { n: 1,  e: '1️⃣☀️', name: 'One the Sun',     fact: 'There is exactly 1 sun in our sky.' },
+      { n: 2,  e: '2️⃣👟', name: 'Two the Shoes',   fact: 'Shoes always come in a pair — that means 2!' },
+      { n: 3,  e: '3️⃣🔺', name: 'Three the Triangle', fact: 'A triangle has exactly 3 sides.' },
+      { n: 4,  e: '4️⃣🍀', name: 'Four the Clover', fact: 'A lucky clover has 4 leaves.' },
+      { n: 5,  e: '5️⃣⭐', name: 'Five the Star',   fact: 'A star shape has 5 points.' },
+      { n: 6,  e: '6️⃣🎲', name: 'Six the Dice',    fact: 'A dice has 6 sides.' },
+      { n: 7,  e: '7️⃣🌈', name: 'Seven the Rainbow', fact: 'A rainbow has 7 colors.' },
+      { n: 8,  e: '8️⃣🐙', name: 'Eight the Octopus', fact: 'An octopus has 8 arms.' },
+      { n: 9,  e: '9️⃣☁️', name: 'Nine the Cloud',  fact: 'When you are super happy, you are on cloud 9!' },
+      { n: 10, e: '🔟🎳', name: 'Ten the Pins',    fact: 'Bowling has 10 pins to knock down.' }
+    ];
+
+    const PRAISE = ['Great job! 🎉', 'Yes! ⭐', 'You got it! 🌟', 'Super! 💪',
+                    'Amazing! 🎯', "That's right! ✨", 'Wow! 🚀'];
+
+    const MATH_LEVELS = [
+      { id: 1,  em: '➕', name: 'Level 1 · up to 20',   desc: 'Adding and taking away small numbers.' },
+      { id: 2,  em: '➕➖', name: 'Level 2 · up to 100', desc: 'Bigger adding and taking away.' },
+      { id: 3,  em: '✖️', name: 'Level 3 · times tables', desc: 'Multiplying up to 10 × 10.' },
+      { id: 4,  em: '🧩', name: 'Level 4 · missing number', desc: 'Find the mystery number: 7 + ? = 15.' },
+      { id: 5,  em: '🧮', name: 'Level 5 · big numbers', desc: '3 and 4 digit adding and taking away.' },
+      { id: 6,  em: '➗', name: 'Level 6 · division', desc: 'Sharing numbers: 72 ÷ 8.' },
+      { id: 7,  em: '🟦', name: 'Level 7 · squares & cubes', desc: '12² and 5³ — powers!' },
+      { id: 8,  em: '🌱', name: 'Level 8 · square roots', desc: '√144 — which number was squared?' },
+      { id: 9,  em: '💧', name: 'Level 9 · decimals', desc: 'Numbers with a point: 3.5 + 1.8.' },
+      { id: 10, em: '🍕', name: 'Level 10 · fractions', desc: 'Parts of a whole: 3/4 of 16.' }
+    ];
+
+    let DATA = null;
+
+    /* ── helpers ──────────────────────────────────────────────────────── */
+
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function shuffle(a) {
+      a = a.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = a[i]; a[i] = a[j]; a[j] = t;
+      }
+      return a;
+    }
+    function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+    function stars3(n) {
+      let h = '';
+      for (let i = 1; i <= 3; i++) h += i <= n ? '★' : '☆';
+      return h;
+    }
+
+    /* ── progress + settings (localStorage) ───────────────────────────── */
+
+    const PKEY = 'wh-quest-v1';
+    let P = null;
+    try { P = JSON.parse(localStorage.getItem(PKEY) || 'null'); } catch (_) {}
+    if (!P || typeof P !== 'object') P = {};
+    P.pts = P.pts || 0;
+    P.stars = P.stars || {};             /* activity id -> 0..3 best */
+    if (P.voice === undefined) P.voice = true;
+    if (P.sound === undefined) P.sound = true;
+    function save() {
+      try { localStorage.setItem(PKEY, JSON.stringify(P)); } catch (_) {}
+    }
+
+    /* ── speech + gentle sounds ───────────────────────────────────────── */
+
+    function speak(text) {
+      if (!P.voice) return;
+      try {
+        if (!window.speechSynthesis) return;
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(String(text).replace(/[🎉⭐🌟💪🎯✨🚀…]/g, ''));
+        u.rate = 0.85;
+        u.pitch = 1.05;
+        speechSynthesis.speak(u);
+      } catch (_) {}
+    }
+
+    let audioCtx = null;
+    function tone(freq, start, dur, vol) {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sine';
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0, audioCtx.currentTime + start);
+      g.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + start + 0.02);
+      g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + start + dur);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(audioCtx.currentTime + start);
+      o.stop(audioCtx.currentTime + start + dur + 0.05);
+    }
+    function sfx(kind) {
+      if (!P.sound) return;
+      try {
+        if (!audioCtx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) return;
+          audioCtx = new AC();
+        }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (kind === 'good') { tone(523, 0, 0.14, 0.07); tone(784, 0.12, 0.2, 0.07); }
+        else if (kind === 'soft') { tone(233, 0, 0.18, 0.045); }
+        else if (kind === 'star') { tone(659, 0, 0.12, 0.06); tone(784, 0.1, 0.12, 0.06); tone(1047, 0.2, 0.25, 0.06); }
+        else if (kind === 'tick') { tone(880, 0, 0.05, 0.03); }
+      } catch (_) {}
+    }
+
+    function burst() {
+      const wrap = document.createElement('div');
+      wrap.className = 'wq-burst';
+      const EMO = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟','⭐','✨','🎉'];
+      for (let i = 0; i < 26; i++) {
+        const s = document.createElement('span');
+        s.textContent = pick(EMO);
+        s.style.left = (Math.random() * 100) + 'vw';
+        s.style.animationDuration = (2 + Math.random() * 2.2) + 's';
+        s.style.animationDelay = (Math.random() * 0.5) + 's';
+        wrap.appendChild(s);
+      }
+      document.body.appendChild(wrap);
+      setTimeout(function () { wrap.remove(); }, 5200);
+    }
+
+    /* ── shared chrome ────────────────────────────────────────────────── */
+
+    function topBar(backLabel, backFn) {
+      const bar = document.createElement('div');
+      bar.className = 'wq-top';
+      if (backFn) {
+        const b = document.createElement('button');
+        b.className = 'wq-back';
+        b.textContent = '← ' + backLabel;
+        b.addEventListener('click', function () {
+          try { speechSynthesis.cancel(); } catch (_) {}
+          backFn();
+        });
+        bar.appendChild(b);
+      }
+      const sp = document.createElement('div');
+      sp.className = 'wq-spacer';
+      bar.appendChild(sp);
+
+      const voiceBtn = document.createElement('button');
+      voiceBtn.className = 'wq-pill' + (P.voice ? '' : ' off');
+      voiceBtn.textContent = '🗣️ Read aloud';
+      voiceBtn.setAttribute('aria-pressed', String(P.voice));
+      voiceBtn.addEventListener('click', function () {
+        P.voice = !P.voice; save();
+        voiceBtn.className = 'wq-pill' + (P.voice ? '' : ' off');
+        voiceBtn.setAttribute('aria-pressed', String(P.voice));
+        if (!P.voice) { try { speechSynthesis.cancel(); } catch (_) {} }
+      });
+      bar.appendChild(voiceBtn);
+
+      const soundBtn = document.createElement('button');
+      soundBtn.className = 'wq-pill' + (P.sound ? '' : ' off');
+      soundBtn.textContent = '🔔 Sounds';
+      soundBtn.setAttribute('aria-pressed', String(P.sound));
+      soundBtn.addEventListener('click', function () {
+        P.sound = !P.sound; save();
+        soundBtn.className = 'wq-pill' + (P.sound ? '' : ' off');
+        soundBtn.setAttribute('aria-pressed', String(P.sound));
+      });
+      bar.appendChild(soundBtn);
+
+      const pts = document.createElement('span');
+      pts.className = 'wq-pill pts';
+      pts.id = 'wq-pts';
+      pts.textContent = P.pts + ' ⭐';
+      bar.appendChild(pts);
+      return bar;
+    }
+
+    function whBadge(wh) {
+      const m = WH[wh];
+      return '<span class="wq-whbadge" style="--wc:' + m.color + ';background:' +
+             m.color + '">' + m.name + '</span>';
+    }
+    /* Wrap the leading WH word of a question in its colored badge. */
+    function qHtml(q) {
+      const m = WH[q.wh];
+      const rest = q.q.replace(/^\S+\s*/, '');
+      return whBadge(q.wh) + ' ' + esc(rest);
+    }
+
+    /* ── home ─────────────────────────────────────────────────────────── */
+
+    function home() {
+      el.innerHTML = '';
+      el.appendChild(topBar(null, null));
+
+      const hero = document.createElement('div');
+      hero.className = 'wq-hero';
+      hero.innerHTML = '<h1>🔍 WH Question Quest</h1>' +
+        '<p>Pick a question word and start collecting stars!</p>';
+      el.appendChild(hero);
+
+      /* number friends shelf — tap a friend to hear its number fact */
+      const shelf = document.createElement('div');
+      shelf.className = 'wq-friends';
+      FRIENDS.forEach(function (f) {
+        const d = document.createElement('div');
+        d.className = 'wq-friend';
+        d.title = f.name + ' — ' + f.fact;
+        d.style.cursor = 'pointer';
+        d.innerHTML = f.e + '<span class="nm">' +
+          esc(f.name.split(' the ')[1] || f.name) + '</span>';
+        d.addEventListener('click', function () { speak(f.name + '! ' + f.fact); });
+        shelf.appendChild(d);
+      });
+      el.appendChild(shelf);
+
+      const s1 = document.createElement('div');
+      s1.className = 'wq-sect';
+      s1.textContent = 'Question worlds';
+      el.appendChild(s1);
+
+      const worlds = document.createElement('div');
+      worlds.className = 'wq-worlds';
+      WH_ORDER.forEach(function (wh) {
+        const m = WH[wh];
+        const b = document.createElement('button');
+        b.className = 'wq-world';
+        b.style.setProperty('--wc', m.color);
+        b.innerHTML = '<span class="em">' + m.emoji + '</span>' +
+          '<span><span class="name">' + m.name + '</span>' +
+          '<div class="tag">' + esc(m.tag) + '</div>' +
+          '<div class="st">' + stars3(P.stars[wh] || 0) + '</div></span>';
+        b.addEventListener('click', function () { startWorld(wh); });
+        worlds.appendChild(b);
+      });
+      el.appendChild(worlds);
+
+      const s2 = document.createElement('div');
+      s2.className = 'wq-sect';
+      s2.textContent = 'More games';
+      el.appendChild(s2);
+
+      const acts = document.createElement('div');
+      acts.className = 'wq-acts';
+      [
+        { em: '🕵️', name: 'Question Detective', id: 'det',
+          desc: 'The question word is hiding — can you find it?',
+          fn: startDetective },
+        { em: '📖', name: 'Number Stories', id: null,
+          desc: 'Little stories full of numbers, with questions after.',
+          fn: storyMenu },
+        { em: '🔢', name: 'Math Power-Up', id: null,
+          desc: '10 levels — up to square roots, decimals and fractions!',
+          fn: mathMenu },
+        { em: '🗺️', name: 'USA States & Capitals', id: null,
+          desc: 'All 50 states — find the capital, find the state!',
+          fn: geoMenu }
+      ].forEach(function (a) {
+        const b = document.createElement('button');
+        b.className = 'wq-card';
+        b.innerHTML = '<div class="em">' + a.em + '</div>' +
+          '<div class="name">' + esc(a.name) + '</div>' +
+          '<div class="desc">' + esc(a.desc) + '</div>' +
+          (a.id ? '<div class="st">' + stars3(P.stars[a.id] || 0) + '</div>' : '');
+        b.addEventListener('click', a.fn);
+        acts.appendChild(b);
+      });
+      el.appendChild(acts);
+      window.scrollTo(0, 0);
+    }
+
+    /* ── sub-menus ────────────────────────────────────────────────────── */
+
+    function storyMenu() {
+      el.innerHTML = '';
+      el.appendChild(topBar('Home', home));
+      const hero = document.createElement('div');
+      hero.className = 'wq-hero';
+      hero.innerHTML = '<h1>📖 Number Stories</h1><p>Pick a story to read together.</p>';
+      el.appendChild(hero);
+
+      const grid = document.createElement('div');
+      grid.className = 'wq-cards';
+      DATA.stories.forEach(function (s, i) {
+        const b = document.createElement('button');
+        b.className = 'wq-card';
+        b.innerHTML = '<div class="em">' + s.emoji + '</div>' +
+          '<div class="name">' + esc(s.title) + '</div>' +
+          '<div class="desc">' + s.qs.length + ' questions</div>' +
+          '<div class="st">' + stars3(P.stars['story' + i] || 0) + '</div>';
+        b.addEventListener('click', function () { startStory(s, i); });
+        grid.appendChild(b);
+      });
+      el.appendChild(grid);
+      window.scrollTo(0, 0);
+    }
+
+    function mathMenu() {
+      el.innerHTML = '';
+      el.appendChild(topBar('Home', home));
+      const hero = document.createElement('div');
+      hero.className = 'wq-hero';
+      hero.innerHTML = '<h1>🔢 Math Power-Up</h1><p>Pick your level. Every right answer is a bonus star!</p>';
+      el.appendChild(hero);
+
+      const grid = document.createElement('div');
+      grid.className = 'wq-cards';
+      MATH_LEVELS.forEach(function (L) {
+        const b = document.createElement('button');
+        b.className = 'wq-card';
+        b.innerHTML = '<div class="em">' + L.em + '</div>' +
+          '<div class="name">' + esc(L.name) + '</div>' +
+          '<div class="desc">' + esc(L.desc) + '</div>' +
+          '<div class="st">' + stars3(P.stars['math' + L.id] || 0) + '</div>';
+        b.addEventListener('click', function () { startMath(L.id); });
+        grid.appendChild(b);
+      });
+      el.appendChild(grid);
+      window.scrollTo(0, 0);
+    }
+
+    function geoMenu() {
+      el.innerHTML = '';
+      el.appendChild(topBar('Home', home));
+      const hero = document.createElement('div');
+      hero.className = 'wq-hero';
+      hero.innerHTML = '<h1>🗺️ USA States & Capitals</h1>' +
+        '<p>All 50 states! Pick a game, or flip through the whole list.</p>';
+      el.appendChild(hero);
+
+      const grid = document.createElement('div');
+      grid.className = 'wq-cards';
+      [
+        { em: '⭐', name: 'Find the Capital', id: 'geocap',
+          desc: 'What is the capital of Texas?',
+          fn: function () { startGeo('cap'); } },
+        { em: '🗺️', name: 'Find the State', id: 'geostate',
+          desc: 'Austin is the capital of which state?',
+          fn: function () { startGeo('state'); } },
+        { em: '📖', name: 'See All 50', id: null,
+          desc: 'Flip through every state and its capital.',
+          fn: geoBrowse }
+      ].forEach(function (a) {
+        const b = document.createElement('button');
+        b.className = 'wq-card';
+        b.innerHTML = '<div class="em">' + a.em + '</div>' +
+          '<div class="name">' + esc(a.name) + '</div>' +
+          '<div class="desc">' + esc(a.desc) + '</div>' +
+          (a.id ? '<div class="st">' + stars3(P.stars[a.id] || 0) + '</div>' : '');
+        b.addEventListener('click', a.fn);
+        grid.appendChild(b);
+      });
+      el.appendChild(grid);
+      window.scrollTo(0, 0);
+    }
+
+    function geoBrowse() {
+      el.innerHTML = '';
+      el.appendChild(topBar('States & Capitals', geoMenu));
+      const hero = document.createElement('div');
+      hero.className = 'wq-hero';
+      hero.innerHTML = '<h1>📖 All 50 States</h1>' +
+        '<p>Tap any state to hear it. ⭐ marks the capital.</p>';
+      el.appendChild(hero);
+
+      const grid = document.createElement('div');
+      grid.className = 'wq-states';
+      DATA.states.forEach(function (s) {
+        const d = document.createElement('div');
+        d.className = 'wq-state';
+        d.style.cursor = 'pointer';
+        d.innerHTML = '<div class="s">' + esc(s[0]) + '</div>' +
+          '<div class="c">' + esc(s[1]) + '</div>';
+        d.addEventListener('click', function () {
+          speak(s[1] + ' is the capital of ' + s[0] + '.');
+        });
+        grid.appendChild(d);
+      });
+      el.appendChild(grid);
+      window.scrollTo(0, 0);
+    }
+
+    function startGeo(mode) {
+      const picks = shuffle(DATA.states).slice(0, 10);
+      const steps = picks.map(function (s) {
+        const others = shuffle(DATA.states.filter(function (o) {
+          return o[0] !== s[0];
+        })).slice(0, 3);
+        const correct = mode === 'cap' ? s[1] : s[0];
+        const opts = shuffle([correct].concat(others.map(function (o) {
+          return mode === 'cap' ? o[1] : o[0];
+        })));
+        return { type: 'geo', mode: mode, s: s, correct: correct, opts: opts };
+      });
+      playRound({
+        id: 'geo' + mode,
+        title: mode === 'cap' ? '⭐ Find the Capital' : '🗺️ Find the State',
+        steps: steps, backTo: geoMenu
+      });
+    }
+
+    /* ── round construction ───────────────────────────────────────────── */
+
+    function startWorld(wh) {
+      const pool = DATA.questions.filter(function (q) { return q.wh === wh; });
+      const easy = shuffle(pool.filter(function (q) { return (q.lvl || 1) === 1; }));
+      const hard = shuffle(pool.filter(function (q) { return (q.lvl || 1) > 1; }));
+      const qs = easy.slice(0, 4).concat(hard.slice(0, 4));
+      playRound({
+        id: wh, title: WH[wh].emoji + ' ' + WH[wh].name + ' World',
+        steps: qs.map(function (q) { return { type: 'answer', q: q }; }),
+        backTo: home
+      });
+    }
+
+    function startDetective() {
+      /* one question per WH type, then extras — WH word hidden, answer shown */
+      const byWh = {};
+      WH_ORDER.forEach(function (wh) {
+        byWh[wh] = shuffle(DATA.questions.filter(function (q) { return q.wh === wh; }));
+      });
+      let qs = WH_ORDER.map(function (wh) { return byWh[wh][0]; });
+      WH_ORDER.forEach(function (wh) { qs = qs.concat(byWh[wh].slice(1, 2)); });
+      qs = shuffle(qs).slice(0, 8);
+      playRound({
+        id: 'det', title: '🕵️ Question Detective',
+        steps: qs.map(function (q) { return { type: 'detective', q: q }; }),
+        backTo: home
+      });
+    }
+
+    function startStory(story, idx) {
+      playRound({
+        id: 'story' + idx, title: story.emoji + ' ' + story.title,
+        story: story,
+        steps: story.qs.map(function (q) { return { type: 'answer', q: q, story: story }; }),
+        backTo: storyMenu
+      });
+    }
+
+    function mathProblem(lvl) {
+      function r(n) { return Math.floor(Math.random() * n); }
+      function ri(lo, hi) { return lo + r(hi - lo + 1); }
+      let a, b, ans, text;
+      let cands = null;       /* preferred distractors; nearby ints otherwise */
+      let decimals = false;
+
+      if (lvl === 1) {
+        if (Math.random() < 0.5) { a = 2 + r(12); b = 2 + r(19 - a); ans = a + b; text = a + ' + ' + b + ' = ?'; }
+        else { a = 5 + r(16); b = 1 + r(a - 1); ans = a - b; text = a + ' − ' + b + ' = ?'; }
+      } else if (lvl === 2) {
+        if (Math.random() < 0.5) { a = 12 + r(60); b = 11 + r(99 - a - 10); ans = a + b; text = a + ' + ' + b + ' = ?'; }
+        else { a = 30 + r(70); b = 11 + r(a - 11); ans = a - b; text = a + ' − ' + b + ' = ?'; }
+      } else if (lvl === 3) {
+        a = 2 + r(9); b = 2 + r(9); ans = a * b; text = a + ' × ' + b + ' = ?';
+        cands = [ans + a, ans - a, ans + b, ans - b, ans + 1, ans - 1];
+      } else if (lvl === 4) {
+        const kind = r(3);
+        if (kind === 0) { a = 2 + r(12); ans = 2 + r(12); text = a + ' + ? = ' + (a + ans); }
+        else if (kind === 1) { const diff = 2 + r(12); b = 2 + r(12); text = '? − ' + b + ' = ' + diff; ans = diff + b; }
+        else { a = 2 + r(8); ans = 2 + r(8); text = a + ' × ? = ' + (a * ans); }
+      } else if (lvl === 5) {
+        const four = Math.random() < 0.5;
+        const lo = four ? 1000 : 100, hi = four ? 9999 : 999;
+        a = ri(lo, hi); b = ri(lo, hi);
+        if (Math.random() < 0.5) { ans = a + b; text = a + ' + ' + b + ' = ?'; }
+        else {
+          if (b > a) { const t = a; a = b; b = t; }
+          ans = a - b; text = a + ' − ' + b + ' = ?';
+        }
+        cands = [ans + 1, ans - 1, ans + 10, ans - 10, ans + 100, ans - 100,
+                 ans + 1000, ans - 1000];
+      } else if (lvl === 6) {
+        b = ri(2, 12); ans = ri(2, 12); a = b * ans;
+        text = a + ' ÷ ' + b + ' = ?';
+        cands = [ans + 1, ans - 1, ans + 2, ans - 2, b];
+      } else if (lvl === 7) {
+        if (Math.random() < 0.55) {
+          const n = ri(2, 20); ans = n * n; text = n + '² = ?';
+          cands = [(n + 1) * (n + 1), (n - 1) * (n - 1), n * 2, ans + n, ans - n];
+        } else {
+          const n = ri(2, 10); ans = n * n * n; text = n + '³ = ?';
+          cands = [n * n, (n + 1) * (n + 1) * (n + 1), ans + n, ans - n * n];
+        }
+      } else if (lvl === 8) {
+        const n = ri(2, 20); ans = n; text = '√' + (n * n) + ' = ?';
+        cands = [n + 1, n - 1, n + 2, n - 2, Math.max(2, Math.round(n * n / 2))];
+      } else if (lvl === 9) {
+        decimals = true;
+        const at = ri(5, 199), bt = ri(5, 199); /* work in tenths — no float drift */
+        let t;
+        if (Math.random() < 0.5) { t = at + bt; text = (at / 10).toFixed(1) + ' + ' + (bt / 10).toFixed(1) + ' = ?'; }
+        else {
+          const hi = Math.max(at, bt), lo = Math.min(at, bt);
+          t = hi - lo; text = (hi / 10).toFixed(1) + ' − ' + (lo / 10).toFixed(1) + ' = ?';
+        }
+        ans = t / 10;
+        cands = [(t + 1) / 10, (t - 1) / 10, (t + 10) / 10, (t - 10) / 10, (t + 2) / 10];
+      } else {
+        const d = [2, 3, 4, 5, 10][r(5)];
+        const num = ri(1, d - 1);
+        const whole = d * ri(2, 6);
+        ans = whole * num / d;
+        text = num + '/' + d + ' of ' + whole + ' = ?';
+        cands = [ans + 1, ans - 1, whole - ans, Math.round(whole / d), ans + 2];
+      }
+
+      const fmt = decimals
+        ? function (v) { return (Math.round(v * 10) / 10).toFixed(1); }
+        : function (v) { return String(v); };
+      const seen = {};
+      const opts = [fmt(ans)];
+      seen[fmt(ans)] = true;
+      shuffle(cands || []).concat().forEach(function (v) {
+        if (opts.length < 4 && isFinite(v) && v >= 0 && !seen[fmt(v)]) {
+          seen[fmt(v)] = true; opts.push(fmt(v));
+        }
+      });
+      const step = decimals ? 0.1 : 1;
+      for (let k = 1; opts.length < 4; k++) {
+        [ans + k * step, ans - k * step].forEach(function (v) {
+          if (opts.length < 4 && v >= 0 && !seen[fmt(v)]) {
+            seen[fmt(v)] = true; opts.push(fmt(v));
+          }
+        });
+      }
+      return { text: text, ans: fmt(ans), opts: shuffle(opts) };
+    }
+
+    function startMath(lvl) {
+      const steps = [];
+      for (let i = 0; i < 8; i++) steps.push({ type: 'math', p: mathProblem(lvl) });
+      playRound({
+        id: 'math' + lvl, title: '🔢 Math Power-Up',
+        steps: steps, backTo: mathMenu
+      });
+    }
+
+    /* ── round engine ─────────────────────────────────────────────────── */
+
+    let R = null; /* current round */
+
+    function playRound(spec) {
+      R = { spec: spec, idx: 0, firstTry: 0, tries: 0, earned: 0,
+            startPts: P.pts };
+      if (spec.story) { storyIntro(spec); return; }
+      renderStep();
+    }
+
+    function storyIntro(spec) {
+      el.innerHTML = '';
+      el.appendChild(topBar('Stories', spec.backTo));
+      const card = document.createElement('div');
+      card.className = 'wq-storycard';
+      card.innerHTML = '<div class="em">' + spec.story.emoji + '</div>' +
+        '<h2>' + esc(spec.story.title) + '</h2>' +
+        '<div class="txt">' + esc(spec.story.text) + '</div>';
+      el.appendChild(card);
+
+      const say = document.createElement('button');
+      say.className = 'wq-say';
+      say.textContent = '🔊 Read the story to me';
+      say.addEventListener('click', function () { speak(spec.story.text); });
+      el.appendChild(say);
+
+      const go = document.createElement('button');
+      go.className = 'wq-next';
+      go.textContent = 'I am ready! ▶';
+      go.addEventListener('click', function () {
+        try { speechSynthesis.cancel(); } catch (_) {}
+        renderStep();
+      });
+      el.appendChild(go);
+      speak(spec.story.text);
+      window.scrollTo(0, 0);
+    }
+
+    function addPts(n) {
+      P.pts += n;
+      R.earned += n;
+      save();
+      const pill = document.getElementById('wq-pts');
+      if (pill) {
+        pill.textContent = P.pts + ' ⭐';
+        pill.classList.remove('pop');
+        void pill.offsetWidth;
+        pill.classList.add('pop');
+      }
+    }
+
+    function progressDots() {
+      const wrap = document.createElement('div');
+      wrap.className = 'wq-prog';
+      R.spec.steps.forEach(function (_, i) {
+        const d = document.createElement('span');
+        d.className = 'wq-dot' + (i < R.idx ? ' done' : i === R.idx ? ' now' : '');
+        wrap.appendChild(d);
+      });
+      return wrap;
+    }
+
+    function renderStep() {
+      if (R.idx >= R.spec.steps.length) { results(); return; }
+      const step = R.spec.steps[R.idx];
+      R.tries = 0;
+      el.innerHTML = '';
+      el.appendChild(topBar(R.spec.story ? 'Story' : 'Home', function () {
+        (R.spec.backTo || home)();
+      }));
+      el.appendChild(progressDots());
+      if (step.type === 'answer') renderAnswer(step);
+      else if (step.type === 'detective') renderDetective(step);
+      else if (step.type === 'geo') renderGeo(step);
+      else renderMath(step);
+      window.scrollTo(0, 0);
+    }
+
+    function feedbackArea() {
+      const f = document.createElement('div');
+      f.className = 'wq-feedback';
+      f.id = 'wq-fb';
+      el.appendChild(f);
+      return f;
+    }
+
+    function nextButton(label) {
+      const b = document.createElement('button');
+      b.className = 'wq-next';
+      b.textContent = label || 'Next ▶';
+      b.addEventListener('click', function () {
+        try { speechSynthesis.cancel(); } catch (_) {}
+        R.idx++;
+        renderStep();
+      });
+      return b;
+    }
+
+    /* correct: gentle celebrate, teach, show Next. */
+    function onCorrect(fb, teachLines, spokenAnswer) {
+      const first = R.tries === 0;
+      if (first) R.firstTry++;
+      addPts(first ? 2 : 1);
+      sfx('good');
+      const praise = pick(PRAISE);
+      fb.innerHTML = '<span class="praise">' + praise + '</span>' +
+        '<span class="wq-pill pts" style="margin-left:0.6rem">+' + (first ? 2 : 1) + ' ⭐</span>' +
+        '<div class="wq-teach">' + teachLines.map(esc).join('<br>') + '</div>';
+      speak((spokenAnswer ? spokenAnswer + '. ' : '') + praise);
+      fb.after(nextButton(R.idx + 1 >= R.spec.steps.length ? 'Finish 🏁' : 'Next ▶'));
+    }
+
+    function onWrong(fb, btnEl, correctBtn, teachLines, correctSpoken) {
+      R.tries++;
+      sfx('soft');
+      btnEl.classList.add('miss');
+      setTimeout(function () { btnEl.classList.remove('miss'); btnEl.classList.add('dim'); }, 380);
+      btnEl.disabled = true;
+      if (R.tries === 1) {
+        fb.innerHTML = '<span class="again">Not that one — try again! 💛</span>';
+        speak('Not that one. Try again!');
+      } else {
+        /* second miss: reveal the answer, teach, move on */
+        correctBtn.classList.add('good');
+        Array.prototype.forEach.call(el.querySelectorAll('.wq-opt'), function (o) {
+          o.disabled = true;
+          if (o !== correctBtn) o.classList.add('dim');
+        });
+        addPts(1); /* still rewards finishing — no failure state */
+        fb.innerHTML = '<span class="again">Here it is! 👀</span>' +
+          '<div class="wq-teach">' + teachLines.map(esc).join('<br>') + '</div>';
+        speak('Here is the answer. ' + correctSpoken);
+        fb.after(nextButton(R.idx + 1 >= R.spec.steps.length ? 'Finish 🏁' : 'Next ▶'));
+      }
+    }
+
+    /* ── step: picture question (worlds + stories) ────────────────────── */
+
+    function renderAnswer(step) {
+      const q = step.q;
+      const m = WH[q.wh];
+
+      /* keep the story visible next to its questions so he can re-read */
+      if (step.story) {
+        const mini = document.createElement('div');
+        mini.className = 'wq-storymini';
+        const ttl = document.createElement('div');
+        ttl.className = 'ttl';
+        ttl.innerHTML = '<span>' + step.story.emoji + ' ' +
+          esc(step.story.title) + '</span>';
+        const rb = document.createElement('button');
+        rb.textContent = '🔊 Read';
+        rb.addEventListener('click', function () { speak(step.story.text); });
+        ttl.appendChild(rb);
+        mini.appendChild(ttl);
+        mini.appendChild(document.createTextNode(step.story.text));
+        el.appendChild(mini);
+      }
+
+      if (q.scene) {
+        const sc = document.createElement('div');
+        sc.className = 'wq-scene';
+        sc.textContent = q.scene;
+        el.appendChild(sc);
+      }
+
+      const qEl = document.createElement('div');
+      qEl.className = 'wq-q';
+      qEl.style.setProperty('--wc', m.color);
+      qEl.innerHTML = qHtml(q);
+      el.appendChild(qEl);
+
+      const say = document.createElement('button');
+      say.className = 'wq-say';
+      say.textContent = '🔊 Read it to me';
+      say.addEventListener('click', function () { speak(q.q); });
+      el.appendChild(say);
+
+      const opts = document.createElement('div');
+      opts.className = 'wq-opts';
+      const fbHolder = { fb: null };
+      let correctBtn = null;
+      const teach = [m.teach].concat(q.teach ? [q.teach] : []);
+      const correctOpt = q.opts.filter(function (o) { return o[2]; })[0];
+
+      shuffle(q.opts).forEach(function (o) {
+        const b = document.createElement('button');
+        b.className = 'wq-opt';
+        b.innerHTML = '<span class="em">' + o[0] + '</span><span>' + esc(o[1]) + '</span>';
+        if (o[2]) correctBtn = b;
+        b.addEventListener('click', function () {
+          if (!fbHolder.fb) fbHolder.fb = document.getElementById('wq-fb');
+          if (o[2]) {
+            Array.prototype.forEach.call(opts.children, function (x) { x.disabled = true; });
+            b.classList.add('good');
+            onCorrect(fbHolder.fb, teach, o[1]);
+          } else {
+            onWrong(fbHolder.fb, b, correctBtn, teach, correctOpt[1]);
+          }
+        });
+        opts.appendChild(b);
+      });
+      el.appendChild(opts);
+      feedbackArea();
+      speak(q.q);
+    }
+
+    /* ── step: detective (find the hidden WH word) ────────────────────── */
+
+    function renderDetective(step) {
+      const q = step.q;
+      const m = WH[q.wh];
+      const rest = q.q.replace(/^\S+\s*/, '');
+      const correctOpt = q.opts.filter(function (o) { return o[2]; })[0];
+
+      if (q.scene) {
+        const sc = document.createElement('div');
+        sc.className = 'wq-scene';
+        sc.textContent = q.scene;
+        el.appendChild(sc);
+      }
+
+      const qEl = document.createElement('div');
+      qEl.className = 'wq-q';
+      qEl.style.setProperty('--wc', m.color);
+      qEl.innerHTML = '<span class="blank" id="wq-blank">?????</span> ' + esc(rest);
+      el.appendChild(qEl);
+
+      const lab = document.createElement('div');
+      lab.className = 'wq-anslabel';
+      lab.textContent = 'The answer is';
+      el.appendChild(lab);
+
+      const ans = document.createElement('div');
+      ans.className = 'wq-anscard';
+      ans.innerHTML = '<span class="em">' + correctOpt[0] + '</span>' + esc(correctOpt[1]);
+      el.appendChild(ans);
+
+      const say = document.createElement('button');
+      say.className = 'wq-say';
+      say.textContent = '🔊 Read it to me';
+      const spokenPuzzle = 'Hmm ' + rest + ' The answer is: ' + correctOpt[1] +
+        '. Which question word is hiding?';
+      say.addEventListener('click', function () { speak(spokenPuzzle); });
+      el.appendChild(say);
+
+      const opts = document.createElement('div');
+      opts.className = 'wq-opts chips';
+      let correctBtn = null;
+      const teach = [m.teach];
+
+      WH_ORDER.forEach(function (wh) {
+        const wm = WH[wh];
+        const b = document.createElement('button');
+        b.className = 'wq-opt chip';
+        b.style.setProperty('--wc', wm.color);
+        b.innerHTML = '<span class="em">' + wm.emoji + '</span>' + wm.name;
+        if (wh === q.wh) correctBtn = b;
+        b.addEventListener('click', function () {
+          const fb = document.getElementById('wq-fb');
+          if (wh === q.wh) {
+            Array.prototype.forEach.call(opts.children, function (x) { x.disabled = true; });
+            b.classList.add('good');
+            document.getElementById('wq-blank').textContent = m.name;
+            onCorrect(fb, teach, m.name + ' ' + rest.replace(/\?$/, ''));
+          } else {
+            onWrong(fb, b, correctBtn, teach, 'The word is ' + m.name + '.');
+          }
+        });
+        opts.appendChild(b);
+      });
+      el.appendChild(opts);
+      feedbackArea();
+      speak(spokenPuzzle);
+    }
+
+    /* ── step: math power-up ──────────────────────────────────────────── */
+
+    function renderMath(step) {
+      const p = step.p;
+
+      const sc = document.createElement('div');
+      sc.className = 'wq-scene';
+      sc.textContent = '🔢';
+      el.appendChild(sc);
+
+      const qEl = document.createElement('div');
+      qEl.className = 'wq-q';
+      qEl.style.fontSize = '2rem';
+      qEl.textContent = p.text;
+      el.appendChild(qEl);
+
+      const say = document.createElement('button');
+      say.className = 'wq-say';
+      say.textContent = '🔊 Read it to me';
+      const spoken = p.text
+        .replace(/−/g, ' minus ').replace(/×/g, ' times ')
+        .replace(/÷/g, ' divided by ')
+        .replace(/√(\d+)/g, 'the square root of $1')
+        .replace(/(\d+)²/g, '$1 squared').replace(/(\d+)³/g, '$1 cubed')
+        .replace(/(\d+)\/(\d+)/g, '$1 over $2')
+        .replace(/(\d)\.(\d)/g, '$1 point $2')
+        .replace('?', 'what').replace('=', 'equals');
+      say.addEventListener('click', function () { speak(spoken); });
+      el.appendChild(say);
+
+      const opts = document.createElement('div');
+      opts.className = 'wq-opts nums';
+      let correctBtn = null;
+      p.opts.forEach(function (v) {
+        const b = document.createElement('button');
+        b.className = 'wq-opt num';
+        b.textContent = v;
+        if (v === p.ans) correctBtn = b;
+        b.addEventListener('click', function () {
+          const fb = document.getElementById('wq-fb');
+          if (v === p.ans) {
+            Array.prototype.forEach.call(opts.children, function (x) { x.disabled = true; });
+            b.classList.add('good');
+            onCorrect(fb, [p.text.replace('?', String(p.ans))], String(p.ans));
+          } else {
+            onWrong(fb, b, correctBtn,
+                    [p.text.replace('?', String(p.ans))], 'It is ' + p.ans + '.');
+          }
+        });
+        opts.appendChild(b);
+      });
+      el.appendChild(opts);
+      feedbackArea();
+    }
+
+    /* ── step: states & capitals ──────────────────────────────────────── */
+
+    function renderGeo(step) {
+      const state = step.s[0], cap = step.s[1];
+      const qText = step.mode === 'cap'
+        ? 'What is the capital of ' + state + '?'
+        : cap + ' is the capital of which state?';
+      const teach = [cap + ' is the capital of ' + state + '.'];
+
+      const sc = document.createElement('div');
+      sc.className = 'wq-scene';
+      sc.textContent = step.mode === 'cap' ? '🗺️⭐' : '⭐🗺️';
+      el.appendChild(sc);
+
+      const qEl = document.createElement('div');
+      qEl.className = 'wq-q';
+      qEl.textContent = qText;
+      el.appendChild(qEl);
+
+      const say = document.createElement('button');
+      say.className = 'wq-say';
+      say.textContent = '🔊 Read it to me';
+      say.addEventListener('click', function () { speak(qText); });
+      el.appendChild(say);
+
+      const opts = document.createElement('div');
+      opts.className = 'wq-opts';
+      let correctBtn = null;
+      step.opts.forEach(function (name) {
+        const b = document.createElement('button');
+        b.className = 'wq-opt';
+        b.style.justifyContent = 'center';
+        b.textContent = name;
+        if (name === step.correct) correctBtn = b;
+        b.addEventListener('click', function () {
+          const fb = document.getElementById('wq-fb');
+          if (name === step.correct) {
+            Array.prototype.forEach.call(opts.children, function (x) { x.disabled = true; });
+            b.classList.add('good');
+            onCorrect(fb, teach, teach[0]);
+          } else {
+            onWrong(fb, b, correctBtn, teach, teach[0]);
+          }
+        });
+        opts.appendChild(b);
+      });
+      el.appendChild(opts);
+      feedbackArea();
+      speak(qText);
+    }
+
+    /* ── results ──────────────────────────────────────────────────────── */
+
+    function results() {
+      const total = R.spec.steps.length;
+      const nStars = R.firstTry >= total ? 3 : R.firstTry >= Math.ceil(total * 0.6) ? 2 : 1;
+      const prevBest = P.stars[R.spec.id] || 0;
+      if (nStars > prevBest) P.stars[R.spec.id] = nStars;
+
+      save();
+
+      el.innerHTML = '';
+      el.appendChild(topBar('Home', home));
+
+      const box = document.createElement('div');
+      box.className = 'wq-results';
+      box.innerHTML = '<div class="em">🏁</div><h2>' + esc(R.spec.title) + ' — done!</h2>' +
+        '<div class="wq-starrow">' +
+        [1, 2, 3].map(function (i) {
+          return '<span' + (i <= nStars ? ' class="on"' : '') + '>★</span>';
+        }).join('') + '</div>';
+
+      /* count-up with explicit arithmetic — numbers are the reward */
+      const mathline = document.createElement('div');
+      mathline.className = 'wq-mathline';
+      mathline.id = 'wq-count';
+      box.appendChild(mathline);
+
+      const btns = document.createElement('div');
+      btns.className = 'wq-resbtns';
+      const again = document.createElement('button');
+      again.className = 'wq-bigbtn go';
+      again.textContent = '🔁 Play again';
+      again.addEventListener('click', function () {
+        const spec = R.spec;
+        if (spec.id.indexOf('math') === 0) startMath(parseInt(spec.id.slice(4), 10));
+        else if (spec.id === 'det') startDetective();
+        else if (spec.id.indexOf('geo') === 0) startGeo(spec.id.slice(3));
+        else if (spec.id.indexOf('story') === 0) {
+          startStory(spec.story, parseInt(spec.id.slice(5), 10));
+        } else startWorld(spec.id);
+      });
+      btns.appendChild(again);
+      const homeB = document.createElement('button');
+      homeB.className = 'wq-bigbtn';
+      homeB.textContent = '🏠 Home';
+      homeB.addEventListener('click', home);
+      btns.appendChild(homeB);
+      box.appendChild(btns);
+      el.appendChild(box);
+
+      sfx('star');
+      if (nStars === 3) burst();
+      speak('All done! You earned ' + R.earned + ' stars. ' +
+            R.startPts + ' plus ' + R.earned + ' makes ' + P.pts + '!');
+
+      /* animate: "37 + 12 = 49 ⭐" counting up */
+      const target = P.pts;
+      let shown = R.startPts;
+      const cnt = document.getElementById('wq-count');
+      function tick() {
+        cnt.textContent = R.startPts + ' + ' + R.earned + ' = ' +
+          shown + (shown === target ? ' ⭐' : '…');
+        if (shown < target) {
+          shown++;
+          sfx('tick');
+          setTimeout(tick, 160);
+        }
+      }
+      tick();
+      window.scrollTo(0, 0);
+    }
+
+    /* ── boot ─────────────────────────────────────────────────────────── */
+
+    function boot(data) {
+      DATA = data;
+      home();
+    }
+
+    return { boot: boot };
+  })();
+
+  init();
+})();
+</script>
