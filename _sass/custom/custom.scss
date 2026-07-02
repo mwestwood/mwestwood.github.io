@@ -1,41 +1,139 @@
 // ============================================================================
-//  Custom theme overrides — readability + polish on top of Just the Docs (dark)
+//  "Night study" — the site's design system, layered over Just the Docs (dark)
 //  Loaded LAST in the cascade, so everything here wins.
+//
+//  Principles:
+//    1. Readability first — generous measure, high contrast, calm surfaces.
+//    2. One warm accent (amber) for structure + emphasis, one cool (blue)
+//       for hyperlinks, one ember (rose-orange) reserved for gradients.
+//    3. Serif display headings (Fraunces) over a sans reading face (Inter).
+//    4. Every decorative effect degrades gracefully and respects
+//       prefers-reduced-motion.
 // ============================================================================
 
-// --- Accent palette -------------------------------------------------------
-// One warm accent for emphasis + structure, one cool accent for links.
-// Exposed as CSS variables so they're trivial to retune later.
 :root {
+  color-scheme: dark;
+
   --accent:        #e2b04a; // warm amber — emphasis, rules, structure marks
   --accent-soft:   rgba(226, 176, 74, 0.14);
   --accent-line:   rgba(226, 176, 74, 0.45);
+  --ember:         #e2764a; // rose-orange — gradient partner, never solo text
   --link:          #6ba8ff; // cool blue — hyperlinks
   --link-hover:    #9cc4ff;
-  --ink:           #e8e6ea; // primary reading text (brighter than theme default)
-  --ink-soft:      #b8b5bf; // secondary text
-  --surface:       #2d2c33; // raised card surface
-  --surface-line:  #3c3a44; // hairline borders
+  --ink:           #eceaf1; // primary reading text
+  --ink-soft:      #b6b2c0; // secondary text
+  --ink-faint:     #8b8797; // tertiary / metadata
+  --bg:            #1e1d24; // page
+  --bg-deep:       #191820; // sidebar / chrome
+  --surface:       #26252d; // raised card surface
+  --surface-2:     #2d2c35; // higher elevation
+  --surface-line:  #3a3844; // hairline borders
+
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  // Bridge tokens for standalone layouts (password gate, arcade) that read
+  // var(--…) with light fallbacks — defining them here themes those too.
+  --body-background-color: var(--bg);
+  --body-text-color: var(--ink);
+  --sidebar-color: var(--bg-deep);
+  --border-color: var(--surface-line);
+  --links-color: var(--accent);
+}
+
+// Cross-fade between page navigations (progressive enhancement; Chromium +
+// Safari 18+; other browsers simply ignore it).
+@view-transition {
+  navigation: auto;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 4.5rem; // clear the sticky header on anchor jumps
+  }
 }
 
 // ============================================================================
-//  Base typography
+//  Base canvas — aurora glow + film grain, all behind the text
 // ============================================================================
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-body);
   line-height: 1.7;
-  // Subtle depth so the page never reads as a flat slab.
-  background-color: #232228;
+  background-color: var(--bg);
+  // Layer 1: film grain (SVG turbulence, tiled, ~4% — texture, not noise).
+  // Layers 2–4: three aurora pools — amber (top right), blue (top left),
+  // violet (deep bottom). All fixed so the page glides over them.
   background-image:
-    radial-gradient(900px 480px at 78% -8%, rgba(226, 176, 74, 0.06), transparent 70%),
-    radial-gradient(720px 420px at 8% 0%, rgba(107, 168, 255, 0.05), transparent 70%);
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"),
+    radial-gradient(1000px 520px at 82% -10%, rgba(226, 176, 74, 0.07), transparent 70%),
+    radial-gradient(800px 460px at 4% -4%, rgba(107, 168, 255, 0.055), transparent 70%),
+    radial-gradient(900px 600px at 50% 118%, rgba(140, 100, 255, 0.05), transparent 72%);
   background-attachment: fixed;
+  background-blend-mode: overlay, normal, normal, normal;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
-// The reading column: larger, calmer, higher-contrast text.
+// Comfortable text selection in the accent colour.
+::selection {
+  background: rgba(226, 176, 74, 0.28);
+  color: #fff;
+}
+
+// Slim, rounded scrollbars that match the chrome.
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface-line) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface-line);
+  border-radius: 6px;
+  border: 2px solid var(--bg);
+
+  &:hover {
+    background: #4a4756;
+  }
+}
+
+// Visible, consistent keyboard focus.
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+// Reading progress — the element is injected by head_custom.html.
+#reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 120;
+  pointer-events: none;
+  transform: scaleX(0);
+  transform-origin: 0 0;
+  background: linear-gradient(90deg, var(--accent), var(--ember) 55%, var(--link));
+  box-shadow: 0 0 8px rgba(226, 176, 74, 0.35);
+}
+
+// ============================================================================
+//  The reading column — larger, calmer, higher-contrast text
+// ============================================================================
+
 .main-content {
   color: var(--ink);
   font-size: 1.0625rem; // ~17px
@@ -49,40 +147,41 @@ body {
   // Lead-in: the opening paragraph reads bigger, like a magazine deck.
   // Content convention is `# Title` / `---` / opening paragraph, so the lead
   // is the <p> right after the title's rule (with a plain `h1 + p` fallback).
-  // The author's `---` itself is always preserved and rendered as a separator.
   h1 + hr + p,
   h1 + p {
-    font-size: 1.18rem;
-    line-height: 1.7;
+    font-size: 1.2rem;
+    line-height: 1.68;
     color: var(--ink);
   }
 }
 
-// Comfortable text selection in the accent colour.
-::selection {
-  background: rgba(226, 176, 74, 0.28);
-  color: #fff;
+// Deep-link feedback: when an anchor (#word, #section) is followed, the
+// target flashes amber and fades — you always know where you landed.
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes target-flash {
+    0% { background-color: var(--accent-soft); box-shadow: 0 0 0 6px var(--accent-soft); }
+    100% { background-color: transparent; box-shadow: 0 0 0 6px transparent; }
+  }
+
+  .main-content :target {
+    animation: target-flash 1.8s ease-out 1;
+    border-radius: 6px;
+  }
 }
 
 // ============================================================================
-//  Layout — turn the nav into a clean fixed rail, centre the reading column
+//  Layout — fixed nav rail, centred reading column
 // ============================================================================
-//
-//  Out of the box, Just the Docs expands the sidebar to ~450px on wide screens
-//  and right-aligns the nav inside it. Because the sidebar is the same colour
-//  as the page, that empty half reads as dead space — the "wide unused gutters"
-//  problem. Here we pin the rail to a fixed width, give it a distinct surface,
-//  and centre the content column in the space beside it with balanced margins.
 
 .side-bar {
-  background-color: #1f1e24; // a touch deeper than the page — a real panel
-  border-right: 1px solid var(--surface-line);
+  background-color: var(--bg-deep);
+  border-right: 1px solid rgba(255, 255, 255, 0.055);
 }
 
 // lg breakpoint = $content-width (55rem) + $nav-width (16.5rem) = 71.5rem
 @media (min-width: 71.5rem) {
   .side-bar {
-    width: 16.5rem;        // fixed rail instead of expanding to ~28rem
+    width: 16.5rem; // fixed rail instead of expanding to ~28rem
     min-width: 16.5rem;
   }
 
@@ -92,40 +191,68 @@ body {
   }
 }
 
+// Sticky glass header: search + aux links float over the content on scroll.
+.main-header {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  background: rgba(30, 29, 36, 0.72);
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  backdrop-filter: blur(14px) saturate(1.5);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+// Mobile chrome matches the rail.
+.site-header {
+  background: var(--bg-deep);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+}
+
 // ============================================================================
-//  Headings — clear hierarchy with quiet structural marks
+//  Headings — Fraunces display serif over the Inter reading face
 // ============================================================================
 
 .main-content {
   h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
+  h2 {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
     color: #f3f1f5;
-    letter-spacing: -0.01em;
+    letter-spacing: 0;
   }
 
   h1 {
-    font-weight: 700;
-    font-size: 2.35rem;
-    line-height: 1.15;
-    margin-top: 0.6em;
-    margin-bottom: 0.5em;
-    background: linear-gradient(92deg, #ffffff 0%, #d7d3dd 100%);
+    font-weight: 640;
+    font-size: 2.6rem;
+    line-height: 1.12;
+    margin-top: 0.55em;
+    margin-bottom: 0.45em;
+    background: linear-gradient(105deg, #fdfcf9 0%, #ece5d2 58%, var(--accent) 135%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 
   h2 {
-    font-weight: 650;
-    font-size: 1.6rem;
-    line-height: 1.25;
+    font-weight: 600;
+    font-size: 1.7rem;
+    line-height: 1.22;
     margin-top: 2em;
-    padding-bottom: 0.3em;
+    padding-bottom: 0.35em;
     border-bottom: 1px solid var(--surface-line);
+    // Short amber signature under the first few characters.
+    background-image: linear-gradient(90deg, var(--accent), var(--ember));
+    background-repeat: no-repeat;
+    background-size: 3.25rem 2px;
+    background-position: 0 100%;
+  }
+
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: #f3f1f5;
+    letter-spacing: -0.01em;
   }
 
   h3 {
@@ -138,6 +265,14 @@ body {
   h4 {
     color: var(--accent);
     font-size: 0.82rem;
+    letter-spacing: 0.09em;
+  }
+
+  // Heading anchor links (hover ¶): quiet until wanted.
+  .anchor-heading {
+    svg {
+      color: var(--accent);
+    }
   }
 }
 
@@ -156,6 +291,21 @@ body {
   color: #f1ede4;
   font-size: 1.12rem;
   line-height: 1.6;
+  overflow: hidden;
+
+  // Oversized typographic quote, ghosted into the corner.
+  &::after {
+    content: "\201C";
+    position: absolute;
+    top: -0.28em;
+    right: 0.12em;
+    font-family: var(--font-display);
+    font-size: 4.6em;
+    line-height: 1;
+    color: var(--accent);
+    opacity: 0.09;
+    pointer-events: none;
+  }
 
   p {
     margin-bottom: 0.6em;
@@ -171,6 +321,7 @@ body {
     color: var(--accent);
     font-style: italic;
     font-weight: 700;
+    text-shadow: 0 0 22px rgba(226, 176, 74, 0.25);
   }
 }
 
@@ -190,6 +341,24 @@ body {
     color: var(--accent);
     font-weight: 700;
     font-style: italic;
+  }
+
+  mark {
+    background: var(--accent-soft);
+    color: #f3e7cf;
+    padding: 0.05em 0.3em;
+    border-radius: 4px;
+  }
+
+  kbd {
+    font-family: var(--font-mono);
+    font-size: 0.8em;
+    padding: 0.12em 0.5em;
+    background: var(--surface-2);
+    border: 1px solid var(--surface-line);
+    border-bottom-width: 2px;
+    border-radius: 6px;
+    color: var(--ink);
   }
 }
 
@@ -212,18 +381,23 @@ body {
 }
 
 // ============================================================================
-//  Links
+//  Links — animated underline that grows on hover
 // ============================================================================
 
-.main-content a:not(.btn) {
+.main-content a:not(.btn):not(.anchor-heading) {
   color: var(--link);
   text-decoration: none;
+  background-image: linear-gradient(90deg, var(--link-hover), var(--link-hover));
+  background-repeat: no-repeat;
+  background-size: 0% 1px;
+  background-position: 0 100%;
   border-bottom: 1px solid rgba(107, 168, 255, 0.3);
-  transition: color 0.15s ease, border-color 0.15s ease;
+  transition: color 0.15s ease, background-size 0.2s ease, border-color 0.15s ease;
 
   &:hover {
     color: var(--link-hover);
-    border-bottom-color: var(--link-hover);
+    background-size: 100% 1px;
+    border-bottom-color: transparent;
   }
 }
 
@@ -260,11 +434,12 @@ body {
 
 .main-content {
   code {
+    font-family: var(--font-mono);
     background: rgba(226, 176, 74, 0.12);
     color: #f3d79a;
     padding: 0.12em 0.4em;
     border-radius: 5px;
-    font-size: 0.86em;
+    font-size: 0.84em;
   }
 
   pre {
@@ -307,20 +482,151 @@ body {
   tbody tr:nth-child(even) {
     background: rgba(255, 255, 255, 0.022);
   }
+
+  tbody tr {
+    transition: background 0.12s ease;
+
+    &:hover {
+      background: rgba(226, 176, 74, 0.055);
+    }
+  }
 }
 
 // ============================================================================
-//  Sidebar — make the active page and site title feel intentional
+//  Sidebar navigation — a real instrument panel
 // ============================================================================
 
 .site-title {
   font-weight: 700 !important;
   letter-spacing: -0.01em;
+
+  // The site mark: a small amber gem before the title.
+  &::before {
+    content: "";
+    display: inline-block;
+    width: 0.55rem;
+    height: 0.55rem;
+    margin-right: 0.15rem;
+    border-radius: 2px;
+    background: linear-gradient(135deg, var(--accent), var(--ember));
+    transform: rotate(45deg) translateY(-1px);
+    box-shadow: 0 0 12px rgba(226, 176, 74, 0.4);
+  }
 }
 
-.nav-list .nav-list-item .nav-list-link.active {
-  font-weight: 600;
-  box-shadow: inset 3px 0 0 var(--accent);
+.nav-list .nav-list-item {
+  .nav-list-link {
+    border-radius: 8px;
+    transition: background-color 0.12s ease, color 0.12s ease;
+
+    &:hover {
+      background-image: none;
+      background-color: rgba(255, 255, 255, 0.045);
+    }
+
+    &.active {
+      font-weight: 600;
+      color: #f3e7cf;
+      background-image: none;
+      background-color: var(--accent-soft);
+      box-shadow: inset 3px 0 0 var(--accent);
+    }
+  }
+
+  .nav-list-expander {
+    color: var(--accent);
+    border-radius: 8px;
+
+    &:hover {
+      background-image: none;
+      background-color: rgba(255, 255, 255, 0.045);
+    }
+  }
+}
+
+// Search: a proper command bar.
+.search-input {
+  background: var(--surface) !important;
+  border: 1px solid var(--surface-line);
+  border-radius: 10px;
+  color: var(--ink);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(226, 176, 74, 0.16);
+  }
+}
+
+.search-label .search-icon {
+  color: var(--ink-faint);
+}
+
+.search-results {
+  background: var(--surface-2);
+  border: 1px solid var(--surface-line);
+  border-radius: 12px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+}
+
+.search-result {
+  &:hover,
+  &.active {
+    background: rgba(226, 176, 74, 0.08);
+  }
+}
+
+.search-result-highlight {
+  color: var(--accent);
+}
+
+.search-result-title {
+  color: var(--ink);
+}
+
+.search-result-rel-url {
+  color: var(--ink-faint);
+}
+
+// Breadcrumbs: quiet uppercase micro-navigation.
+.breadcrumb-nav-list-item {
+  font-size: 0.72rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+
+  a {
+    color: var(--ink-faint);
+
+    &:hover {
+      color: var(--accent);
+    }
+  }
+}
+
+// Buttons + back-to-top pill.
+.btn {
+  border-radius: 8px;
+}
+
+a[href="#top"] {
+  display: inline-block;
+  padding: 0.3rem 0.95rem;
+  border: 1px solid var(--surface-line);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  text-decoration: none;
+  font-size: 0.82rem;
+  transition: border-color 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background-image: none;
+  }
+}
+
+.site-footer {
+  color: var(--ink-faint);
 }
 
 // ============================================================================
@@ -364,7 +670,7 @@ body {
 }
 
 #gate-password {
-  background: #232228 !important;
+  background: var(--bg) !important;
   border: 1px solid var(--surface-line) !important;
   border-radius: 9px !important;
   color: var(--ink) !important;
@@ -417,13 +723,21 @@ body {
   padding: 1.3rem 1.6rem 1.45rem;
   margin: 1.5rem 0;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.28);
+  transition: border-color 0.15s ease, transform 0.15s ease;
+
+  &:hover {
+    border-color: var(--accent-line);
+  }
 
   // The word itself is the card title — no big top gap, accent colour.
   h3 {
     margin-top: 0;
     margin-bottom: 0.1rem;
     color: var(--accent);
-    font-size: 1.4rem;
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    font-weight: 600;
+    font-size: 1.5rem;
   }
 
   // "part of speech · say it" line, right under the title.
@@ -597,6 +911,45 @@ body {
 }
 
 // ============================================================================
+//  Print — clean paper output: no chrome, no effects, black on white
+// ============================================================================
+
+@media print {
+  body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  .side-bar,
+  .main-header,
+  .site-header,
+  #reading-progress,
+  .floating-toc,
+  a[href="#top"] {
+    display: none !important;
+  }
+
+  .side-bar + .main {
+    margin-left: 0 !important;
+  }
+
+  .main-content {
+    color: #111;
+
+    h1 {
+      -webkit-text-fill-color: initial;
+      background: none;
+      color: #000;
+    }
+
+    blockquote {
+      background: #f6f2e8;
+      color: #222;
+    }
+  }
+}
+
+// ============================================================================
 //  Responsive tightening
 // ============================================================================
 
@@ -605,14 +958,14 @@ body {
     font-size: 1rem;
     line-height: 1.72;
 
-    h1 { font-size: 1.95rem; }
-    h2 { font-size: 1.4rem; }
+    h1 { font-size: 2rem; }
+    h2 { font-size: 1.45rem; }
     h3 { font-size: 1.18rem; }
 
     .word-card {
       padding: 1.1rem 1.15rem 1.2rem;
 
-      h3 { font-size: 1.25rem; }
+      h3 { font-size: 1.3rem; }
     }
   }
 }
