@@ -330,9 +330,19 @@ Built to teach WH-questions (who/what/where/why/how) to a young autistic
 learner who loves numbers, so keep its design rules when editing:
 
 - **Question worlds** — every WH word has a fixed color + icon
-  (speech-therapy convention); level 1 questions use cross-category foils
-  (a WHO question offers a person, a thing, a place — teaches
-  "who = person"), level 2 uses same-category foils.
+  (speech-therapy convention). Each world opens a 3-tier level picker:
+  Beginner (lvl 1–2), Intermediate (lvl 3), Advanced (lvl 4), with
+  separate stars per tier (star ids: `who`, `whoi`, `whoa`). Levels in
+  `wh_data.py`: lvl 1 cross-category foils (teaches "who = person"),
+  lvl 2 same-category foils, lvl 3 richer everyday language across many
+  settings (school, store, doctor, airport…), lvl 4 has 4 answer choices
+  and teaches inference from clues, feelings/perspective, sequences,
+  safety and social reasoning, and "how do you know…" questions.
+- **Scene photos** — lvl 3–4 questions may set `img: "<key>"` referencing
+  `SCENE_IMAGES` in `wh_data.py` (CC0/public-domain photos in
+  `assets/images/wh/`, ≤640px wide). The build resolves keys to paths and
+  silently drops unknown keys; the engine shows the photo instead of the
+  emoji scene and falls back to the emoji if the photo fails to load.
 - **Autism-friendly engine** (in `_layouts/protected-wh.html`): no timers,
   nothing auto-advances (big Next button), identical layout every question,
   questions auto-read via speechSynthesis (toggleable), quiet sine-tone

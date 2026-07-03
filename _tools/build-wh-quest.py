@@ -41,6 +41,11 @@ def pack_q(q):
     for k in ("lvl", "scene", "teach"):
         if q.get(k):
             out[k] = q[k]
+    # resolve scene-photo key -> site path; unknown keys are dropped so a
+    # missing photo can never break the page
+    img = data.SCENE_IMAGES.get(q.get("img"))
+    if img:
+        out["img"] = img
     return out
 
 

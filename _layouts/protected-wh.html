@@ -162,6 +162,9 @@ layout: default
   }
   .wq-scene { text-align: center; font-size: 3.4rem; line-height: 1.25;
               margin: 0.8rem 0 0.4rem; letter-spacing: 0.3rem; }
+  .wq-photo { display: block; max-width: 420px; width: 100%;
+              border-radius: 14px; margin: 0.9rem auto 0.5rem;
+              border: 1px solid var(--line); }
   .wq-q { text-align: center; font-size: 1.45rem; font-weight: 700;
           line-height: 1.5; max-width: 620px; margin: 0 auto 0.4rem; }
   .wq-q .blank { color: var(--wc, #facc15); border-bottom: 3px dashed;
@@ -720,11 +723,14 @@ layout: default
         const b = document.createElement('button');
         b.className = 'wq-world';
         b.style.setProperty('--wc', m.color);
+        const earned = (P.stars[wh] || 0) + (P.stars[wh + 'i'] || 0) +
+                       (P.stars[wh + 'a'] || 0);
         b.innerHTML = '<span class="em">' + m.emoji + '</span>' +
           '<span><span class="name">' + m.name + '</span>' +
           '<div class="tag">' + esc(m.tag) + '</div>' +
-          '<div class="st">' + stars3(P.stars[wh] || 0) + '</div></span>';
-        b.addEventListener('click', function () { startWorld(wh); });
+          '<div class="st">' + (earned ? '★ ' + earned + ' / 9' : '☆ ☆ ☆') +
+          '</div></span>';
+        b.addEventListener('click', function () { worldMenu(wh); });
         worlds.appendChild(b);
       });
       el.appendChild(worlds);
@@ -895,15 +901,65 @@ layout: default
 
     /* ── round construction ───────────────────────────────────────────── */
 
-    function startWorld(wh) {
+    /* three difficulty tiers per world; star ids: 'who', 'whoi', 'whoa' */
+    const TIERS = [
+      { key: '',  em: '🌱', name: 'Beginner',
+        desc: 'Warm up — learn what each question word means.' },
+      { key: 'i', em: '🌿', name: 'Intermediate',
+        desc: 'Everyday places: school, store, doctor, airport…' },
+      { key: 'a', em: '🌳', name: 'Advanced',
+        desc: 'Detective thinking — clues, feelings and 4 choices!' }
+    ];
+
+    function worldMenu(wh) {
+      const m = WH[wh];
+      el.innerHTML = '';
+      el.appendChild(topBar('Home', home));
+      const hero = document.createElement('div');
+      hero.className = 'wq-hero';
+      hero.innerHTML = '<h1>' + m.emoji + ' ' + m.name + ' World</h1>' +
+        '<p>' + esc(m.teach) + ' Pick your level!</p>';
+      el.appendChild(hero);
+
+      const grid = document.createElement('div');
+      grid.className = 'wq-cards';
+      TIERS.forEach(function (t) {
+        const b = document.createElement('button');
+        b.className = 'wq-card';
+        b.innerHTML = '<div class="em">' + t.em + '</div>' +
+          '<div class="name">' + esc(t.name) + '</div>' +
+          '<div class="desc">' + esc(t.desc) + '</div>' +
+          '<div class="st">' + stars3(P.stars[wh + t.key] || 0) + '</div>';
+        b.addEventListener('click', function () { startWorld(wh, t.key); });
+        grid.appendChild(b);
+      });
+      el.appendChild(grid);
+      window.scrollTo(0, 0);
+    }
+
+    function startWorld(wh, tier) {
       const pool = DATA.questions.filter(function (q) { return q.wh === wh; });
-      const easy = shuffle(pool.filter(function (q) { return (q.lvl || 1) === 1; }));
-      const hard = shuffle(pool.filter(function (q) { return (q.lvl || 1) > 1; }));
-      const qs = easy.slice(0, 4).concat(hard.slice(0, 4));
+      let qs;
+      if (tier === 'i') {
+        qs = shuffle(pool.filter(function (q) { return (q.lvl || 1) === 3; }))
+          .slice(0, 8);
+      } else if (tier === 'a') {
+        qs = shuffle(pool.filter(function (q) { return (q.lvl || 1) === 4; }))
+          .slice(0, 8);
+      } else {
+        const easy = shuffle(pool.filter(function (q) { return (q.lvl || 1) === 1; }));
+        const hard = shuffle(pool.filter(function (q) { return (q.lvl || 1) === 2; }));
+        qs = easy.slice(0, 4).concat(hard.slice(0, 4));
+      }
+      const tname = tier === 'i' ? ' · Intermediate'
+                  : tier === 'a' ? ' · Advanced' : '';
       playRound({
-        id: wh, title: WH[wh].emoji + ' ' + WH[wh].name + ' World',
+        id: wh + (tier || ''),
+        title: WH[wh].emoji + ' ' + WH[wh].name + ' World' + tname,
         steps: qs.map(function (q) { return { type: 'answer', q: q }; }),
-        backTo: home
+        backTo: function () { worldMenu(wh); },
+        backLabel: 'Levels',
+        replay: function () { startWorld(wh, tier); }
       });
     }
 
@@ -1098,7 +1154,8 @@ layout: default
       const step = R.spec.steps[R.idx];
       R.tries = 0;
       el.innerHTML = '';
-      el.appendChild(topBar(R.spec.story ? 'Story' : 'Home', function () {
+      el.appendChild(topBar(R.spec.story ? 'Story' : (R.spec.backLabel || 'Home'),
+                            function () {
         (R.spec.backTo || home)();
       }));
       el.appendChild(progressDots());
@@ -1107,6 +1164,32 @@ layout: default
       else if (step.type === 'geo') renderGeo(step);
       else renderMath(step);
       window.scrollTo(0, 0);
+    }
+
+    /* scene above a question: a real photo when the question has one
+       (falls back to the emoji scene if the photo fails to load) */
+    function addScene(q) {
+      if (q.img) {
+        const ph = document.createElement('img');
+        ph.className = 'wq-photo';
+        ph.src = q.img;
+        ph.alt = '';
+        ph.addEventListener('error', function () {
+          if (!q.scene) { ph.remove(); return; }
+          const sc = document.createElement('div');
+          sc.className = 'wq-scene';
+          sc.textContent = q.scene;
+          ph.replaceWith(sc);
+        });
+        el.appendChild(ph);
+        return;
+      }
+      if (q.scene) {
+        const sc = document.createElement('div');
+        sc.className = 'wq-scene';
+        sc.textContent = q.scene;
+        el.appendChild(sc);
+      }
     }
 
     function feedbackArea() {
@@ -1190,12 +1273,7 @@ layout: default
         el.appendChild(mini);
       }
 
-      if (q.scene) {
-        const sc = document.createElement('div');
-        sc.className = 'wq-scene';
-        sc.textContent = q.scene;
-        el.appendChild(sc);
-      }
+      addScene(q);
 
       const qEl = document.createElement('div');
       qEl.className = 'wq-q';
@@ -1246,12 +1324,7 @@ layout: default
       const rest = q.q.replace(/^\S+\s*/, '');
       const correctOpt = q.opts.filter(function (o) { return o[2]; })[0];
 
-      if (q.scene) {
-        const sc = document.createElement('div');
-        sc.className = 'wq-scene';
-        sc.textContent = q.scene;
-        el.appendChild(sc);
-      }
+      addScene(q);
 
       const qEl = document.createElement('div');
       qEl.className = 'wq-q';
@@ -1447,12 +1520,13 @@ layout: default
       again.textContent = '🔁 Play again';
       again.addEventListener('click', function () {
         const spec = R.spec;
-        if (spec.id.indexOf('math') === 0) startMath(parseInt(spec.id.slice(4), 10));
+        if (spec.replay) spec.replay();
+        else if (spec.id.indexOf('math') === 0) startMath(parseInt(spec.id.slice(4), 10));
         else if (spec.id === 'det') startDetective();
         else if (spec.id.indexOf('geo') === 0) startGeo(spec.id.slice(3));
         else if (spec.id.indexOf('story') === 0) {
           startStory(spec.story, parseInt(spec.id.slice(5), 10));
-        } else startWorld(spec.id);
+        } else startWorld(spec.id, '');
       });
       btns.appendChild(again);
       const homeB = document.createElement('button');
