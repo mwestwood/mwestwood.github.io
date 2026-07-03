@@ -47,6 +47,7 @@ header h1 span{color:var(--accent)}
 #hud .big{font-size:1.2rem; color:var(--gold)}
 main{display:flex; gap:16px; padding:8px 20px 24px; align-items:flex-start}
 #map-wrap{flex:1; min-width:0; position:relative}
+#map-canvas{width:100%}
 #map-wrap svg{width:100%; height:auto; display:block}
 .st{cursor:pointer; transition:filter .12s, opacity .12s; stroke:#0e1420; stroke-width:.6}
 .st:hover{filter:brightness(1.35) saturate(1.2)}
@@ -56,6 +57,10 @@ main{display:flex; gap:16px; padding:8px 20px 24px; align-items:flex-start}
 .st.pulse{animation:pulse .5s ease-in-out 3; fill:var(--gold) !important}
 @keyframes pulse{50%{filter:brightness(1.8)}}
 .st.mastered{stroke:var(--gold); stroke-width:1.4}
+.st.target-hl{stroke:var(--gold); stroke-width:2.5}
+.st.trip-start{stroke:var(--good); stroke-width:2.5}
+.st.trip-dest{stroke:var(--gold); stroke-width:2.5}
+.st.trip-cur{stroke:#fff; stroke-width:3}
 .star-mark{pointer-events:none; font-size:11px; fill:#ffdf6b; text-anchor:middle;
   paint-order:stroke; stroke:#00000088; stroke-width:2px}
 .legend{display:flex; gap:14px; flex-wrap:wrap; padding:10px 4px 0; font-size:.8rem; color:var(--muted)}
@@ -131,6 +136,17 @@ main{display:flex; gap:16px; padding:8px 20px 24px; align-items:flex-start}
   main{flex-direction:column}
   #panel{width:100%; max-height:none}
 }
+/* Fit the whole app to the viewport on desktop — no page scroll, map scales
+   to whatever space is left after the header/mode bar/hud. */
+@media (min-width:861px){
+  body{display:flex; flex-direction:column; height:100vh; overflow:hidden}
+  main{flex:1; min-height:0; align-items:stretch}
+  #map-wrap{display:flex; flex-direction:column; min-height:0}
+  #map-canvas{flex:1; min-height:0; display:flex; align-items:center; justify-content:center; overflow:hidden}
+  #map-canvas svg{width:auto; height:auto; max-width:100%; max-height:100%}
+  .legend{flex:0 0 auto}
+  #panel{height:100%; max-height:100%}
+}
 </style>
 </head>
 <body>
@@ -139,12 +155,17 @@ main{display:flex; gap:16px; padding:8px 20px 24px; align-items:flex-start}
   <div class="scorebar">
     <div class="chip">⭐ <b id="pts">0</b> pts</div>
     <div class="chip">🏆 <b id="mast">0</b>/50 mastered</div>
+    <button class="chip" id="cert-chip" style="display:none;cursor:pointer;border-color:var(--gold)" onclick="showCertificate(false)">🎓 Certificate</button>
   </div>
 </header>
 
 <div class="modes">
   <button class="mode-btn active" data-mode="explore" onclick="setMode('explore')">🔍 Explore &amp; Learn</button>
   <button class="mode-btn" data-mode="find" onclick="setMode('find')">📍 Find the State</button>
+  <button class="mode-btn" data-mode="detective" onclick="setMode('detective')">🕵️ State Detective</button>
+  <button class="mode-btn" data-mode="neighbor" onclick="setMode('neighbor')">🧭 Border Patrol</button>
+  <button class="mode-btn" data-mode="roadtrip" onclick="setMode('roadtrip')">🚗 Road Trip</button>
+  <button class="mode-btn" data-mode="compare" onclick="startCompare()">⚖️ Compare Battle</button>
   <button class="mode-btn" data-mode="sprint" onclick="startSprint('capital')">🏛️ Capital Sprint</button>
   <button class="mode-btn" data-mode="nick" onclick="startSprint('nick')">🏷️ Nickname Sprint</button>
 </div>
@@ -153,6 +174,7 @@ main{display:flex; gap:16px; padding:8px 20px 24px; align-items:flex-start}
 
 <main>
   <div id="map-wrap">
+    <div id="map-canvas">
     <svg viewBox="0 0 959 593" xmlns="http://www.w3.org/2000/svg" id="usmap">
       <g id="states">
 <path class="st" data-st="AL" d="m 643,467.4 .4,-7.3 -.9,-1.2 -1.7,-.7 -2.5,-2.8 .5,-2.9 48.8,-5.1 -.7,-2.2 -1.5,-1.5 -.5,-1.4 .6,-6.3 -2.4,-5.7 .5,-2.6 .3,-3.7 2.2,-3.8 -.2,-1.1 -1.7,-1 v -3.2 l -1.8,-1.9 -2.9,-6.1 -12.9,-45.8 -45.7,4 1.3,2 -1.3,67 4.4,33.2 .9,-.5 1.3,.1 .6,.4 .8,-.1 2,-3.8 v -2.3 l 1.1,-1.1 1.4,.5 3.4,6.4 v .9 l -3.3,2.2 3.5,-.4 4.9,-1.6 z"/>
@@ -320,6 +342,7 @@ main{display:flex; gap:16px; padding:8px 20px 24px; align-items:flex-start}
       <path fill="none" stroke="#2a3a58" stroke-width="2" d="m 215,493 v 55 l 36,45 m -251,-168 h 147 l 68,68 h 85 l 54,54 v 46"/>
       <g id="starlayer"></g>
     </svg>
+    </div>
     <div class="legend">
       <span><i style="background:var(--ne)"></i>Northeast</span>
       <span><i style="background:var(--se)"></i>Southeast</span>
@@ -349,20 +372,22 @@ main{display:flex; gap:16px; padding:8px 20px 24px; align-items:flex-start}
 <script>
 "use strict";
 /* ============ DATA ============ */
-const S = {"AL":{"n":"Alabama","c":"Montgomery","nk":"Yellowhammer State","lc":"Huntsville","yr":1819,"ord":22,"pop":5024279,"pr":24,"area":52420,"ar":30,"rg":"SE","fx":["Huntsville is nicknamed 'Rocket City' — the Saturn V rocket that took astronauts to the Moon was developed there.","Montgomery had the world's first electric trolley system, back in 1886."]},"AK":{"n":"Alaska","c":"Juneau","nk":"The Last Frontier","lc":"Anchorage","yr":1959,"ord":49,"pop":733391,"pr":48,"area":665384,"ar":1,"rg":"W","fx":["Alaska is bigger than Texas, California, and Montana combined.","It has about 3 million lakes and 17 of the 20 highest peaks in the U.S., including Denali (20,310 ft)."]},"AZ":{"n":"Arizona","c":"Phoenix","nk":"Grand Canyon State","lc":"Phoenix","yr":1912,"ord":48,"pop":7151502,"pr":14,"area":113990,"ar":6,"rg":"SW","fx":["The Grand Canyon is 277 miles long and more than a mile deep.","Most of Arizona doesn't observe daylight saving time — clocks stay the same all year."]},"AR":{"n":"Arkansas","c":"Little Rock","nk":"The Natural State","lc":"Little Rock","yr":1836,"ord":25,"pop":3011524,"pr":33,"area":53179,"ar":29,"rg":"SE","fx":["Crater of Diamonds State Park is the only diamond site in the world where visitors keep what they find.","Hot Springs became a protected federal reservation in 1832 — 40 years before the first national park."]},"CA":{"n":"California","c":"Sacramento","nk":"The Golden State","lc":"Los Angeles","yr":1850,"ord":31,"pop":39538223,"pr":1,"area":163695,"ar":3,"rg":"W","fx":["If California were a country, its economy would rank among the world's top five.","It has both the highest point (Mount Whitney) and lowest point (Death Valley, −282 ft) in the contiguous U.S. — only about 85 miles apart."]},"CO":{"n":"Colorado","c":"Denver","nk":"Centennial State","lc":"Denver","yr":1876,"ord":38,"pop":5773714,"pr":21,"area":104094,"ar":8,"rg":"W","fx":["Colorado has 58 peaks over 14,000 feet — the most of any state.","Denver is exactly one mile (5,280 ft) above sea level — a step on the capitol stairs marks the spot."]},"CT":{"n":"Connecticut","c":"Hartford","nk":"Constitution State","lc":"Bridgeport","yr":1788,"ord":5,"pop":3605944,"pr":29,"area":5543,"ar":48,"rg":"NE","fx":["It's called the Constitution State for the Fundamental Orders of 1639, one of the first written constitutions.","Louis' Lunch in New Haven claims to have served America's first hamburger, in 1900."]},"DE":{"n":"Delaware","c":"Dover","nk":"The First State","lc":"Wilmington","yr":1787,"ord":1,"pop":989948,"pr":45,"area":2489,"ar":49,"rg":"SE","fx":["Delaware was the first state to ratify the U.S. Constitution — December 7, 1787.","The whole state is only about 30 miles across at its widest point."]},"FL":{"n":"Florida","c":"Tallahassee","nk":"Sunshine State","lc":"Jacksonville","yr":1845,"ord":27,"pop":21538187,"pr":3,"area":65758,"ar":22,"rg":"SE","fx":["Florida has the longest coastline in the contiguous U.S. — about 1,350 miles.","Astronauts have launched into space from Cape Canaveral since 1961."]},"GA":{"n":"Georgia","c":"Atlanta","nk":"Peach State","lc":"Atlanta","yr":1788,"ord":4,"pop":10711908,"pr":8,"area":59425,"ar":24,"rg":"SE","fx":["Atlanta's airport is the busiest in the world by passengers.","Georgia was the last of the original 13 colonies, founded in 1733."]},"HI":{"n":"Hawaii","c":"Honolulu","nk":"Aloha State","lc":"Honolulu","yr":1959,"ord":50,"pop":1455271,"pr":40,"area":10932,"ar":43,"rg":"W","fx":["Hawaii is the only state made entirely of islands — 137 of them.","Measured from its base on the ocean floor, Mauna Kea is taller than Mount Everest."]},"ID":{"n":"Idaho","c":"Boise","nk":"Gem State","lc":"Boise","yr":1890,"ord":43,"pop":1839106,"pr":38,"area":83569,"ar":14,"rg":"W","fx":["Idaho grows about a third of all potatoes in the United States.","Hells Canyon is deeper than the Grand Canyon — nearly 8,000 feet."]},"IL":{"n":"Illinois","c":"Springfield","nk":"Prairie State","lc":"Chicago","yr":1818,"ord":21,"pop":12812508,"pr":6,"area":57914,"ar":25,"rg":"MW","fx":["The world's first skyscraper was built in Chicago in 1885.","Abraham Lincoln lived and practiced law in Springfield for about 24 years."]},"IN":{"n":"Indiana","c":"Indianapolis","nk":"Hoosier State","lc":"Indianapolis","yr":1816,"ord":19,"pop":6785528,"pr":17,"area":36420,"ar":38,"rg":"MW","fx":["The Indianapolis 500 is the world's largest single-day sporting event.","People from Indiana have been called 'Hoosiers' since the 1830s — and nobody is sure why."]},"IA":{"n":"Iowa","c":"Des Moines","nk":"Hawkeye State","lc":"Des Moines","yr":1846,"ord":29,"pop":3190369,"pr":31,"area":56273,"ar":26,"rg":"MW","fx":["Iowa produces more corn than any other state.","The Eskimo Pie ice cream bar was invented in Onawa, Iowa in 1920."]},"KS":{"n":"Kansas","c":"Topeka","nk":"Sunflower State","lc":"Wichita","yr":1861,"ord":34,"pop":2937880,"pr":35,"area":82278,"ar":15,"rg":"MW","fx":["Kansas grows more wheat than any other state — enough for billions of loaves of bread a year.","Dodge City is one of the windiest cities in the United States."]},"KY":{"n":"Kentucky","c":"Frankfort","nk":"Bluegrass State","lc":"Louisville","yr":1792,"ord":15,"pop":4505836,"pr":26,"area":40408,"ar":37,"rg":"SE","fx":["The Kentucky Derby has run every year since 1875 — the oldest continuously held major U.S. sporting event.","Mammoth Cave is the longest known cave system on Earth, with over 400 miles mapped."]},"LA":{"n":"Louisiana","c":"Baton Rouge","nk":"Pelican State","lc":"New Orleans","yr":1812,"ord":18,"pop":4657757,"pr":25,"area":52378,"ar":31,"rg":"SE","fx":["The Lake Pontchartrain Causeway is nearly 24 miles long — one of the longest bridges over water in the world.","Louisiana is the only state divided into parishes instead of counties."]},"ME":{"n":"Maine","c":"Augusta","nk":"Pine Tree State","lc":"Portland","yr":1820,"ord":23,"pop":1362359,"pr":42,"area":35380,"ar":39,"rg":"NE","fx":["Maine catches most of America's lobster and grows 99% of its wild blueberries.","It's the only state that borders exactly one other state (New Hampshire)."]},"MD":{"n":"Maryland","c":"Annapolis","nk":"Old Line State","lc":"Baltimore","yr":1788,"ord":7,"pop":6177224,"pr":18,"area":12406,"ar":42,"rg":"SE","fx":["The U.S. national anthem was written during a battle in Baltimore Harbor in 1814.","The Chesapeake Bay is the largest estuary in the United States."]},"MA":{"n":"Massachusetts","c":"Boston","nk":"Bay State","lc":"Boston","yr":1788,"ord":6,"pop":7029917,"pr":15,"area":10554,"ar":44,"rg":"NE","fx":["America's first public park (Boston Common, 1634), first public school, and first subway are all in Boston.","Basketball (1891) and volleyball (1895) were both invented in Massachusetts."]},"MI":{"n":"Michigan","c":"Lansing","nk":"Great Lakes State","lc":"Detroit","yr":1837,"ord":26,"pop":10077331,"pr":10,"area":96714,"ar":11,"rg":"MW","fx":["Michigan touches four of the five Great Lakes and has the longest freshwater coastline in the country.","Anywhere in Michigan, you're never more than about 6 miles from a lake or stream."]},"MN":{"n":"Minnesota","c":"St. Paul","nk":"North Star State","lc":"Minneapolis","yr":1858,"ord":32,"pop":5706494,"pr":22,"area":86936,"ar":12,"rg":"MW","fx":["The license plates say 10,000 lakes — Minnesota actually has more than 11,800.","The mighty Mississippi River starts at Lake Itasca as a stream you can walk across."]},"MS":{"n":"Mississippi","c":"Jackson","nk":"Magnolia State","lc":"Jackson","yr":1817,"ord":20,"pop":2961279,"pr":34,"area":48432,"ar":32,"rg":"SE","fx":["The state is named for the Mississippi River, the second-longest river in North America.","Barq's root beer was created in Biloxi in 1898."]},"MO":{"n":"Missouri","c":"Jefferson City","nk":"Show-Me State","lc":"Kansas City","yr":1821,"ord":24,"pop":6154913,"pr":19,"area":69707,"ar":21,"rg":"MW","fx":["The Gateway Arch in St. Louis is the tallest man-made monument in the U.S. — 630 feet.","The 1904 World's Fair in St. Louis made the ice cream cone famous."]},"MT":{"n":"Montana","c":"Helena","nk":"Treasure State","lc":"Billings","yr":1889,"ord":41,"pop":1084225,"pr":43,"area":147040,"ar":4,"rg":"W","fx":["Montana has more elk, deer, and antelope than people.","The Roe River near Great Falls is one of the shortest rivers in the world — about 201 feet."]},"NE":{"n":"Nebraska","c":"Lincoln","nk":"Cornhusker State","lc":"Omaha","yr":1867,"ord":37,"pop":1961504,"pr":37,"area":77348,"ar":16,"rg":"MW","fx":["Nebraska has more miles of river than any other state.","Kool-Aid was invented in Hastings, Nebraska in 1927."]},"NV":{"n":"Nevada","c":"Carson City","nk":"Silver State","lc":"Las Vegas","yr":1864,"ord":36,"pop":3104614,"pr":32,"area":110572,"ar":7,"rg":"W","fx":["Nevada is the driest state, yet it has more mountain ranges than any other.","About 80% of Nevada's land is owned by the federal government."]},"NH":{"n":"New Hampshire","c":"Concord","nk":"Granite State","lc":"Manchester","yr":1788,"ord":9,"pop":1377529,"pr":41,"area":9349,"ar":46,"rg":"NE","fx":["New Hampshire declared independence from Britain six months before the Declaration of Independence.","Mount Washington once recorded a 231 mph wind gust — for decades the world record."]},"NJ":{"n":"New Jersey","c":"Trenton","nk":"Garden State","lc":"Newark","yr":1787,"ord":3,"pop":9288994,"pr":11,"area":8723,"ar":47,"rg":"NE","fx":["New Jersey is the most densely populated state in the country.","The world's first drive-in movie theater opened in Camden in 1933."]},"NM":{"n":"New Mexico","c":"Santa Fe","nk":"Land of Enchantment","lc":"Albuquerque","yr":1912,"ord":47,"pop":2117522,"pr":36,"area":121590,"ar":5,"rg":"SW","fx":["Santa Fe is the oldest state capital (founded 1610) and the highest, at 7,199 feet.","Carlsbad Caverns' Big Room is the largest cave chamber in North America."]},"NY":{"n":"New York","c":"Albany","nk":"Empire State","lc":"New York City","yr":1788,"ord":11,"pop":20201249,"pr":4,"area":54555,"ar":27,"rg":"NE","fx":["New York City was the first capital of the United States — George Washington was inaugurated there in 1789.","The NYC subway has 472 stations — the most of any system in the world."]},"NC":{"n":"North Carolina","c":"Raleigh","nk":"Tar Heel State","lc":"Charlotte","yr":1789,"ord":12,"pop":10439388,"pr":9,"area":53819,"ar":28,"rg":"SE","fx":["The Wright brothers made the first airplane flight at Kitty Hawk in 1903 — it lasted 12 seconds.","The Biltmore Estate in Asheville is America's largest home, about 175,000 square feet."]},"ND":{"n":"North Dakota","c":"Bismarck","nk":"Peace Garden State","lc":"Fargo","yr":1889,"ord":39,"pop":779094,"pr":47,"area":70698,"ar":19,"rg":"MW","fx":["North Dakota produces more honey than any other state.","The geographic center of North America is near Rugby, North Dakota."]},"OH":{"n":"Ohio","c":"Columbus","nk":"Buckeye State","lc":"Columbus","yr":1803,"ord":17,"pop":11799448,"pr":7,"area":44826,"ar":34,"rg":"MW","fx":["Astronauts Neil Armstrong and John Glenn — and both Wright brothers — were from Ohio.","Seven U.S. presidents were born in Ohio."]},"OK":{"n":"Oklahoma","c":"Oklahoma City","nk":"Sooner State","lc":"Oklahoma City","yr":1907,"ord":46,"pop":3959353,"pr":28,"area":69899,"ar":20,"rg":"SW","fx":["Oklahoma's capitol grounds had working oil wells — one was nicknamed 'Petunia #1' for being drilled in a flower bed.","The parking meter was invented in Oklahoma City in 1935."]},"OR":{"n":"Oregon","c":"Salem","nk":"Beaver State","lc":"Portland","yr":1859,"ord":33,"pop":4237256,"pr":27,"area":98379,"ar":9,"rg":"W","fx":["Crater Lake is the deepest lake in the U.S. — 1,943 feet, inside a collapsed volcano.","Oregon has no sales tax."]},"PA":{"n":"Pennsylvania","c":"Harrisburg","nk":"Keystone State","lc":"Philadelphia","yr":1787,"ord":2,"pop":13002700,"pr":5,"area":46054,"ar":33,"rg":"NE","fx":["The Declaration of Independence and the Constitution were both signed in Philadelphia.","Hershey, Pennsylvania is known as the Chocolate Capital of the U.S."]},"RI":{"n":"Rhode Island","c":"Providence","nk":"Ocean State","lc":"Providence","yr":1790,"ord":13,"pop":1097379,"pr":44,"area":1545,"ar":50,"rg":"NE","fx":["Rhode Island is the smallest state — Alaska is over 400 times bigger.","Despite the name, most of Rhode Island is on the mainland."]},"SC":{"n":"South Carolina","c":"Columbia","nk":"Palmetto State","lc":"Charleston","yr":1788,"ord":8,"pop":5118425,"pr":23,"area":32020,"ar":40,"rg":"SE","fx":["The first shots of the Civil War were fired at Fort Sumter in Charleston Harbor in 1861.","South Carolina grows more peaches than Georgia, the 'Peach State'."]},"SD":{"n":"South Dakota","c":"Pierre","nk":"Mount Rushmore State","lc":"Sioux Falls","yr":1889,"ord":40,"pop":886667,"pr":46,"area":77116,"ar":17,"rg":"MW","fx":["Mount Rushmore's presidential faces are 60 feet tall and took 14 years to carve.","The Badlands erode about an inch every year."]},"TN":{"n":"Tennessee","c":"Nashville","nk":"Volunteer State","lc":"Nashville","yr":1796,"ord":16,"pop":6910840,"pr":16,"area":42144,"ar":36,"rg":"SE","fx":["Nashville is 'Music City' — the Grand Ole Opry is the longest-running radio show in the U.S.","Great Smoky Mountains National Park is the most-visited national park in the country."]},"TX":{"n":"Texas","c":"Austin","nk":"Lone Star State","lc":"Houston","yr":1845,"ord":28,"pop":29145505,"pr":2,"area":268596,"ar":2,"rg":"SW","fx":["Texas was an independent country — the Republic of Texas — from 1836 to 1845.","Texas is larger than every country in Europe except Russia."]},"UT":{"n":"Utah","c":"Salt Lake City","nk":"Beehive State","lc":"Salt Lake City","yr":1896,"ord":45,"pop":3271616,"pr":30,"area":84897,"ar":13,"rg":"W","fx":["The Great Salt Lake is much saltier than the ocean — you float without trying.","Utah's Rainbow Bridge is one of the largest natural bridges in the world."]},"VT":{"n":"Vermont","c":"Montpelier","nk":"Green Mountain State","lc":"Burlington","yr":1791,"ord":14,"pop":643077,"pr":49,"area":9616,"ar":45,"rg":"NE","fx":["Vermont makes more maple syrup than any other state.","Montpelier is the smallest state capital — about 8,000 people."]},"VA":{"n":"Virginia","c":"Richmond","nk":"Old Dominion","lc":"Virginia Beach","yr":1788,"ord":10,"pop":8631393,"pr":12,"area":42775,"ar":35,"rg":"SE","fx":["Eight U.S. presidents were born in Virginia — more than any other state.","Jamestown (1607) was the first permanent English settlement in America."]},"WA":{"n":"Washington","c":"Olympia","nk":"Evergreen State","lc":"Seattle","yr":1889,"ord":42,"pop":7705281,"pr":13,"area":71298,"ar":18,"rg":"W","fx":["Washington grows more apples than any other state.","It's the only state named after a president."]},"WV":{"n":"West Virginia","c":"Charleston","nk":"Mountain State","lc":"Charleston","yr":1863,"ord":35,"pop":1793716,"pr":39,"area":24230,"ar":41,"rg":"SE","fx":["West Virginia was born when it split from Virginia during the Civil War in 1863.","The New River Gorge Bridge was for decades the world's longest single-arch steel bridge."]},"WI":{"n":"Wisconsin","c":"Madison","nk":"Badger State","lc":"Milwaukee","yr":1848,"ord":30,"pop":5893718,"pr":20,"area":65496,"ar":23,"rg":"MW","fx":["Wisconsin makes about a quarter of all the cheese in America.","The ice cream sundae is said to have been invented in Two Rivers, Wisconsin in 1881."]},"WY":{"n":"Wyoming","c":"Cheyenne","nk":"Equality State","lc":"Cheyenne","yr":1890,"ord":44,"pop":576851,"pr":50,"area":97813,"ar":10,"rg":"W","fx":["Wyoming has the fewest people of any state — but it was the first to give women the vote, in 1869.","Yellowstone, mostly in Wyoming, was the world's first national park (1872)."]},"DC":{"n":"Washington, D.C.","c":"—","nk":"The Nation's Capital","lc":"Washington","yr":1790,"ord":0,"pop":689545,"pr":0,"area":68,"ar":0,"rg":"DC","fx":["Washington, D.C. isn't a state — it's a federal district created in 1790 to be the nation's capital.","The Washington Monument was the tallest structure in the world when it was finished in 1884."]}};
+const S = {"AL":{"n":"Alabama","c":"Montgomery","nk":"Yellowhammer State","lc":"Huntsville","yr":1819,"ord":22,"pop":5024279,"pr":24,"area":52420,"ar":30,"rg":"SE","fx":["Huntsville is nicknamed 'Rocket City' — the Saturn V rocket that took astronauts to the Moon was developed there.","Montgomery had the world's first electric trolley system, back in 1886."],"nb":["FL","GA","MS","TN"]},"AK":{"n":"Alaska","c":"Juneau","nk":"The Last Frontier","lc":"Anchorage","yr":1959,"ord":49,"pop":733391,"pr":48,"area":665384,"ar":1,"rg":"W","fx":["Alaska is bigger than Texas, California, and Montana combined.","It has about 3 million lakes and 17 of the 20 highest peaks in the U.S., including Denali (20,310 ft)."],"nb":[]},"AZ":{"n":"Arizona","c":"Phoenix","nk":"Grand Canyon State","lc":"Phoenix","yr":1912,"ord":48,"pop":7151502,"pr":14,"area":113990,"ar":6,"rg":"SW","fx":["The Grand Canyon is 277 miles long and more than a mile deep.","Most of Arizona doesn't observe daylight saving time — clocks stay the same all year."],"nb":["CA","CO","NM","NV","UT"]},"AR":{"n":"Arkansas","c":"Little Rock","nk":"The Natural State","lc":"Little Rock","yr":1836,"ord":25,"pop":3011524,"pr":33,"area":53179,"ar":29,"rg":"SE","fx":["Crater of Diamonds State Park is the only diamond site in the world where visitors keep what they find.","Hot Springs became a protected federal reservation in 1832 — 40 years before the first national park."],"nb":["LA","MO","MS","OK","TN","TX"]},"CA":{"n":"California","c":"Sacramento","nk":"The Golden State","lc":"Los Angeles","yr":1850,"ord":31,"pop":39538223,"pr":1,"area":163695,"ar":3,"rg":"W","fx":["If California were a country, its economy would rank among the world's top five.","It has both the highest point (Mount Whitney) and lowest point (Death Valley, −282 ft) in the contiguous U.S. — only about 85 miles apart."],"nb":["AZ","NV","OR"]},"CO":{"n":"Colorado","c":"Denver","nk":"Centennial State","lc":"Denver","yr":1876,"ord":38,"pop":5773714,"pr":21,"area":104094,"ar":8,"rg":"W","fx":["Colorado has 58 peaks over 14,000 feet — the most of any state.","Denver is exactly one mile (5,280 ft) above sea level — a step on the capitol stairs marks the spot."],"nb":["AZ","KS","NE","NM","OK","UT","WY"]},"CT":{"n":"Connecticut","c":"Hartford","nk":"Constitution State","lc":"Bridgeport","yr":1788,"ord":5,"pop":3605944,"pr":29,"area":5543,"ar":48,"rg":"NE","fx":["It's called the Constitution State for the Fundamental Orders of 1639, one of the first written constitutions.","Louis' Lunch in New Haven claims to have served America's first hamburger, in 1900."],"nb":["MA","NY","RI"]},"DE":{"n":"Delaware","c":"Dover","nk":"The First State","lc":"Wilmington","yr":1787,"ord":1,"pop":989948,"pr":45,"area":2489,"ar":49,"rg":"SE","fx":["Delaware was the first state to ratify the U.S. Constitution — December 7, 1787.","The whole state is only about 30 miles across at its widest point."],"nb":["MD","NJ","PA"]},"FL":{"n":"Florida","c":"Tallahassee","nk":"Sunshine State","lc":"Jacksonville","yr":1845,"ord":27,"pop":21538187,"pr":3,"area":65758,"ar":22,"rg":"SE","fx":["Florida has the longest coastline in the contiguous U.S. — about 1,350 miles.","Astronauts have launched into space from Cape Canaveral since 1961."],"nb":["AL","GA"]},"GA":{"n":"Georgia","c":"Atlanta","nk":"Peach State","lc":"Atlanta","yr":1788,"ord":4,"pop":10711908,"pr":8,"area":59425,"ar":24,"rg":"SE","fx":["Atlanta's airport is the busiest in the world by passengers.","Georgia was the last of the original 13 colonies, founded in 1733."],"nb":["AL","FL","NC","SC","TN"]},"HI":{"n":"Hawaii","c":"Honolulu","nk":"Aloha State","lc":"Honolulu","yr":1959,"ord":50,"pop":1455271,"pr":40,"area":10932,"ar":43,"rg":"W","fx":["Hawaii is the only state made entirely of islands — 137 of them.","Measured from its base on the ocean floor, Mauna Kea is taller than Mount Everest."],"nb":[]},"ID":{"n":"Idaho","c":"Boise","nk":"Gem State","lc":"Boise","yr":1890,"ord":43,"pop":1839106,"pr":38,"area":83569,"ar":14,"rg":"W","fx":["Idaho grows about a third of all potatoes in the United States.","Hells Canyon is deeper than the Grand Canyon — nearly 8,000 feet."],"nb":["MT","NV","OR","UT","WA","WY"]},"IL":{"n":"Illinois","c":"Springfield","nk":"Prairie State","lc":"Chicago","yr":1818,"ord":21,"pop":12812508,"pr":6,"area":57914,"ar":25,"rg":"MW","fx":["The world's first skyscraper was built in Chicago in 1885.","Abraham Lincoln lived and practiced law in Springfield for about 24 years."],"nb":["IN","IA","KY","MO","WI"]},"IN":{"n":"Indiana","c":"Indianapolis","nk":"Hoosier State","lc":"Indianapolis","yr":1816,"ord":19,"pop":6785528,"pr":17,"area":36420,"ar":38,"rg":"MW","fx":["The Indianapolis 500 is the world's largest single-day sporting event.","People from Indiana have been called 'Hoosiers' since the 1830s — and nobody is sure why."],"nb":["IL","KY","MI","OH"]},"IA":{"n":"Iowa","c":"Des Moines","nk":"Hawkeye State","lc":"Des Moines","yr":1846,"ord":29,"pop":3190369,"pr":31,"area":56273,"ar":26,"rg":"MW","fx":["Iowa produces more corn than any other state.","The Eskimo Pie ice cream bar was invented in Onawa, Iowa in 1920."],"nb":["IL","MN","MO","NE","SD","WI"]},"KS":{"n":"Kansas","c":"Topeka","nk":"Sunflower State","lc":"Wichita","yr":1861,"ord":34,"pop":2937880,"pr":35,"area":82278,"ar":15,"rg":"MW","fx":["Kansas grows more wheat than any other state — enough for billions of loaves of bread a year.","Dodge City is one of the windiest cities in the United States."],"nb":["CO","MO","NE","OK"]},"KY":{"n":"Kentucky","c":"Frankfort","nk":"Bluegrass State","lc":"Louisville","yr":1792,"ord":15,"pop":4505836,"pr":26,"area":40408,"ar":37,"rg":"SE","fx":["The Kentucky Derby has run every year since 1875 — the oldest continuously held major U.S. sporting event.","Mammoth Cave is the longest known cave system on Earth, with over 400 miles mapped."],"nb":["IL","IN","MO","OH","TN","VA","WV"]},"LA":{"n":"Louisiana","c":"Baton Rouge","nk":"Pelican State","lc":"New Orleans","yr":1812,"ord":18,"pop":4657757,"pr":25,"area":52378,"ar":31,"rg":"SE","fx":["The Lake Pontchartrain Causeway is nearly 24 miles long — one of the longest bridges over water in the world.","Louisiana is the only state divided into parishes instead of counties."],"nb":["AR","MS","TX"]},"ME":{"n":"Maine","c":"Augusta","nk":"Pine Tree State","lc":"Portland","yr":1820,"ord":23,"pop":1362359,"pr":42,"area":35380,"ar":39,"rg":"NE","fx":["Maine catches most of America's lobster and grows 99% of its wild blueberries.","It's the only state that borders exactly one other state (New Hampshire)."],"nb":["NH"]},"MD":{"n":"Maryland","c":"Annapolis","nk":"Old Line State","lc":"Baltimore","yr":1788,"ord":7,"pop":6177224,"pr":18,"area":12406,"ar":42,"rg":"SE","fx":["The U.S. national anthem was written during a battle in Baltimore Harbor in 1814.","The Chesapeake Bay is the largest estuary in the United States."],"nb":["DE","PA","VA","WV","DC"]},"MA":{"n":"Massachusetts","c":"Boston","nk":"Bay State","lc":"Boston","yr":1788,"ord":6,"pop":7029917,"pr":15,"area":10554,"ar":44,"rg":"NE","fx":["America's first public park (Boston Common, 1634), first public school, and first subway are all in Boston.","Basketball (1891) and volleyball (1895) were both invented in Massachusetts."],"nb":["CT","NH","NY","RI","VT"]},"MI":{"n":"Michigan","c":"Lansing","nk":"Great Lakes State","lc":"Detroit","yr":1837,"ord":26,"pop":10077331,"pr":10,"area":96714,"ar":11,"rg":"MW","fx":["Michigan touches four of the five Great Lakes and has the longest freshwater coastline in the country.","Anywhere in Michigan, you're never more than about 6 miles from a lake or stream."],"nb":["IN","OH","WI"]},"MN":{"n":"Minnesota","c":"St. Paul","nk":"North Star State","lc":"Minneapolis","yr":1858,"ord":32,"pop":5706494,"pr":22,"area":86936,"ar":12,"rg":"MW","fx":["The license plates say 10,000 lakes — Minnesota actually has more than 11,800.","The mighty Mississippi River starts at Lake Itasca as a stream you can walk across."],"nb":["IA","ND","SD","WI"]},"MS":{"n":"Mississippi","c":"Jackson","nk":"Magnolia State","lc":"Jackson","yr":1817,"ord":20,"pop":2961279,"pr":34,"area":48432,"ar":32,"rg":"SE","fx":["The state is named for the Mississippi River, the second-longest river in North America.","Barq's root beer was created in Biloxi in 1898."],"nb":["AL","AR","LA","TN"]},"MO":{"n":"Missouri","c":"Jefferson City","nk":"Show-Me State","lc":"Kansas City","yr":1821,"ord":24,"pop":6154913,"pr":19,"area":69707,"ar":21,"rg":"MW","fx":["The Gateway Arch in St. Louis is the tallest man-made monument in the U.S. — 630 feet.","The 1904 World's Fair in St. Louis made the ice cream cone famous."],"nb":["AR","IL","IA","KS","KY","NE","OK","TN"]},"MT":{"n":"Montana","c":"Helena","nk":"Treasure State","lc":"Billings","yr":1889,"ord":41,"pop":1084225,"pr":43,"area":147040,"ar":4,"rg":"W","fx":["Montana has more elk, deer, and antelope than people.","The Roe River near Great Falls is one of the shortest rivers in the world — about 201 feet."],"nb":["ID","ND","SD","WY"]},"NE":{"n":"Nebraska","c":"Lincoln","nk":"Cornhusker State","lc":"Omaha","yr":1867,"ord":37,"pop":1961504,"pr":37,"area":77348,"ar":16,"rg":"MW","fx":["Nebraska has more miles of river than any other state.","Kool-Aid was invented in Hastings, Nebraska in 1927."],"nb":["CO","IA","KS","MO","SD","WY"]},"NV":{"n":"Nevada","c":"Carson City","nk":"Silver State","lc":"Las Vegas","yr":1864,"ord":36,"pop":3104614,"pr":32,"area":110572,"ar":7,"rg":"W","fx":["Nevada is the driest state, yet it has more mountain ranges than any other.","About 80% of Nevada's land is owned by the federal government."],"nb":["AZ","CA","ID","OR","UT"]},"NH":{"n":"New Hampshire","c":"Concord","nk":"Granite State","lc":"Manchester","yr":1788,"ord":9,"pop":1377529,"pr":41,"area":9349,"ar":46,"rg":"NE","fx":["New Hampshire declared independence from Britain six months before the Declaration of Independence.","Mount Washington once recorded a 231 mph wind gust — for decades the world record."],"nb":["ME","MA","VT"]},"NJ":{"n":"New Jersey","c":"Trenton","nk":"Garden State","lc":"Newark","yr":1787,"ord":3,"pop":9288994,"pr":11,"area":8723,"ar":47,"rg":"NE","fx":["New Jersey is the most densely populated state in the country.","The world's first drive-in movie theater opened in Camden in 1933."],"nb":["DE","NY","PA"]},"NM":{"n":"New Mexico","c":"Santa Fe","nk":"Land of Enchantment","lc":"Albuquerque","yr":1912,"ord":47,"pop":2117522,"pr":36,"area":121590,"ar":5,"rg":"SW","fx":["Santa Fe is the oldest state capital (founded 1610) and the highest, at 7,199 feet.","Carlsbad Caverns' Big Room is the largest cave chamber in North America."],"nb":["AZ","CO","OK","TX","UT"]},"NY":{"n":"New York","c":"Albany","nk":"Empire State","lc":"New York City","yr":1788,"ord":11,"pop":20201249,"pr":4,"area":54555,"ar":27,"rg":"NE","fx":["New York City was the first capital of the United States — George Washington was inaugurated there in 1789.","The NYC subway has 472 stations — the most of any system in the world."],"nb":["CT","MA","NJ","PA","VT"]},"NC":{"n":"North Carolina","c":"Raleigh","nk":"Tar Heel State","lc":"Charlotte","yr":1789,"ord":12,"pop":10439388,"pr":9,"area":53819,"ar":28,"rg":"SE","fx":["The Wright brothers made the first airplane flight at Kitty Hawk in 1903 — it lasted 12 seconds.","The Biltmore Estate in Asheville is America's largest home, about 175,000 square feet."],"nb":["GA","SC","TN","VA"]},"ND":{"n":"North Dakota","c":"Bismarck","nk":"Peace Garden State","lc":"Fargo","yr":1889,"ord":39,"pop":779094,"pr":47,"area":70698,"ar":19,"rg":"MW","fx":["North Dakota produces more honey than any other state.","The geographic center of North America is near Rugby, North Dakota."],"nb":["MN","MT","SD"]},"OH":{"n":"Ohio","c":"Columbus","nk":"Buckeye State","lc":"Columbus","yr":1803,"ord":17,"pop":11799448,"pr":7,"area":44826,"ar":34,"rg":"MW","fx":["Astronauts Neil Armstrong and John Glenn — and both Wright brothers — were from Ohio.","Seven U.S. presidents were born in Ohio."],"nb":["IN","KY","MI","PA","WV"]},"OK":{"n":"Oklahoma","c":"Oklahoma City","nk":"Sooner State","lc":"Oklahoma City","yr":1907,"ord":46,"pop":3959353,"pr":28,"area":69899,"ar":20,"rg":"SW","fx":["Oklahoma's capitol grounds had working oil wells — one was nicknamed 'Petunia #1' for being drilled in a flower bed.","The parking meter was invented in Oklahoma City in 1935."],"nb":["AR","CO","KS","MO","NM","TX"]},"OR":{"n":"Oregon","c":"Salem","nk":"Beaver State","lc":"Portland","yr":1859,"ord":33,"pop":4237256,"pr":27,"area":98379,"ar":9,"rg":"W","fx":["Crater Lake is the deepest lake in the U.S. — 1,943 feet, inside a collapsed volcano.","Oregon has no sales tax."],"nb":["CA","ID","NV","WA"]},"PA":{"n":"Pennsylvania","c":"Harrisburg","nk":"Keystone State","lc":"Philadelphia","yr":1787,"ord":2,"pop":13002700,"pr":5,"area":46054,"ar":33,"rg":"NE","fx":["The Declaration of Independence and the Constitution were both signed in Philadelphia.","Hershey, Pennsylvania is known as the Chocolate Capital of the U.S."],"nb":["DE","MD","NJ","NY","OH","WV"]},"RI":{"n":"Rhode Island","c":"Providence","nk":"Ocean State","lc":"Providence","yr":1790,"ord":13,"pop":1097379,"pr":44,"area":1545,"ar":50,"rg":"NE","fx":["Rhode Island is the smallest state — Alaska is over 400 times bigger.","Despite the name, most of Rhode Island is on the mainland."],"nb":["CT","MA"]},"SC":{"n":"South Carolina","c":"Columbia","nk":"Palmetto State","lc":"Charleston","yr":1788,"ord":8,"pop":5118425,"pr":23,"area":32020,"ar":40,"rg":"SE","fx":["The first shots of the Civil War were fired at Fort Sumter in Charleston Harbor in 1861.","South Carolina grows more peaches than Georgia, the 'Peach State'."],"nb":["GA","NC"]},"SD":{"n":"South Dakota","c":"Pierre","nk":"Mount Rushmore State","lc":"Sioux Falls","yr":1889,"ord":40,"pop":886667,"pr":46,"area":77116,"ar":17,"rg":"MW","fx":["Mount Rushmore's presidential faces are 60 feet tall and took 14 years to carve.","The Badlands erode about an inch every year."],"nb":["IA","MN","MT","ND","NE","WY"]},"TN":{"n":"Tennessee","c":"Nashville","nk":"Volunteer State","lc":"Nashville","yr":1796,"ord":16,"pop":6910840,"pr":16,"area":42144,"ar":36,"rg":"SE","fx":["Nashville is 'Music City' — the Grand Ole Opry is the longest-running radio show in the U.S.","Great Smoky Mountains National Park is the most-visited national park in the country."],"nb":["AL","AR","GA","KY","MS","MO","NC","VA"]},"TX":{"n":"Texas","c":"Austin","nk":"Lone Star State","lc":"Houston","yr":1845,"ord":28,"pop":29145505,"pr":2,"area":268596,"ar":2,"rg":"SW","fx":["Texas was an independent country — the Republic of Texas — from 1836 to 1845.","Texas is larger than every country in Europe except Russia."],"nb":["AR","LA","NM","OK"]},"UT":{"n":"Utah","c":"Salt Lake City","nk":"Beehive State","lc":"Salt Lake City","yr":1896,"ord":45,"pop":3271616,"pr":30,"area":84897,"ar":13,"rg":"W","fx":["The Great Salt Lake is much saltier than the ocean — you float without trying.","Utah's Rainbow Bridge is one of the largest natural bridges in the world."],"nb":["AZ","CO","ID","NV","NM","WY"]},"VT":{"n":"Vermont","c":"Montpelier","nk":"Green Mountain State","lc":"Burlington","yr":1791,"ord":14,"pop":643077,"pr":49,"area":9616,"ar":45,"rg":"NE","fx":["Vermont makes more maple syrup than any other state.","Montpelier is the smallest state capital — about 8,000 people."],"nb":["MA","NH","NY"]},"VA":{"n":"Virginia","c":"Richmond","nk":"Old Dominion","lc":"Virginia Beach","yr":1788,"ord":10,"pop":8631393,"pr":12,"area":42775,"ar":35,"rg":"SE","fx":["Eight U.S. presidents were born in Virginia — more than any other state.","Jamestown (1607) was the first permanent English settlement in America."],"nb":["KY","MD","NC","TN","WV","DC"]},"WA":{"n":"Washington","c":"Olympia","nk":"Evergreen State","lc":"Seattle","yr":1889,"ord":42,"pop":7705281,"pr":13,"area":71298,"ar":18,"rg":"W","fx":["Washington grows more apples than any other state.","It's the only state named after a president."],"nb":["ID","OR"]},"WV":{"n":"West Virginia","c":"Charleston","nk":"Mountain State","lc":"Charleston","yr":1863,"ord":35,"pop":1793716,"pr":39,"area":24230,"ar":41,"rg":"SE","fx":["West Virginia was born when it split from Virginia during the Civil War in 1863.","The New River Gorge Bridge was for decades the world's longest single-arch steel bridge."],"nb":["KY","MD","OH","PA","VA"]},"WI":{"n":"Wisconsin","c":"Madison","nk":"Badger State","lc":"Milwaukee","yr":1848,"ord":30,"pop":5893718,"pr":20,"area":65496,"ar":23,"rg":"MW","fx":["Wisconsin makes about a quarter of all the cheese in America.","The ice cream sundae is said to have been invented in Two Rivers, Wisconsin in 1881."],"nb":["IL","IA","MI","MN"]},"WY":{"n":"Wyoming","c":"Cheyenne","nk":"Equality State","lc":"Cheyenne","yr":1890,"ord":44,"pop":576851,"pr":50,"area":97813,"ar":10,"rg":"W","fx":["Wyoming has the fewest people of any state — but it was the first to give women the vote, in 1869.","Yellowstone, mostly in Wyoming, was the world's first national park (1872)."],"nb":["CO","ID","MT","NE","SD","UT"]},"DC":{"n":"Washington, D.C.","c":"—","nk":"The Nation's Capital","lc":"Washington","yr":1790,"ord":0,"pop":689545,"pr":0,"area":68,"ar":0,"rg":"DC","fx":["Washington, D.C. isn't a state — it's a federal district created in 1790 to be the nation's capital.","The Washington Monument was the tallest structure in the world when it was finished in 1884."],"nb":["MD","VA"]}};
 const KEYS = Object.keys(S).filter(k => k !== "DC");
 const REGION_VAR = {NE:"--ne", SE:"--se", MW:"--mw", SW:"--sw", W:"--we", DC:"--dc"};
 const REGION_NAME = {NE:"Northeast", SE:"Southeast", MW:"Midwest", SW:"Southwest", W:"West", DC:"Federal District"};
 
 /* ============ SAVE ============ */
 const SAVE_KEY = "usa-map-quest-v1";
-let save = {pts:0, mastered:{}, bestFind:0, bestCapital:0, bestNick:0};
+let save = {pts:0, mastered:{}, bestFind:0, bestCapital:0, bestNick:0, bestNeighbor:0, bestCompare:0, certShown:false};
 try{ const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if(s && typeof s==="object") save = Object.assign(save, s); }catch(e){}
 function persist(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }catch(e){} }
 function addPts(n){ save.pts += n; persist(); renderScore(); }
 function renderScore(){
   document.getElementById("pts").textContent = save.pts.toLocaleString();
-  document.getElementById("mast").textContent = Object.keys(save.mastered).length;
+  const m = Object.keys(save.mastered).length;
+  document.getElementById("mast").textContent = m;
+  document.getElementById("cert-chip").style.display = m >= KEYS.length ? "inline-flex" : "none";
 }
 
 /* ============ HELPERS ============ */
@@ -400,7 +425,7 @@ document.querySelectorAll(".st").forEach(p=>{
   if(p.tagName==="path") p.style.fill = "var("+REGION_VAR[S[k].rg]+")";
   p.addEventListener("click", ()=>onStateClick(k, p));
   p.addEventListener("mousemove", e=>{
-    if(mode==="find" && find){ tooltip.style.display="none"; return; }
+    if((mode==="find" || mode==="detective") && find){ tooltip.style.display="none"; return; }
     tooltip.style.display="block";
     tooltip.style.left=(e.clientX+14)+"px";
     tooltip.style.top=(e.clientY+14)+"px";
@@ -434,14 +459,26 @@ function setMode(m){
   document.querySelectorAll(".mode-btn").forEach(b=>b.classList.toggle("active", b.dataset.mode===m));
   closePanel();
   clearMapFx();
-  if(m==="find") startFind(); else { hud.classList.remove("show"); find=null; }
+  find = null; neighborGame = null; roadtrip = null;
+  hud.classList.remove("show");
+  if(m==="find") startFind("find");
+  else if(m==="detective") startFind("detective");
+  else if(m==="neighbor") startNeighborGame();
+  else if(m==="roadtrip") startRoadTrip();
 }
+function endModeEarly(){ setMode("explore"); }
 function clearMapFx(){
-  document.querySelectorAll(".st").forEach(p=>p.classList.remove("dim","flash-good","flash-bad","pulse"));
+  document.querySelectorAll(".st").forEach(p=>p.classList.remove(
+    "dim","flash-good","flash-bad","pulse","target-hl","trip-start","trip-dest","trip-cur"));
+}
+function endBtn(){
+  return " <button class='ghost-btn' style='padding:4px 10px;font-size:.75rem;margin-left:8px' onclick='endModeEarly()'>✕ End</button>";
 }
 
 function onStateClick(k, el){
-  if(mode==="find" && find){ findClick(k, el); return; }
+  if((mode==="find" || mode==="detective") && find){ findClick(k, el); return; }
+  if(mode==="neighbor" && neighborGame){ onNeighborMapClick(k, el); return; }
+  if(mode==="roadtrip" && roadtrip){ onRoadTripMapClick(k, el); return; }
   openPanel(k);
 }
 
@@ -477,10 +514,21 @@ function renderLearn(){
       st("Statehood", d.yr+" ("+ord(d.ord)+" state)") + st("Nickname", d.nk) +
       st("Population", fmtPop(d.pop)+" ("+ord(d.pr)+")") + st("Area", fmtArea(d.area)+" ("+ord(d.ar)+")");
   }
+  const nbHtml = (curState!=="DC" && d.nb.length) ?
+    '<div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:2px 0 6px">Borders</div>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">' +
+      d.nb.map(nk=>'<button class="ghost-btn" style="padding:5px 10px;font-size:.78rem" onclick="openPanel(\''+nk+'\')">'+esc(S[nk].n)+'</button>').join("") +
+    '</div>' : "";
+  const badgeHtml = curState!=="DC" ?
+    '<div class="fact" style="border-left-color:var(--gold)">🏅 '+
+      (save.mastered[curState] ? "<b>"+esc(d.nk)+" Badge</b> earned!" : "Score 5+/6 on the quiz to earn the <b>"+esc(d.nk)+" Badge</b>.") +
+    '</div>' : "";
   b.innerHTML =
     (save.mastered[curState] ? '<div class="mastered-note">🏆 Mastered!</div>' : "") +
     '<div class="stat-grid">'+stats+'</div>' +
-    d.fx.map(f=>'<div class="fact">💡 '+esc(f)+'</div>').join("");
+    nbHtml +
+    d.fx.map(f=>'<div class="fact">💡 '+esc(f)+'</div>').join("") +
+    badgeHtml;
   function st(k,v){ return '<div class="stat"><div class="k">'+k+'</div><div class="v">'+esc(String(v))+'</div></div>'; }
 }
 
@@ -566,6 +614,7 @@ function renderQuizResult(){
   const already = !!save.mastered[quiz.k];
   if(passed && !already){
     save.mastered[quiz.k] = true; save.pts += 25; persist(); renderScore(); markMastered(); confetti();
+    checkCertificate();
   }
   b.innerHTML =
     '<div class="result-box">' +
@@ -579,17 +628,38 @@ function renderQuizResult(){
     '</div>';
 }
 
-/* ============ FIND THE STATE ============ */
+/* ============ FIND THE STATE / STATE DETECTIVE ============ */
 let find = null;
-function startFind(){
-  find = {targets: shuffle(KEYS).slice(0,10), i:0, score:0, lock:false};
+function clueBank(k){
+  const d = S[k], nameLower = d.n.toLowerCase();
+  const raw = [
+    "I'm in the "+REGION_NAME[d.rg]+" region.",
+    "My nickname is “"+d.nk+"”.",
+    "My capital is "+d.c+".",
+    d.lc!==d.c ? "My largest city is "+d.lc+"." : null,
+    d.pr<=10 ? "I'm one of the 10 most populous states." : (d.pr>=41 ? "I'm one of the least populous states." : "My population ranks "+ord(d.pr)+" among all states."),
+    d.ar<=10 ? "I'm one of the 10 largest states by area." : (d.ar>=41 ? "I'm one of the smallest states by area." : "My area ranks "+ord(d.ar)+" among all states."),
+    "I became a state in "+d.yr+"."
+  ];
+  return raw.filter(l => l && !l.toLowerCase().includes(nameLower));
+}
+function startFind(kind){
+  find = {kind: kind||"find", targets: shuffle(KEYS).slice(0,10), i:0, score:0, lock:false};
   hud.classList.add("show");
   renderFindHud();
 }
 function renderFindHud(){
   if(find.i >= find.targets.length) return endFind();
-  hud.innerHTML = "Round "+(find.i+1)+"/10 — Click on: <span class='big'>"+S[find.targets[find.i]].n+"</span>" +
-    " &nbsp;•&nbsp; Score: "+find.score;
+  const k = find.targets[find.i];
+  if(find.kind==="detective"){
+    const clues = shuffle(clueBank(k)).slice(0,3);
+    hud.innerHTML = "🕵️ Round "+(find.i+1)+"/10<br>" +
+      clues.map(c=>"<div style='font-weight:400;font-size:.92rem'>"+esc(c)+"</div>").join("") +
+      "<div style='margin-top:4px'>Which state am I? Click it on the map. Score: "+find.score+"</div>" + endBtn();
+  } else {
+    hud.innerHTML = "Round "+(find.i+1)+"/10 — Click on: <span class='big'>"+S[k].n+"</span>" +
+      " &nbsp;•&nbsp; Score: "+find.score + endBtn();
+  }
 }
 function findClick(k, el){
   if(find.lock) return;
@@ -609,23 +679,286 @@ function findClick(k, el){
 }
 function endFind(){
   hud.classList.remove("show");
+  const isDet = find.kind==="detective";
   if(find.score > save.bestFind){ save.bestFind = find.score; persist(); }
   showOverlay(
-    '<h2>📍 Find the State — done!</h2>' +
+    '<h2>'+(isDet?'🕵️ State Detective':'📍 Find the State')+' — done!</h2>' +
     '<div class="result-box"><div class="score">'+find.score+'/100</div>' +
     '<p style="margin:8px 0 16px">Best: '+save.bestFind+'</p>' +
-    '<button class="primary-btn" onclick="hideOverlay(); startFind()">🔁 Play again</button> ' +
+    '<button class="primary-btn" onclick="hideOverlay(); startFind(\''+find.kind+'\')">🔁 Play again</button> ' +
     '<button class="ghost-btn" onclick="hideOverlay(); setMode(\'explore\')">Done</button></div>'
   );
   if(find.score >= 80) confetti();
   find = null;
 }
 
+/* ============ BORDER PATROL (neighbor challenge) ============ */
+let neighborGame = null;
+function startNeighborGame(){
+  const pool = KEYS.filter(k => S[k].nb.length>=2);
+  neighborGame = {targets: shuffle(pool).slice(0,5), i:0, score:0, selected:new Set(), locked:false};
+  hud.classList.add("show");
+  renderNeighborRound();
+}
+function renderNeighborRound(){
+  if(neighborGame.i >= neighborGame.targets.length) return endNeighborGame();
+  clearMapFx();
+  neighborGame.selected = new Set();
+  neighborGame.locked = false;
+  const k = neighborGame.targets[neighborGame.i], d = S[k];
+  const el = document.querySelector('.st[data-st="'+k+'"]');
+  if(el) el.classList.add("target-hl");
+  hud.innerHTML = "🧭 Round "+(neighborGame.i+1)+"/5 — Click every state that borders <span class='big'>"+d.n+"</span> ("+d.nb.length+" total)" +
+    " • Found: <span id='nb-found'>0</span>/"+d.nb.length+" • Score: "+neighborGame.score + endBtn() +
+    " <button class='ghost-btn' style='padding:4px 10px;font-size:.75rem;margin-left:6px' onclick='revealNeighborRound()'>Reveal</button>";
+}
+function onNeighborMapClick(k, el){
+  if(neighborGame.locked) return;
+  const target = neighborGame.targets[neighborGame.i];
+  if(k===target || neighborGame.selected.has(k)) return;
+  const d = S[target];
+  if(d.nb.includes(k)){
+    neighborGame.selected.add(k);
+    el.classList.add("flash-good");
+    const found = document.getElementById("nb-found");
+    if(found) found.textContent = neighborGame.selected.size;
+    if(neighborGame.selected.size === d.nb.length){
+      neighborGame.locked = true;
+      neighborGame.score += 20; addPts(20);
+      hud.innerHTML = "✅ All "+d.nb.length+" neighbors of "+d.n+" found! +20";
+      setTimeout(()=>{ neighborGame.i++; renderNeighborRound(); }, 1400);
+    }
+  } else {
+    el.classList.add("flash-bad");
+    setTimeout(()=>el.classList.remove("flash-bad"), 500);
+  }
+}
+function revealNeighborRound(){
+  if(neighborGame.locked) return;
+  const target = neighborGame.targets[neighborGame.i], d = S[target];
+  d.nb.forEach(nk=>{
+    if(!neighborGame.selected.has(nk)){
+      const el = document.querySelector('.st[data-st="'+nk+'"]');
+      if(el) el.classList.add("pulse");
+    }
+  });
+  neighborGame.locked = true;
+  hud.innerHTML = "The neighbors of "+d.n+" are flashing gold.";
+  setTimeout(()=>{ neighborGame.i++; renderNeighborRound(); }, 2200);
+}
+function endNeighborGame(){
+  hud.classList.remove("show");
+  if(neighborGame.score > save.bestNeighbor){ save.bestNeighbor = neighborGame.score; persist(); }
+  showOverlay(
+    '<h2>🧭 Border Patrol — done!</h2>' +
+    '<div class="result-box"><div class="score">'+neighborGame.score+'/100</div>' +
+    '<p style="margin:8px 0 16px">Best: '+save.bestNeighbor+'</p>' +
+    '<button class="primary-btn" onclick="hideOverlay(); startNeighborGame()">🔁 Play again</button> ' +
+    '<button class="ghost-btn" onclick="hideOverlay(); setMode(\'explore\')">Done</button></div>'
+  );
+  if(neighborGame.score >= 80) confetti();
+  neighborGame = null;
+}
+
+/* ============ ROAD TRIP ============ */
+let roadtrip = null;
+const ROAD_POOL = KEYS.filter(k => S[k].nb.length>0);
+function bfsDist(a,b){
+  if(a===b) return 0;
+  const seen = new Set([a]); let frontier=[a], dist=0;
+  while(frontier.length){
+    dist++;
+    const next=[];
+    for(const s of frontier){
+      for(const nb of S[s].nb){
+        if(!seen.has(nb)){
+          if(nb===b) return dist;
+          seen.add(nb); next.push(nb);
+        }
+      }
+    }
+    frontier = next;
+  }
+  return Infinity;
+}
+function shortestPath(a,b){
+  if(a===b) return [a];
+  const prev={}; const seen=new Set([a]); let frontier=[a];
+  while(frontier.length){
+    const next=[];
+    for(const s of frontier){
+      for(const nb of S[s].nb){
+        if(!seen.has(nb)){
+          seen.add(nb); prev[nb]=s;
+          if(nb===b){
+            const p=[b]; let c=b; while(c!==a){ c=prev[c]; p.unshift(c); } return p;
+          }
+          next.push(nb);
+        }
+      }
+    }
+    frontier = next;
+  }
+  return [a,b];
+}
+function startRoadTrip(){
+  let start, dest, dist, tries=0;
+  do{
+    start = pick(ROAD_POOL); dest = pick(ROAD_POOL);
+    dist = bfsDist(start, dest);
+    tries++;
+  } while((dist<4 || dist===Infinity || start===dest) && tries<200);
+  roadtrip = {start, dest, dist, path:[start]};
+  hud.classList.add("show");
+  renderRoadTrip();
+}
+function renderRoadTrip(){
+  clearMapFx();
+  const cur = roadtrip.path[roadtrip.path.length-1];
+  [roadtrip.start].forEach(s=>{ const el=document.querySelector('.st[data-st="'+s+'"]'); if(el) el.classList.add("trip-start"); });
+  [roadtrip.dest].forEach(s=>{ const el=document.querySelector('.st[data-st="'+s+'"]'); if(el) el.classList.add("trip-dest"); });
+  const curEl = document.querySelector('.st[data-st="'+cur+'"]');
+  if(curEl) curEl.classList.add("trip-cur");
+  hud.innerHTML = "🚗 Road Trip — get from <b>"+S[roadtrip.start].n+"</b> to <b>"+S[roadtrip.dest].n+"</b>." +
+    " You're in <span class='big'>"+S[cur].n+"</span>. Click a bordering state to drive there. Hops so far: "+(roadtrip.path.length-1) +
+    endBtn() +
+    " <button class='ghost-btn' style='padding:4px 10px;font-size:.75rem;margin-left:6px' onclick='giveUpRoadTrip()'>Show a route</button>";
+}
+function onRoadTripMapClick(k, el){
+  const cur = roadtrip.path[roadtrip.path.length-1];
+  if(k===cur) return;
+  if(!S[cur].nb.includes(k)){
+    el.classList.add("flash-bad");
+    setTimeout(()=>el.classList.remove("flash-bad"), 500);
+    return;
+  }
+  roadtrip.path.push(k);
+  addPts(5);
+  if(k===roadtrip.dest){ finishRoadTrip(); return; }
+  renderRoadTrip();
+}
+function finishRoadTrip(){
+  hud.classList.remove("show");
+  const hops = roadtrip.path.length-1;
+  const bonus = hops<=roadtrip.dist ? 30 : (hops<=roadtrip.dist+2 ? 15 : 0);
+  if(bonus) addPts(bonus);
+  const routeNames = roadtrip.path.map(s=>S[s].n).join(" → ");
+  showOverlay(
+    '<h2>🚗 Road Trip complete!</h2>' +
+    '<div class="result-box">' +
+      '<div class="score">'+hops+' hops</div>' +
+      '<p style="margin:8px 0 10px">Shortest possible route: '+roadtrip.dist+' hops.'+(bonus?" +"+bonus+" efficiency bonus!":"")+'</p>' +
+      '<p style="font-size:.82rem;color:var(--muted);margin-bottom:16px">'+esc(routeNames)+'</p>' +
+      '<button class="primary-btn" onclick="hideOverlay(); startRoadTrip()">🔁 New trip</button> ' +
+      '<button class="ghost-btn" onclick="hideOverlay(); setMode(\'explore\')">Done</button>' +
+    '</div>'
+  );
+  confetti();
+  roadtrip = null;
+}
+function giveUpRoadTrip(){
+  const path = shortestPath(roadtrip.start, roadtrip.dest);
+  hud.classList.remove("show");
+  showOverlay(
+    '<h2>🚗 Road Trip — a route</h2>' +
+    '<div class="result-box"><p style="margin:10px 0 16px">'+esc(path.map(s=>S[s].n).join(" → "))+'</p>' +
+    '<button class="primary-btn" onclick="hideOverlay(); startRoadTrip()">🔁 New trip</button> ' +
+    '<button class="ghost-btn" onclick="hideOverlay(); setMode(\'explore\')">Done</button></div>'
+  );
+  roadtrip = null;
+}
+
+/* ============ COMPARE BATTLE ============ */
+let compare = null;
+function startCompare(){
+  document.querySelectorAll(".mode-btn").forEach(b=>b.classList.toggle("active", b.dataset.mode==="compare"));
+  hud.classList.remove("show"); find=null; neighborGame=null; roadtrip=null; closePanel(); clearMapFx();
+  compare = {i:0, score:0, streak:0, rounds:10};
+  renderCompareQ();
+}
+function renderCompareQ(){
+  if(compare.i >= compare.rounds) return endCompare();
+  const statKey = pick(["pop","area"]);
+  let a,b;
+  do{ a=pick(KEYS); b=pick(KEYS); } while(a===b);
+  const av = S[a][statKey], bv = S[b][statKey];
+  const correct = av>bv ? a : b;
+  const label = statKey==="pop" ? "more people" : "more land area";
+  showOverlay(
+    '<button class="close" title="Exit" onclick="quitCompare()">✕</button>' +
+    '<h2>⚖️ Compare Battle</h2>' +
+    '<div class="sub">Round '+(compare.i+1)+'/'+compare.rounds+' • Score '+compare.score+(compare.streak>=3?' • 🔥 streak '+compare.streak:'')+'</div>' +
+    '<div class="q-text">Which state has '+label+'?</div>' +
+    '<button class="opt" data-v="'+a+'">'+esc(S[a].n)+'</button>' +
+    '<button class="opt" data-v="'+b+'">'+esc(S[b].n)+'</button>' +
+    '<div class="feedback" id="cmp-fb"></div>'
+  );
+  const box = document.getElementById("ov-body");
+  const fmt = statKey==="pop" ? fmtPop : fmtArea;
+  box.querySelectorAll(".opt").forEach(btn=>{
+    btn.onclick = ()=>{
+      box.querySelectorAll(".opt").forEach(o=>{ o.disabled=true; if(o.dataset.v===correct) o.classList.add("correct"); });
+      const fb = document.getElementById("cmp-fb");
+      const right = btn.dataset.v===correct;
+      if(right){
+        compare.streak++; const bonus = compare.streak>=3 ? 5 : 0;
+        compare.score += 10+bonus; addPts(10+bonus);
+        fb.textContent = "✅ +"+(10+bonus)+" — "+S[a].n+": "+fmt(av)+" • "+S[b].n+": "+fmt(bv);
+        fb.className = "feedback good";
+      } else {
+        btn.classList.add("wrong"); compare.streak=0;
+        fb.textContent = "❌ "+S[a].n+": "+fmt(av)+" • "+S[b].n+": "+fmt(bv);
+        fb.className = "feedback bad";
+      }
+      const nx = document.createElement("button"); nx.className="next-btn";
+      nx.textContent = compare.i+1<compare.rounds ? "Next →" : "See result";
+      nx.onclick = ()=>{ compare.i++; renderCompareQ(); };
+      box.appendChild(nx);
+    };
+  });
+}
+function quitCompare(){ compare=null; hideOverlay(); setMode("explore"); }
+function endCompare(){
+  if(compare.score > save.bestCompare){ save.bestCompare = compare.score; persist(); }
+  showOverlay(
+    '<h2>⚖️ Compare Battle — done!</h2>' +
+    '<div class="result-box"><div class="score">'+compare.score+'</div>' +
+    '<p style="margin:8px 0 16px">Best: '+save.bestCompare+'</p>' +
+    '<button class="primary-btn" onclick="startCompare()">🔁 Play again</button> ' +
+    '<button class="ghost-btn" onclick="hideOverlay(); setMode(\'explore\')">Done</button></div>'
+  );
+  if(compare.score >= 90) confetti();
+  compare = null;
+}
+
+/* ============ CERTIFICATE ============ */
+function checkCertificate(){
+  if(Object.keys(save.mastered).length >= KEYS.length && !save.certShown){
+    save.certShown = true; persist();
+    showCertificate(true);
+  }
+}
+function showCertificate(justEarned){
+  showOverlay(
+    '<div style="text-align:center">' +
+    (justEarned ? '<h2>🎓 Congratulations!</h2><div class="sub">You mastered all 50 states!</div>' : '<h2>🎓 Your Certificate</h2>') +
+    '<div style="border:2px solid var(--gold); border-radius:14px; padding:24px; margin:16px 0; background:var(--panel2)">' +
+      '<div style="font-size:.75rem;letter-spacing:2px;color:var(--muted);text-transform:uppercase">United States Explorer</div>' +
+      '<div style="font-size:1.5rem;font-weight:800;color:var(--gold);margin:10px 0">Certificate of Completion</div>' +
+      '<div style="font-size:.9rem;color:var(--muted)">Awarded for mastering all 50 U.S. states</div>' +
+    '</div>' +
+    '<button class="primary-btn" onclick="window.print()">🖨️ Print</button> ' +
+    '<button class="ghost-btn" onclick="hideOverlay()">Close</button>' +
+    '</div>'
+  );
+  if(justEarned) confetti();
+}
+
 /* ============ SPRINTS (capital / nickname) ============ */
 let sprint = null;
 function startSprint(kind){
   document.querySelectorAll(".mode-btn").forEach(b=>b.classList.toggle("active", b.dataset.mode===(kind==="capital"?"sprint":"nick")));
-  hud.classList.remove("show"); find=null; closePanel(); clearMapFx();
+  hud.classList.remove("show"); find=null; neighborGame=null; roadtrip=null; closePanel(); clearMapFx();
   sprint = {kind, states: shuffle(KEYS).slice(0,10), i:0, score:0, streak:0};
   renderSprintQ();
 }
