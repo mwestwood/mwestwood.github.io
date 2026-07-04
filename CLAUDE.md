@@ -310,12 +310,43 @@ python3 _tools/build-vocab-arcade.py "passphrase"
 
 Generates `teaching/vocabulary/arcade.md` (`layout: protected-game`) from
 `_tools/vocab_data.py` — the word bank is packed as JSON and encrypted into
-front matter. The game engine (levels → themes → games UI) is public code in
-`_layouts/protected-game.html`; editing the games never requires
-re-encryption, only word changes do. Do not expect `encrypt-batch.py` to
-handle this page — it forces `layout: protected` (it skips arcade.md anyway
-because the body is empty). Player progress (XP/stars) lives in localStorage
-under `vocab-arcade-v1`.
+front matter. Note `_tools/vocab_data.py` is **git-ignored** (plaintext
+content); it exists only locally. The game engine (levels → themes → games
+UI) is public code in `_layouts/protected-game.html`; editing the games never
+requires re-encryption, only word changes do. Do not expect
+`encrypt-batch.py` to handle this page — it forces `layout: protected` (it
+skips arcade.md anyway because the body is empty).
+
+The arcade has a **reinforcement engine** (spaced repetition, added July
+2026) — keep its design rules when editing:
+
+- **Per-word memory**: every answered question calls `recordAnswer(word, ok)`
+  which updates a Leitner record `{b, due, s, r, x}` (box 0–6, next-review
+  timestamp, seen/right/wrong counts) keyed `level|word`. Correct → box+1,
+  wrong → back to box 1. Review intervals: 0/1/2/4/7/14/30 days by box.
+  Flashcard "Got it" and Memory Flip matches call `touchWord` (marks
+  introduced, no box change). Word chips show mastery medals: 🥉 box ≥ 2,
+  🥈 ≥ 4, 🥇 ≥ 6. The same word text in two themes of one level shares one
+  record on purpose (progress carries across themes); `buckets()` dedupes
+  by key so counts don't inflate.
+- **Today's Mission** (home screen): builds a 12-word session from buckets —
+  4 weak + 4 due + 2 old-strong + 2 never-seen, topped up if buckets are
+  thin — with mixed question types. Completing it bumps a daily streak
+  (`P.streak`) and banks XP in `P.xp.mission`. Shuffle Mix uses the same
+  buckets per level (not random).
+- **Games**: besides the classic ten, `duel` (Word Duel — sentence blank,
+  the right word vs an antonym foil, 2 big options), `fool` (Don't Get
+  Fooled — all 4 options come from the same confusion family), and `boss`
+  (Boss Battle — 10 questions mixed from every builder; ≥ 80% wins a 👑
+  crown stored in `P.crowns[themeId]`, shown on theme cards). Answer
+  feedback appends the word's mini-network (synonyms 🟢 / antonyms 🔴).
+- **Confusion families** in `vocab_data.py` are `kind: "meaning"` groups
+  titled "Don't get fooled: …" (cred-/ambi-/bene- traps,
+  reticent/reluctant/resistant/reserved) — deliberately overlapping words
+  from root families so the `fool` game can attack precision.
+
+Player progress (XP/stars/words/crowns/streak) lives in localStorage under
+`vocab-arcade-v1`; all new fields are backward-compatible with old saves.
 
 ### Rebuild WH Question Quest (interactive game page)
 

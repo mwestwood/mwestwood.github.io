@@ -529,7 +529,15 @@ layout: default
       { id: 'mem', name: 'Memory Flip', emoji: '🧠', starred: true,
         desc: 'Match each word to its meaning in as few moves as you can.' },
       { id: 'root', name: 'Root Rally', emoji: '🌿', starred: true, rootOnly: true,
-        desc: 'Spot the root hiding inside each word.' }
+        desc: 'Spot the root hiding inside each word.' },
+      { id: 'duel', name: 'Word Duel', emoji: '⚔️', starred: true,
+        desc: 'Two words enter one sentence. Pick the one that truly fits.' },
+      { id: 'fool', name: 'Don’t Get Fooled', emoji: '🪤', starred: true,
+        desc: 'Every wrong answer is a close cousin. Precision only.' },
+      { id: 'boss', name: 'Boss Battle', emoji: '🐉', starred: false, boss: true,
+        desc: 'Ten mixed questions, every game at once. Score 80% to win the crown.' },
+      { id: 'mission', name: 'Today’s Mission', emoji: '📬', starred: false,
+        hidden: true, desc: 'Weak, due, old and new words — served by the memory engine.' }
     ];
 
     /* ── helpers ──────────────────────────────────────────────────────── */
@@ -587,11 +595,77 @@ layout: default
     let P = null;
     try { P = JSON.parse(localStorage.getItem(PKEY) || 'null'); } catch (_) {}
     if (!P || typeof P !== 'object') P = {};
-    P.xp = P.xp || {};       /* per level */
+    P.xp = P.xp || {};       /* per level (+ 'mission') */
     P.stars = P.stars || {}; /* themeId|gameId -> 0..3 */
     P.done = P.done || {};   /* themeId|flash -> true */
+    P.words = P.words || {}; /* wordKey -> {b,due,s,r,x} (box, due-ts, seen, right, wrong) */
+    P.crowns = P.crowns || {}; /* themeId -> true (boss battle won) */
+    P.streak = P.streak || { cur: 0, best: 0, last: '' }; /* daily mission streak */
     function save() {
       try { localStorage.setItem(PKEY, JSON.stringify(P)); } catch (_) {}
+    }
+
+    /* ── per-word memory (Leitner boxes) ──────────────────────────────────
+       Every answered question feeds a word's record. box 0-6 decides the
+       review interval; a wrong answer knocks the word back to box 1. */
+    const BOX_DAYS = [0, 1, 2, 4, 7, 14, 30];
+    const DAY = 86400000;
+    function wkey(w) { return w._lvl + '|' + w.w.toLowerCase(); }
+    function wrec(w) { return P.words[wkey(w)] || null; }
+    function wstat(w) {
+      let r = P.words[wkey(w)];
+      if (!r) r = P.words[wkey(w)] = { b: 0, due: 0, s: 0, r: 0, x: 0 };
+      return r;
+    }
+    function recordAnswer(w, ok) {
+      if (!w) return;
+      const r = wstat(w);
+      r.s++;
+      if (ok) { r.r++; r.b = Math.min(6, r.b + 1); }
+      else { r.x++; r.b = r.b > 1 ? 1 : 0; }
+      r.due = Date.now() + BOX_DAYS[r.b] * DAY;
+      save();
+    }
+    function touchWord(w) { /* introduced (flashcard / memory match) */
+      if (!w) return;
+      wstat(w).s++;
+      save();
+    }
+    function medal(w) {
+      const r = wrec(w);
+      if (!r || !r.s) return '';
+      if (r.b >= 6) return '🥇'; if (r.b >= 4) return '🥈'; if (r.b >= 2) return '🥉';
+      return '';
+    }
+    /* fresh: never met · weak: recently missed / just introduced ·
+       due: scheduled for review · strong: old solid words · rest: learning */
+    function buckets(words) {
+      /* a word text can live in several themes of one level (e.g. a root
+         family and a confusion family) — they share one record, so only
+         count the first occurrence */
+      const now = Date.now();
+      const B = { fresh: [], weak: [], due: [], strong: [], rest: [] };
+      const seenK = {};
+      words.forEach(function (w) {
+        const k = wkey(w);
+        if (seenK[k]) return;
+        seenK[k] = true;
+        const r = wrec(w);
+        if (!r || !r.s) B.fresh.push(w);
+        else if (r.b <= 1) B.weak.push(w);
+        else if (r.due <= now) B.due.push(w);
+        else if (r.b >= 5) B.strong.push(w);
+        else B.rest.push(w);
+      });
+      return B;
+    }
+    function bumpStreak() {
+      const today = new Date().toISOString().slice(0, 10);
+      if (P.streak.last === today) return;
+      const yest = new Date(Date.now() - DAY).toISOString().slice(0, 10);
+      P.streak.cur = P.streak.last === yest ? P.streak.cur + 1 : 1;
+      if (P.streak.cur > P.streak.best) P.streak.best = P.streak.cur;
+      P.streak.last = today;
     }
     function starKey(t, g) { return t.id + '|' + g; }
     function themeStars(t) {
@@ -643,6 +717,7 @@ layout: default
         L.themes.push(t);
         g.words.forEach(function (w) {
           w._t = t;
+          w._lvl = g.level;
           w._syn = splitList(w.syn);
           w._ant = splitList(w.ant);
           L.words.push(w);
@@ -681,7 +756,38 @@ layout: default
     function goHome() {
       S.level = null; S.theme = null; S.sess = null;
       setAccent('#e2b04a');
-      let cards = '';
+      const B = buckets(allWords());
+      const recs = Object.keys(P.words).map(function (k) { return P.words[k]; });
+      const nowTs = Date.now();
+      const seenN = recs.filter(function (r) { return r.s > 0; }).length;
+      const masteredN = recs.filter(function (r) { return r.b >= 6; }).length;
+      const crownsN = Object.keys(P.crowns).length;
+      const reviewN = recs.filter(function (r) {
+        return r.s > 0 && (r.b <= 1 || r.due <= nowTs);
+      }).length;
+      const today = new Date().toISOString().slice(0, 10);
+      const streakLive = P.streak.last === today ||
+        P.streak.last === new Date(Date.now() - DAY).toISOString().slice(0, 10);
+      const streakN = streakLive ? P.streak.cur : 0;
+      const missionDone = P.streak.last === today;
+      let cards =
+        '<button class="va-level" data-mission style="--lc:#60a5fa">' +
+          '<span class="em">📬</span>' +
+          '<span class="body">' +
+            '<div class="name">Today’s Mission' +
+              (missionDone ? ' <span style="font-size:.8rem;color:#4ade80">✓ done today</span>' : '') +
+            '</div>' +
+            '<div class="tag">The memory engine picks the words: weak + due + old + new</div>' +
+            '<div class="meta">' +
+              (reviewN ? '⏰ ' + reviewN + ' to review · ' : '') +
+              '🌱 ' + B.fresh.length + ' never seen</div>' +
+          '</span>' +
+          '<span class="side">' +
+            '<div class="stars">🔥 ' + streakN + '<span style="opacity:.5;font-weight:400"> day' +
+              (streakN === 1 ? '' : 's') + '</span></div>' +
+            '<div class="xp">⚡ ' + (P.xp.mission || 0) + ' XP</div>' +
+          '</span>' +
+        '</button>';
       LEVELS.forEach(function (l) {
         const m = LMETA[l];
         const st = levelStars(l), mx = levelMaxStars(l);
@@ -705,11 +811,19 @@ layout: default
       render(
         '<div class="va-hero">' +
           '<h1>🕹️ Vocabulary Arcade</h1>' +
-          '<p>Pick a level, pick a theme, pick a game. Earn stars and XP as the words stick.</p>' +
+          '<p>Run the mission, then pick a theme. Words come back until you own them.</p>' +
+        '</div>' +
+        '<div class="va-statrow" style="margin-bottom:1.1rem">' +
+          '<span class="va-pill">📖 ' + seenN + ' words met</span>' +
+          '<span class="va-pill">🥇 ' + masteredN + ' mastered</span>' +
+          '<span class="va-pill">⏰ ' + reviewN + ' to review</span>' +
+          '<span class="va-pill">👑 ' + crownsN + ' crowns</span>' +
+          '<span class="va-pill">🏅 best streak ' + P.streak.best + '</span>' +
         '</div>' +
         '<div class="va-levels">' + cards + '</div>'
       );
-      on('.va-level', 'click', function (e) {
+      on('[data-mission]', 'click', startMission);
+      on('.va-level[data-l]', 'click', function (e) {
         goLevel(e.currentTarget.dataset.l);
       });
     }
@@ -722,7 +836,8 @@ layout: default
       const preview = t.words.map(function (w) { return w.w; }).join(' · ');
       return '<button class="va-theme" data-t="' + t.id + '">' +
         '<span class="kind"><span>' + kindLabel + '</span>' +
-          '<span class="st">' + (st ? '★ ' + st : '☆') +
+          '<span class="st">' + (P.crowns[t.id] ? '👑 ' : '') +
+          (st ? '★ ' + st : '☆') +
           '<span style="opacity:.5;font-weight:400"> / ' + themeMaxStars(t) + '</span></span></span>' +
         '<span class="name">' + md(t.title) + '</span>' +
         '<span class="words">' + esc(preview) + '</span>' +
@@ -762,9 +877,9 @@ layout: default
         '</div>' +
         '<div class="va-grid">' +
           '<button class="va-theme mix" data-t="__mix">' +
-            '<span class="kind"><span>🎲 Practice</span><span></span></span>' +
+            '<span class="kind"><span>🎲 Smart practice</span><span></span></span>' +
             '<span class="name">Shuffle Mix</span>' +
-            '<span class="words">10 random words from the whole level — no stars, pure practice</span>' +
+            '<span class="words">10 words the memory engine says you need: weak + due + old + new</span>' +
           '</button>' +
           themes.map(themeCard).join('') +
         '</div>' +
@@ -793,11 +908,24 @@ layout: default
     }
 
     function makeMix(l) {
+      /* not random: weak + due + old strong + never-seen, in that priority */
+      const B = buckets(D[l].words);
+      let ws = shuffle(B.weak).slice(0, 3)
+        .concat(shuffle(B.due).slice(0, 3),
+                shuffle(B.strong).slice(0, 2),
+                shuffle(B.fresh).slice(0, 2));
+      if (ws.length < 10) {
+        const extra = shuffle(D[l].words.filter(function (w) {
+          return ws.indexOf(w) < 0;
+        }));
+        ws = ws.concat(extra.slice(0, 10 - ws.length));
+      }
       return {
         id: '__mix', level: l, kind: 'mix', title: '🎲 Shuffle Mix',
-        blurb: 'Ten random words from the whole ' + LMETA[l].name.toLowerCase() +
-               ' level. Practice only — stars are earned inside real themes.',
-        root: null, words: shuffle(D[l].words).slice(0, 10)
+        blurb: 'Ten ' + LMETA[l].name.toLowerCase() + ' words picked by the ' +
+               'memory engine — the ones about to fade, plus a couple of new ' +
+               'ones. Practice only; stars are earned inside real themes.',
+        root: null, words: shuffle(ws)
       };
     }
 
@@ -810,16 +938,19 @@ layout: default
     function goTheme(t) {
       S.theme = t; S.sess = null;
       const chips = t.words.map(function (w) {
+        const m = medal(w);
         return '<button class="va-chip" data-w="' + esc(w.w) + '" title="' +
-               esc(w.say) + '">' + esc(w.w) + ' 🔈</button>';
+               esc(w.say) + '">' + esc(w.w) + (m ? ' ' + m : '') + ' 🔈</button>';
       }).join('');
       const canRoot = rootWordsOf(t).length >= 4;
       const games = GAMES.filter(function (g) {
-        return !g.rootOnly || canRoot;
+        return !g.hidden && (!g.rootOnly || canRoot);
       }).map(function (g) {
         let st = '';
         if (t.id !== '__mix') {
-          if (g.starred) {
+          if (g.boss) {
+            st = P.crowns[t.id] ? '👑 crown won' : '';
+          } else if (g.starred) {
             const n = P.stars[starKey(t, g.id)] || 0;
             st = '★'.repeat(n) + '<span style="opacity:.3">' + '★'.repeat(3 - n) + '</span>';
           } else if (P.done[starKey(t, 'flash')]) {
@@ -850,7 +981,7 @@ layout: default
     /* ── question builders ────────────────────────────────────────────── */
 
     function distractorWords(w, n) {
-      const pool = D[S.level].words.filter(function (o) {
+      const pool = D[w._lvl].words.filter(function (o) {
         return o !== w && o._t !== w._t && o.w !== w.w && o.mean !== w.mean;
       });
       const same = shuffle(pool.filter(function (o) { return o.pos === w.pos; }));
@@ -864,31 +995,53 @@ layout: default
       }));
     }
 
+    /* after every answer, reinforce the word's mini-network */
+    function network(w) {
+      const bits = [];
+      if (w.syn) bits.push('🟢 ' + esc(w.syn));
+      if (w.ant) bits.push('🔴 ' + esc(w.ant));
+      return bits.length
+        ? '<br><span style="opacity:.72;font-size:.82rem">' +
+          bits.join(' &nbsp;·&nbsp; ') + '</span>'
+        : '';
+    }
+
+    function wordPrompt(w, sayBtn) {
+      return '<div class="word">' + esc(w.w) +
+        (sayBtn ? ' <button class="va-say-btn" data-say="' + esc(w.w) + '">🔈</button>' : '') +
+        '</div>' +
+        '<div class="say">' + esc(w.say) + ' · ' + esc(w.pos) + '</div>';
+    }
+
+    function quizQFor(w, dir) {
+      const others = distractorWords(w, 3);
+      if (others.length < 3) return null;
+      if (dir === 'w2m') {
+        return {
+          word: w,
+          label: 'What does it mean?',
+          prompt: wordPrompt(w, true),
+          options: optRow([w].concat(others).map(function (o) { return md(o.mean); }), 0),
+          after: '💡 ' + md(w.story) + network(w)
+        };
+      }
+      return {
+        word: w,
+        label: 'Which word is it?',
+        prompt: '<div class="mean">' + md(w.mean) + '</div>',
+        options: optRow([w].concat(others).map(function (o) { return esc(o.w); }), 0),
+        after: '💡 ' + md(w.story) + network(w)
+      };
+    }
+
     function quizQs(t) {
       const both = t.words.length <= 6;
       const qs = [];
       t.words.forEach(function (w) {
         const dirs = both ? ['w2m', 'm2w'] : [pick(['w2m', 'm2w'])];
         dirs.forEach(function (dir) {
-          const others = distractorWords(w, 3);
-          if (others.length < 3) return;
-          if (dir === 'w2m') {
-            qs.push({
-              label: 'What does it mean?',
-              prompt: '<div class="word">' + esc(w.w) +
-                ' <button class="va-say-btn" data-say="' + esc(w.w) + '">🔈</button></div>' +
-                '<div class="say">' + esc(w.say) + ' · ' + esc(w.pos) + '</div>',
-              options: optRow([w].concat(others).map(function (o) { return md(o.mean); }), 0),
-              after: '💡 ' + md(w.story)
-            });
-          } else {
-            qs.push({
-              label: 'Which word is it?',
-              prompt: '<div class="mean">' + md(w.mean) + '</div>',
-              options: optRow([w].concat(others).map(function (o) { return esc(o.w); }), 0),
-              after: '💡 ' + md(w.story)
-            });
-          }
+          const q = quizQFor(w, dir);
+          if (q) qs.push(q);
         });
       });
       return shuffle(qs);
@@ -899,7 +1052,7 @@ layout: default
          kind 'ant': correct from w._ant, trap from w._syn, fillers from pool */
       const mine = kind === 'syn' ? w._syn : w._ant;
       const trapList = kind === 'syn' ? w._ant : w._syn;
-      const pool = kind === 'syn' ? D[S.level].synPool : D[S.level].antPool;
+      const pool = kind === 'syn' ? D[w._lvl].synPool : D[w._lvl].antPool;
       if (!mine.length) return null;
       const correct = pick(mine);
       const bothMine = {};
@@ -923,20 +1076,30 @@ layout: default
       return optRow(opts.map(esc), 0);
     }
 
+    function synQFor(w, kind) {
+      const options = synOptions(w, kind);
+      if (!options) return null;
+      if (kind === 'syn') {
+        return {
+          word: w, label: 'Grab a synonym of', prompt: wordPrompt(w),
+          options: options,
+          after: '🟢 Synonyms of <b>' + esc(w.w) + '</b>: ' + esc(w.syn)
+        };
+      }
+      return {
+        word: w, label: 'Pick the OPPOSITE of', prompt: wordPrompt(w),
+        options: options,
+        after: '🙃 Opposites of <b>' + esc(w.w) + '</b>: ' + esc(w.ant)
+      };
+    }
+
     function antQs(t) {
       const passes = t.words.length <= 5 ? 2 : 1;
       const qs = [];
       for (let p = 0; p < passes; p++) {
         t.words.forEach(function (w) {
-          const options = synOptions(w, 'ant');
-          if (!options) return;
-          qs.push({
-            label: 'Pick the OPPOSITE of',
-            prompt: '<div class="word">' + esc(w.w) + '</div>' +
-                    '<div class="say">' + esc(w.say) + ' · ' + esc(w.pos) + '</div>',
-            options: options,
-            after: '🙃 Opposites of <b>' + esc(w.w) + '</b>: ' + esc(w.ant)
-          });
+          const q = synQFor(w, 'ant');
+          if (q) qs.push(q);
         });
       }
       return shuffle(qs);
@@ -957,6 +1120,7 @@ layout: default
                  esc(means) + '</span>';
         }
         qs.push({
+          word: w,
           label: 'Which root is hiding inside…',
           prompt: '<div class="word">' + esc(w.w) + '</div>' +
                   '<div class="say">' + esc(w.say) + '</div>',
@@ -971,6 +1135,7 @@ layout: default
         })).slice(0, 3);
         if (otherWords.length === 3) {
           qs.push({
+            word: w,
             label: 'Which word is built from…',
             prompt: '<div class="word" style="font-size:1.5rem">' +
                     esc(myRoot.root) + '</div>' +
@@ -985,31 +1150,114 @@ layout: default
       return shuffle(qs);
     }
 
+    function boldExs(w) {
+      return (w.ex || []).filter(function (e) { return /\*\*(.+?)\*\*/.test(e); });
+    }
+    function blankSentence(raw) {
+      return md(raw.replace(/\*\*(.+?)\*\*/g, '\u0001')).split('\u0001')
+        .join('<span class="va-blank">_____</span>');
+    }
+
+    function blankQFromEx(w, raw) {
+      const others = distractorWords(w, 3);
+      if (others.length < 3) return null;
+      return {
+        word: w,
+        label: 'Which word completes it?',
+        prompt: '<div class="mean">' + blankSentence(raw) + '</div>',
+        options: optRow([w].concat(others).map(function (o) {
+          return esc(o.w);
+        }), 0),
+        after: '💡 <b>' + esc(w.w) + '</b>: ' + md(w.mean) + network(w)
+      };
+    }
+    function blankQFor(w) {
+      const exs = boldExs(w);
+      return exs.length ? blankQFromEx(w, pick(exs)) : null;
+    }
+
     function blankQs(t) {
       /* the word's own example sentences with the **bold** word blanked out */
       const passes = t.words.length <= 6 ? 2 : 1;
       const qs = [];
       t.words.forEach(function (w) {
-        const exs = shuffle((w.ex || []).filter(function (e) {
-          return /\*\*(.+?)\*\*/.test(e);
-        }));
+        const exs = shuffle(boldExs(w));
         for (let p = 0; p < passes && p < exs.length; p++) {
-          const raw = exs[p].replace(/\*\*(.+?)\*\*/g, '\u0001');
-          const sentence = md(raw).split('\u0001')
-            .join('<span class="va-blank">_____</span>');
-          const others = distractorWords(w, 3);
-          if (others.length < 3) continue;
-          qs.push({
-            label: 'Which word completes it?',
-            prompt: '<div class="mean">' + sentence + '</div>',
-            options: optRow([w].concat(others).map(function (o) {
-              return esc(o.w);
-            }), 0),
-            after: '💡 <b>' + esc(w.w) + '</b>: ' + md(w.mean)
-          });
+          const q = blankQFromEx(w, exs[p]);
+          if (q) qs.push(q);
         }
       });
       return shuffle(qs);
+    }
+
+    /* ── word duel: the right word vs a tempting foil, one sentence ────── */
+
+    function duelQFor(w) {
+      const exs = boldExs(w);
+      if (!exs.length) return null;
+      let foil = null;
+      if (w._ant.length) {
+        const f = pick(w._ant);
+        if (f.toLowerCase() !== w.w.toLowerCase()) foil = f;
+      }
+      if (!foil) {
+        const o = distractorWords(w, 1)[0];
+        if (!o) return null;
+        foil = o.w;
+      }
+      return {
+        word: w,
+        label: 'Word duel — which one truly fits?',
+        prompt: '<div class="mean">' + blankSentence(pick(exs)) + '</div>',
+        options: optRow([esc(w.w), esc(foil)], 0),
+        after: '⚔️ <b>' + esc(w.w) + '</b>: ' + md(w.mean) + network(w)
+      };
+    }
+
+    function duelQs(t) {
+      const qs = [];
+      t.words.forEach(function (w) {
+        const q = duelQFor(w);
+        if (q) qs.push(q);
+      });
+      return shuffle(qs);
+    }
+
+    /* ── don't get fooled: every option comes from the same family ─────── */
+
+    function foolQs(t) {
+      if (t.words.length < 4) return [];
+      const qs = [];
+      t.words.forEach(function (w) {
+        const sibs = shuffle(t.words.filter(function (o) {
+          return o !== w && o.w !== w.w;
+        })).slice(0, 3);
+        if (sibs.length < 3) return;
+        qs.push({
+          word: w,
+          label: 'Don’t get fooled — which word means…',
+          prompt: '<div class="mean">' + md(w.mean) + '</div>',
+          options: optRow([w].concat(sibs).map(function (o) { return esc(o.w); }), 0),
+          after: '🪤 <b>' + esc(w.w) + '</b> — ' + md(w.story)
+        });
+        qs.push({
+          word: w,
+          label: 'Don’t get fooled — what does it mean?',
+          prompt: wordPrompt(w, true),
+          options: optRow([w].concat(sibs).map(function (o) { return md(o.mean); }), 0),
+          after: '🪤 ' + md(w.story) + network(w)
+        });
+      });
+      return shuffle(qs);
+    }
+
+    /* ── boss battle: every question type at once, 80% wins the crown ──── */
+
+    function bossQs(t) {
+      let pool = quizQs(t).concat(blankQs(t), antQs(t), duelQs(t), foolQs(t),
+                                  oddQs(t));
+      if (rootWordsOf(t).length >= 4) pool = pool.concat(rootQs(t));
+      return shuffle(pool).slice(0, 10);
     }
 
     function oddQs(t) {
@@ -1063,10 +1311,18 @@ layout: default
       if (gid === 'root') qs = rootQs(t);
       if (gid === 'blank') qs = blankQs(t);
       if (gid === 'odd') qs = oddQs(t);
+      if (gid === 'duel') qs = duelQs(t);
+      if (gid === 'fool') qs = foolQs(t);
+      if (gid === 'boss') qs = bossQs(t);
       if (!qs.length) return;
       S.sess = { gid: gid, qs: qs, i: 0, score: 0, correct: 0, streak: 0,
-                 best: 0, answered: false };
+                 best: 0, answered: false, boss: gid === 'boss' };
       renderQ();
+    }
+
+    function quitSession() {
+      if (S.theme && S.theme.id === '__mission') return goHome();
+      goTheme(S.theme);
     }
 
     function hud(mid) {
@@ -1126,7 +1382,7 @@ layout: default
         '<div class="va-after"></div>'
       );
       if (s.timed) startClock();
-      on('[data-nav="quit"]', 'click', function () { goTheme(S.theme); });
+      on('[data-nav="quit"]', 'click', quitSession);
       on('.va-say-btn', 'click', function (e) {
         e.stopPropagation(); speak(e.currentTarget.dataset.say);
       });
@@ -1142,6 +1398,7 @@ layout: default
       btns.forEach(function (b) { b.disabled = true; });
       const okIdx = q.options.findIndex(function (o) { return o.ok; });
       const ok = q.options[i].ok;
+      recordAnswer(q.word, ok);
       if (ok) {
         btns[i].classList.add('good');
         s.streak++;
@@ -1168,6 +1425,31 @@ layout: default
     function finishQuiz() {
       const s = S.sess;
       const acc = s.qs.length ? s.correct / s.qs.length : 0;
+      if (s.boss) {
+        const win = acc >= 0.8;
+        let firstCrown = false;
+        if (win && S.theme.id !== '__mix' && !P.crowns[S.theme.id]) {
+          P.crowns[S.theme.id] = true;
+          firstCrown = true;
+        }
+        return results({
+          stars: 0, score: s.score, crown: win,
+          title: win
+            ? (firstCrown ? 'Boss defeated — crown won! 👑' : 'Crown defended! 👑')
+            : 'The boss survived… 🐉',
+          line: s.correct + ' / ' + s.qs.length + ' correct' +
+                (win ? '' : ' — you need 80% to take the crown')
+        });
+      }
+      if (s.gid === 'mission') {
+        return results({
+          stars: 0, score: s.score,
+          title: acc >= 0.9 ? 'Mission crushed! 🚀'
+               : acc >= 0.6 ? 'Mission complete! ✅'
+               : 'Mission done — every word logged 📬',
+          line: s.correct + ' / ' + s.qs.length + ' correct · best streak 🔥' + s.best
+        });
+      }
       const stars = acc >= 0.9 ? 3 : acc >= 0.65 ? 2 : 1;
       results({
         stars: stars, score: s.score,
@@ -1202,15 +1484,8 @@ layout: default
       while (!q && guard++ < 20) {
         const w = s.queue[s.qi % s.queue.length];
         s.qi++;
-        const options = synOptions(w, 'syn');
-        if (options) {
-          q = {
-            label: 'Grab a synonym of', options: options,
-            prompt: '<div class="word">' + esc(w.w) + '</div>' +
-                    '<div class="say">' + esc(w.say) + ' · ' + esc(w.pos) + '</div>',
-            after: ''
-          };
-        }
+        q = synQFor(w, 'syn');
+        if (q) q.after = '';
       }
       if (!q) return;
       s.qs = [q]; s.i = 0;
@@ -1249,6 +1524,7 @@ layout: default
         after = '🎭 Really: ' + md(w.mean);
       }
       s.qs = [{
+        word: w,
         label: 'Fact or fake?',
         prompt: '<div class="word" style="font-size:1.6rem">' + esc(w.w) + '</div>' +
                 '<div class="mean" style="margin-top:.4rem">“' + md(shownMean) + '”</div>',
@@ -1259,6 +1535,60 @@ layout: default
         after: after
       }];
       s.i = 0;
+      renderQ();
+    }
+
+    /* ── today's mission: the reinforcement engine picks the words ─────── */
+
+    function allWords() {
+      return LEVELS.reduce(function (a, l) { return a.concat(D[l].words); }, []);
+    }
+
+    /* 4 weak + 4 due + 2 old strong + 2 never-seen; filled up to 12 */
+    function missionWords() {
+      const B = buckets(allWords());
+      let sel = shuffle(B.weak).slice(0, 4)
+        .concat(shuffle(B.due).slice(0, 4),
+                shuffle(B.strong).slice(0, 2),
+                shuffle(B.fresh).slice(0, 2));
+      if (sel.length < 12) {
+        const extra = shuffle(B.fresh.concat(B.rest, B.due, B.weak, B.strong)
+          .filter(function (w) { return sel.indexOf(w) < 0; }));
+        sel = sel.concat(extra.slice(0, 12 - sel.length));
+      }
+      return shuffle(sel);
+    }
+
+    function missionQs(words) {
+      const qs = [];
+      words.forEach(function (w) {
+        const types = ['w2m', 'm2w'];
+        if (boldExs(w).length) { types.push('blank', 'duel'); }
+        if (w._syn.length) types.push('syn');
+        if (w._ant.length) types.push('ant');
+        const ty = pick(types);
+        let q = null;
+        if (ty === 'w2m' || ty === 'm2w') q = quizQFor(w, ty);
+        else if (ty === 'blank') q = blankQFor(w);
+        else if (ty === 'duel') q = duelQFor(w);
+        else q = synQFor(w, ty);
+        if (!q) q = quizQFor(w, 'w2m');
+        if (q) qs.push(q);
+      });
+      return shuffle(qs);
+    }
+
+    function startMission() {
+      const words = missionWords();
+      const qs = missionQs(words);
+      if (!qs.length) return;
+      S.level = null;
+      S.theme = { id: '__mission', level: null, kind: 'mix',
+                  title: '📬 Today’s Mission', words: words };
+      S.game = 'mission';
+      setAccent('#60a5fa');
+      S.sess = { gid: 'mission', qs: qs, i: 0, score: 0, correct: 0,
+                 streak: 0, best: 0, answered: false };
       renderQ();
     }
 
@@ -1329,6 +1659,7 @@ layout: default
         flashRender();
       });
       on('[data-a="got"]', 'click', function () {
+        touchWord(w); /* introduced — enters the review pipeline */
         s.deck.shift();
         s.got++;
         flashRender();
@@ -1465,6 +1796,7 @@ layout: default
         s.locked = true;
         if (!s.hints && !s.fails) s.clean++;
         s.score += Math.max(5, 15 - 5 * s.hints);
+        recordAnswer(w, true);
         scrRender('💡 ' + md(w.story));
         const box = el.querySelector('[data-slots]');
         if (box) box.classList.add('won');
@@ -1479,6 +1811,7 @@ layout: default
       if (s.fails >= 3) {
         /* reveal and move on */
         s.locked = true;
+        recordAnswer(w, false);
         s.tiles.forEach(function (tl) { tl.used = true; });
         s.placed = s.letters.map(function (ch) {
           return { ch: ch, tile: null, hinted: true };
@@ -1584,6 +1917,7 @@ layout: default
       if (guess === w.w.toLowerCase()) {
         if (s.tries === 0) { s.firstTry++; s.score += 15; }
         else s.score += 8;
+        recordAnswer(w, true);
         spellRender('✅ <b>' + esc(w.w) + '</b> — ' + md(w.mean), true);
         const done = el.querySelector('[data-spell]');
         done.value = w.w; done.classList.add('good');
@@ -1597,6 +1931,7 @@ layout: default
       }
       s.tries++;
       if (s.tries >= 2) {
+        recordAnswer(w, false);
         spellRender('❌ It’s spelled <b>' + esc(w.w) + '</b> (' +
                     esc(w.say) + ')', true);
         const done = el.querySelector('[data-spell]');
@@ -1628,7 +1963,7 @@ layout: default
       });
       cards = shuffle(cards);
       S.sess = { gid: 'mem', cards: cards, open: [], lock: false, moves: 0,
-                 matched: 0, pairs: words.length };
+                 matched: 0, pairs: words.length, wordlist: words };
       const grid = cards.map(function (c, i) {
         return '<div class="va-mem-card" data-i="' + i + '">' +
           '<div class="va-mem-in">' +
@@ -1666,6 +2001,7 @@ layout: default
         a.classList.add('won'); b.classList.add('won');
         s.open = [];
         s.matched++;
+        touchWord(s.wordlist[pa]);
         if (s.matched === s.pairs) {
           const stars = s.moves <= s.pairs + 1 ? 3 : s.moves <= s.pairs + 4 ? 2 : 1;
           const score = 30 + Math.max(0, (s.pairs + 6 - s.moves)) * 5;
@@ -1691,13 +2027,17 @@ layout: default
       S.sess = null;
       const t = S.theme, gid = S.game;
       const isMix = t.id === '__mix';
+      const isMission = gid === 'mission';
       const game = GAMES.find(function (g) { return g.id === gid; });
       let newBest = false;
-      if (!isMix && game.starred && r.stars > 0) {
+      if (!isMix && !isMission && game.starred && r.stars > 0) {
         const k = starKey(t, gid);
         if (r.stars > (P.stars[k] || 0)) { P.stars[k] = r.stars; newBest = true; }
       }
-      if (gid !== 'flash') {
+      if (isMission) {
+        P.xp.mission = (P.xp.mission || 0) + r.score;
+        bumpStreak();
+      } else if (gid !== 'flash') {
         P.xp[S.level] = (P.xp[S.level] || 0) + r.score;
       }
       save();
@@ -1721,19 +2061,29 @@ layout: default
             '<span class="va-pill acc">⚡ +' + r.score + ' XP</span>' +
             '<span class="va-pill">' + esc(r.line) + '</span>' +
             (newBest ? '<span class="va-pill" style="border-color:#facc15;color:#facc15">New best! 🎉</span>' : '') +
+            (r.crown ? '<span class="va-pill" style="border-color:#facc15;color:#facc15">👑 Crowned</span>' : '') +
             (isMix ? '<span class="va-pill">practice mode — no stars</span>' : '') +
+            (isMission ? '<span class="va-pill">🔥 streak: ' + P.streak.cur + ' day' +
+              (P.streak.cur === 1 ? '' : 's') + '</span>' : '') +
           '</div>' +
           '<div class="va-resbtns">' +
-            '<button class="va-btn" data-a="replay">🔁 Play again</button>' +
-            '<button class="va-btn ghost" data-a="games">🎮 More games</button>' +
-            '<button class="va-btn ghost" data-a="themes">📚 Themes</button>' +
+            '<button class="va-btn" data-a="replay">🔁 ' +
+              (isMission ? 'New mission' : 'Play again') + '</button>' +
+            (isMission ? '' :
+              '<button class="va-btn ghost" data-a="games">🎮 More games</button>' +
+              '<button class="va-btn ghost" data-a="themes">📚 Themes</button>') +
+            (isMission ? '<button class="va-btn ghost" data-a="home">🏠 Home</button>' : '') +
           '</div>' +
         '</div>'
       );
-      if (r.stars === 3 || newBest) confetti();
-      on('[data-a="replay"]', 'click', function () { startGame(gid); });
+      if (r.stars === 3 || newBest || r.crown) confetti();
+      on('[data-a="replay"]', 'click', function () {
+        if (isMission) return startMission();
+        startGame(gid);
+      });
       on('[data-a="games"]', 'click', function () { goTheme(t); });
       on('[data-a="themes"]', 'click', function () { goLevel(S.level); });
+      on('[data-a="home"]', 'click', goHome);
     }
 
     function confetti() {
