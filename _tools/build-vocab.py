@@ -76,8 +76,10 @@ def card_md(word):
     for ex in word["ex"]:
         lines.append("- %s" % end_punct(ex))
     lines.append("")
-    lines.append("**Synonyms:** %s" % word["syn"])
-    lines.append("**Antonyms:** %s" % word["ant"])
+    if word.get("syn"):
+        lines.append("**Synonyms:** %s" % word["syn"])
+    if word.get("ant"):
+        lines.append("**Antonyms:** %s" % word["ant"])
     lines.append("")
     lines.append("</div>")
     return "\n".join(lines)
