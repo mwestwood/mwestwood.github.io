@@ -317,6 +317,23 @@ requires re-encryption, only word changes do. Do not expect
 `encrypt-batch.py` to handle this page — it forces `layout: protected` (it
 skips arcade.md anyway because the body is empty).
 
+The arcade is **Minecraft-themed** (July 2026): hero "⛏️ WordCraft Arcade";
+levels are worlds (basic = The Overworld 🌳, intermediate = The Nether 🔥,
+advanced = The End 🐉); themes are called **biomes** in the UI; Shuffle Mix
+is "Mystery Mine". The skin — tiled grass texture
+`assets/images/mc-grass.png` (an original texture generated with
+`struct`+`zlib`, not a Mojang asset), blocky bevelled buttons, Press Start
+2P pixel font for headings — is a CSS override layer at the end of the
+`<style>` block in `protected-game.html`. Game display names: flash =
+Enchanting Table, quiz = Target Practice, blank = Block Placer, scr =
+Crafting Table, spell = Echo Cave, odd = Creeper Hunt, syn = Minecart
+Sprint, ant = Nether Portal, tf = Villager or Zombie, mem = Chest Match,
+root = Root Mine, duel = Sword Duel, fool = Trapped Chest, boss = Ender
+Dragon (game ids unchanged). `vocab_data.py` ends with three "⛏️ Minecraft
+mission:" meaning-groups (survive the first night / mine deep and fortify /
+conquer the End) whose stories and example sentences are Minecraft
+scenarios.
+
 The arcade has a **reinforcement engine** (spaced repetition, added July
 2026) — keep its design rules when editing:
 
@@ -325,8 +342,8 @@ The arcade has a **reinforcement engine** (spaced repetition, added July
   timestamp, seen/right/wrong counts) keyed `level|word`. Correct → box+1,
   wrong → back to box 1. Review intervals: 0/1/2/4/7/14/30 days by box.
   Flashcard "Got it" and Memory Flip matches call `touchWord` (marks
-  introduced, no box change). Word chips show mastery medals: 🥉 box ≥ 2,
-  🥈 ≥ 4, 🥇 ≥ 6. The same word text in two themes of one level shares one
+  introduced, no box change). Word chips show mastery medals: 🪨 box ≥ 2,
+  🥇 ≥ 4, 💎 ≥ 6. The same word text in two themes of one level shares one
   record on purpose (progress carries across themes); `buckets()` dedupes
   by key so counts don't inflate.
 - **Today's Mission** (home screen): builds a 12-word session from buckets —
@@ -334,10 +351,10 @@ The arcade has a **reinforcement engine** (spaced repetition, added July
   thin — with mixed question types. Completing it bumps a daily streak
   (`P.streak`) and banks XP in `P.xp.mission`. Shuffle Mix uses the same
   buckets per level (not random).
-- **Games**: besides the classic ten, `duel` (Word Duel — sentence blank,
-  the right word vs an antonym foil, 2 big options), `fool` (Don't Get
-  Fooled — all 4 options come from the same confusion family), and `boss`
-  (Boss Battle — 10 questions mixed from every builder; ≥ 80% wins a 👑
+- **Games**: besides the classic ten, `duel` (Sword Duel — sentence blank,
+  the right word vs an antonym foil, 2 big options), `fool` (Trapped
+  Chest — all 4 options come from the same confusion family), and `boss`
+  (Ender Dragon — 10 questions mixed from every builder; ≥ 80% wins a 👑
   crown stored in `P.crowns[themeId]`, shown on theme cards). Answer
   feedback appends the word's mini-network (synonyms 🟢 / antonyms 🔴).
 - **Confusion families** in `vocab_data.py` are `kind: "meaning"` groups

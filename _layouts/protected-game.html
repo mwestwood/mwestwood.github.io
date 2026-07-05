@@ -2,6 +2,10 @@
 layout: default
 ---
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+
 <style>
   /* ── Password gate (same look as protected.html) ─────────────────────── */
   #protected-gate {
@@ -353,6 +357,75 @@ layout: default
     100% { transform: scale(1); }
   }
   @keyframes vaPulse { 50% { transform: scale(1.18); } }
+
+  /* ── Minecraft skin ──────────────────────────────────────────────────
+     Overrides layered on top of the base arcade styles: grass-block
+     texture, blocky bevelled buttons, pixel headings, green palette. */
+  #arcade-root {
+    background: url('/assets/images/mc-grass.png') repeat;
+    background-size: 96px 96px;
+    image-rendering: pixelated;
+    border: 4px solid #2a1f14;
+    box-shadow: inset 0 0 0 3px rgba(0,0,0,0.35);
+    padding: 14px;
+  }
+  #arcade-root .va {
+    --acc: #58c73c; --good: #7efc20; --bad: #ff5555;
+    --card: rgba(12, 18, 9, 0.55); --line: rgba(0, 0, 0, 0.45);
+    background: rgba(10, 14, 7, 0.86);
+    border: 3px solid #1d2a12;
+    padding: 1.2rem 1.1rem 1.6rem;
+    margin: 0 auto;
+  }
+  .va .va-hero h1 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 1.3rem; line-height: 1.6; color: #9bf06b;
+    text-shadow: 3px 3px 0 #1b3d10;
+  }
+  .va .va-qlabel {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.6rem; line-height: 1.8; opacity: 0.7;
+  }
+  .va .va-results h2 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.95rem; line-height: 1.9; color: #9bf06b;
+    text-shadow: 2px 2px 0 #1b3d10;
+  }
+  /* blocky corners everywhere */
+  .va .va-level, .va .va-theme, .va .va-game, .va .va-opt, .va .va-btn,
+  .va .va-face, .va .va-mem-face, .va .va-flip-inner,
+  .va .va-slot, .va .va-tile, .va .va-hear, .va .va-spell-input,
+  .va .va-bar, .va .va-bar i { border-radius: 2px; }
+  .va .va-pill, .va .va-back, .va .va-tab, .va .va-chip, .va .va-search,
+  .va .va-opt .key { border-radius: 3px; }
+  /* Minecraft button bevel: light top-left, dark bottom-right */
+  .va .va-level, .va .va-theme, .va .va-game, .va .va-opt,
+  .va .va-tile, .va .va-hear, .va .va-mem-face.f {
+    box-shadow: inset 2px 2px 0 rgba(255,255,255,0.10),
+                inset -2px -3px 0 rgba(0,0,0,0.38);
+  }
+  .va .va-btn {
+    background: #4d9e33; border-color: #2c5c1c;
+    box-shadow: inset 2px 2px 0 rgba(255,255,255,0.25),
+                inset -2px -3px 0 rgba(0,0,0,0.35);
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
+  }
+  .va .va-btn.ghost { background: var(--card); text-shadow: none; }
+  .va .va-tab.on { color: #0e1a08; font-weight: 700; text-shadow: none; }
+  .va .va-bar { background: rgba(0,0,0,0.5); }
+  .va .va-bar i { background: var(--lc, #7efc20); }
+  .va .va-hud .va-pill.acc { color: #7efc20; border-color: #3f7a2a; }
+  /* gate matches the skin */
+  #protected-gate .gate-card {
+    border-radius: 2px; border: 3px solid #2a1f14;
+    box-shadow: inset 2px 2px 0 rgba(255,255,255,0.06),
+                inset -2px -3px 0 rgba(0,0,0,0.3);
+  }
+  #protected-gate #gate-submit {
+    background: #4d9e33; border-radius: 2px;
+    box-shadow: inset 2px 2px 0 rgba(255,255,255,0.25),
+                inset -2px -3px 0 rgba(0,0,0,0.35);
+  }
 </style>
 
 <!-- Password gate -->
@@ -498,45 +571,45 @@ layout: default
     const el = document.getElementById('va');
 
     const LMETA = {
-      basic:        { name: 'Basic', emoji: '🌱', color: '#4ade80',
-                      tag: 'Strong everyday words' },
-      intermediate: { name: 'Intermediate', emoji: '🚀', color: '#fbbf24',
-                      tag: 'Essay-grade words' },
-      advanced:     { name: 'Advanced', emoji: '🏆', color: '#a78bfa',
-                      tag: 'Words that make teachers reread' }
+      basic:        { name: 'The Overworld', emoji: '🌳', color: '#7cbd56',
+                      tag: 'Starter words — every builder needs them' },
+      intermediate: { name: 'The Nether', emoji: '🔥', color: '#ff7043',
+                      tag: 'Hotter, essay-grade words' },
+      advanced:     { name: 'The End', emoji: '🐉', color: '#b39ddb',
+                      tag: 'Rare drops — words that make teachers reread' }
     };
     const LEVELS = ['basic', 'intermediate', 'advanced'];
 
     const GAMES = [
-      { id: 'flash', name: 'Flashcards', emoji: '🃏', starred: false,
-        desc: 'Flip, learn, repeat until every card is yours.' },
-      { id: 'quiz', name: 'Meaning Match', emoji: '🎯', starred: true,
-        desc: 'Pick the right meaning — or the right word.' },
-      { id: 'blank', name: 'Blank Buster', emoji: '✏️', starred: true,
-        desc: 'Drop the missing word into a real sentence.' },
-      { id: 'scr', name: 'Word Scramble', emoji: '🔤', starred: true,
-        desc: 'Unscramble the letters — the meaning is your clue.' },
-      { id: 'spell', name: 'Echo Spell', emoji: '🔊', starred: true,
-        desc: 'Hear the word, then type it letter-perfect.' },
-      { id: 'odd', name: 'Odd One Out', emoji: '🕵️', starred: true,
-        desc: 'Three belong together. Catch the impostor.' },
-      { id: 'syn', name: 'Synonym Sprint', emoji: '⚡', starred: true,
-        desc: '45 seconds. Grab every synonym you can.' },
-      { id: 'ant', name: 'Antonym Attack', emoji: '🙃', starred: true,
-        desc: 'Pick the opposite — and dodge the look-alike trap.' },
-      { id: 'tf', name: 'Fact or Fake', emoji: '🎭', starred: true,
-        desc: '30 seconds of rapid-fire true or false.' },
-      { id: 'mem', name: 'Memory Flip', emoji: '🧠', starred: true,
-        desc: 'Match each word to its meaning in as few moves as you can.' },
-      { id: 'root', name: 'Root Rally', emoji: '🌿', starred: true, rootOnly: true,
-        desc: 'Spot the root hiding inside each word.' },
-      { id: 'duel', name: 'Word Duel', emoji: '⚔️', starred: true,
-        desc: 'Two words enter one sentence. Pick the one that truly fits.' },
-      { id: 'fool', name: 'Don’t Get Fooled', emoji: '🪤', starred: true,
-        desc: 'Every wrong answer is a close cousin. Precision only.' },
-      { id: 'boss', name: 'Boss Battle', emoji: '🐉', starred: false, boss: true,
-        desc: 'Ten mixed questions, every game at once. Score 80% to win the crown.' },
-      { id: 'mission', name: 'Today’s Mission', emoji: '📬', starred: false,
+      { id: 'flash', name: 'Enchanting Table', emoji: '📖', starred: false,
+        desc: 'Flip each card and enchant the word into your memory.' },
+      { id: 'quiz', name: 'Target Practice', emoji: '🏹', starred: true,
+        desc: 'Draw your bow — hit the right meaning, or the right word.' },
+      { id: 'blank', name: 'Block Placer', emoji: '🧱', starred: true,
+        desc: 'Place the missing word-block into a real sentence.' },
+      { id: 'scr', name: 'Crafting Table', emoji: '🧩', starred: true,
+        desc: 'Craft the word from scrambled letter-blocks — the meaning is your recipe.' },
+      { id: 'spell', name: 'Echo Cave', emoji: '🔊', starred: true,
+        desc: 'A voice echoes from the cave. Type the word letter-perfect.' },
+      { id: 'odd', name: 'Creeper Hunt', emoji: '🕵️', starred: true,
+        desc: 'Three belong together. Catch the creeper in disguise.' },
+      { id: 'syn', name: 'Minecart Sprint', emoji: '⚡', starred: true,
+        desc: '45 seconds in the minecart. Grab every synonym you can.' },
+      { id: 'ant', name: 'Nether Portal', emoji: '🌀', starred: true,
+        desc: 'Step through the portal — everything flips to its opposite.' },
+      { id: 'tf', name: 'Villager or Zombie', emoji: '🧟', starred: true,
+        desc: '30 seconds — is the meaning the real deal or a zombie fake?' },
+      { id: 'mem', name: 'Chest Match', emoji: '📦', starred: true,
+        desc: 'Open chests and match each word to its meaning in as few moves as you can.' },
+      { id: 'root', name: 'Root Mine', emoji: '⛏️', starred: true, rootOnly: true,
+        desc: 'Dig down to the root hiding inside each word.' },
+      { id: 'duel', name: 'Sword Duel', emoji: '⚔️', starred: true,
+        desc: 'Two words enter one sentence. Only one truly fits.' },
+      { id: 'fool', name: 'Trapped Chest', emoji: '🪤', starred: true,
+        desc: 'Every wrong answer is a booby-trapped look-alike. Precision only.' },
+      { id: 'boss', name: 'Ender Dragon', emoji: '🐉', starred: false, boss: true,
+        desc: 'Ten mixed questions, every game at once. Score 80% to defeat the dragon and take the crown.' },
+      { id: 'mission', name: 'Today’s Mission', emoji: '🗺️', starred: false,
         hidden: true, desc: 'Weak, due, old and new words — served by the memory engine.' }
     ];
 
@@ -634,7 +707,7 @@ layout: default
     function medal(w) {
       const r = wrec(w);
       if (!r || !r.s) return '';
-      if (r.b >= 6) return '🥇'; if (r.b >= 4) return '🥈'; if (r.b >= 2) return '🥉';
+      if (r.b >= 6) return '💎'; if (r.b >= 4) return '🥇'; if (r.b >= 2) return '🪨';
       return '';
     }
     /* fresh: never met · weak: recently missed / just introduced ·
@@ -755,7 +828,7 @@ layout: default
 
     function goHome() {
       S.level = null; S.theme = null; S.sess = null;
-      setAccent('#e2b04a');
+      setAccent('#58c73c');
       const B = buckets(allWords());
       const recs = Object.keys(P.words).map(function (k) { return P.words[k]; });
       const nowTs = Date.now();
@@ -772,12 +845,12 @@ layout: default
       const missionDone = P.streak.last === today;
       let cards =
         '<button class="va-level" data-mission style="--lc:#60a5fa">' +
-          '<span class="em">📬</span>' +
+          '<span class="em">🗺️</span>' +
           '<span class="body">' +
             '<div class="name">Today’s Mission' +
-              (missionDone ? ' <span style="font-size:.8rem;color:#4ade80">✓ done today</span>' : '') +
+              (missionDone ? ' <span style="font-size:.8rem;color:#7efc20">✓ done today</span>' : '') +
             '</div>' +
-            '<div class="tag">The memory engine picks the words: weak + due + old + new</div>' +
+            '<div class="tag">Your daily quest — the memory engine picks the words: weak + due + old + new</div>' +
             '<div class="meta">' +
               (reviewN ? '⏰ ' + reviewN + ' to review · ' : '') +
               '🌱 ' + B.fresh.length + ' never seen</div>' +
@@ -798,7 +871,7 @@ layout: default
             '<span class="body">' +
               '<div class="name">' + m.name + '</div>' +
               '<div class="tag">' + m.tag + '</div>' +
-              '<div class="meta">' + D[l].themes.length + ' themes · ' +
+              '<div class="meta">' + D[l].themes.length + ' biomes · ' +
                  D[l].words.length + ' words</div>' +
               '<div class="va-bar"><i style="width:' + pct + '%"></i></div>' +
             '</span>' +
@@ -810,14 +883,14 @@ layout: default
       });
       render(
         '<div class="va-hero">' +
-          '<h1>🕹️ Vocabulary Arcade</h1>' +
-          '<p>Run the mission, then pick a theme. Words come back until you own them.</p>' +
+          '<h1>⛏️ WordCraft Arcade</h1>' +
+          '<p>Run today’s mission, then explore the biomes. Words respawn until you tame them.</p>' +
         '</div>' +
         '<div class="va-statrow" style="margin-bottom:1.1rem">' +
-          '<span class="va-pill">📖 ' + seenN + ' words met</span>' +
-          '<span class="va-pill">🥇 ' + masteredN + ' mastered</span>' +
+          '<span class="va-pill">⛏️ ' + seenN + ' words mined</span>' +
+          '<span class="va-pill">💎 ' + masteredN + ' diamond words</span>' +
           '<span class="va-pill">⏰ ' + reviewN + ' to review</span>' +
-          '<span class="va-pill">👑 ' + crownsN + ' crowns</span>' +
+          '<span class="va-pill">👑 ' + crownsN + ' dragons beaten</span>' +
           '<span class="va-pill">🏅 best streak ' + P.streak.best + '</span>' +
         '</div>' +
         '<div class="va-levels">' + cards + '</div>'
@@ -832,7 +905,7 @@ layout: default
 
     function themeCard(t) {
       const st = themeStars(t);
-      const kindLabel = t.kind === 'root' ? '🌿 Root family' : '🫂 Word family';
+      const kindLabel = t.kind === 'root' ? '🌳 Root family' : '🧱 Word family';
       const preview = t.words.map(function (w) { return w.w; }).join(' · ');
       return '<button class="va-theme" data-t="' + t.id + '">' +
         '<span class="kind"><span>' + kindLabel + '</span>' +
@@ -864,26 +937,26 @@ layout: default
       }
       render(
         '<div class="va-top">' +
-          '<button class="va-back" data-nav="home">‹ Levels</button>' +
+          '<button class="va-back" data-nav="home">‹ Worlds</button>' +
           '<span class="va-crumb">' + m.emoji + ' ' + m.name + '</span>' +
           '<span class="va-spacer"></span>' +
           '<span class="va-pill">★ ' + levelStars(l) + '</span>' +
           '<span class="va-pill">⚡ ' + (P.xp[l] || 0) + ' XP</span>' +
         '</div>' +
         '<div class="va-tabs">' +
-          tab('all', 'All') + tab('family', '🫂 Word families') +
-          tab('root', '🌿 Roots') +
-          '<input class="va-search" placeholder="Find a theme or word…" value="' + esc(S.q) + '">' +
+          tab('all', 'All') + tab('family', '🧱 Word families') +
+          tab('root', '🌳 Roots') +
+          '<input class="va-search" placeholder="Find a biome or word…" value="' + esc(S.q) + '">' +
         '</div>' +
         '<div class="va-grid">' +
           '<button class="va-theme mix" data-t="__mix">' +
-            '<span class="kind"><span>🎲 Smart practice</span><span></span></span>' +
-            '<span class="name">Shuffle Mix</span>' +
+            '<span class="kind"><span>⛏️ Smart practice</span><span></span></span>' +
+            '<span class="name">Mystery Mine</span>' +
             '<span class="words">10 words the memory engine says you need: weak + due + old + new</span>' +
           '</button>' +
           themes.map(themeCard).join('') +
         '</div>' +
-        (themes.length ? '' : '<p style="opacity:.6;margin-top:1rem">No themes match.</p>')
+        (themes.length ? '' : '<p style="opacity:.6;margin-top:1rem">No biomes match.</p>')
       );
       on('.va-back', 'click', goHome);
       on('.va-tab', 'click', function (e) {
@@ -921,10 +994,10 @@ layout: default
         ws = ws.concat(extra.slice(0, 10 - ws.length));
       }
       return {
-        id: '__mix', level: l, kind: 'mix', title: '🎲 Shuffle Mix',
-        blurb: 'Ten ' + LMETA[l].name.toLowerCase() + ' words picked by the ' +
+        id: '__mix', level: l, kind: 'mix', title: '⛏️ Mystery Mine',
+        blurb: 'Ten words from ' + LMETA[l].name + ' picked by the ' +
                'memory engine — the ones about to fade, plus a couple of new ' +
-               'ones. Practice only; stars are earned inside real themes.',
+               'ones. Practice only; stars are earned inside real biomes.',
         root: null, words: shuffle(ws)
       };
     }
@@ -954,7 +1027,7 @@ layout: default
             const n = P.stars[starKey(t, g.id)] || 0;
             st = '★'.repeat(n) + '<span style="opacity:.3">' + '★'.repeat(3 - n) + '</span>';
           } else if (P.done[starKey(t, 'flash')]) {
-            st = '✓ learned';
+            st = '✓ enchanted';
           }
         }
         return '<button class="va-game" data-g="' + g.id + '">' +
@@ -966,7 +1039,7 @@ layout: default
       }).join('');
       render(
         '<div class="va-top">' +
-          '<button class="va-back" data-nav="level">‹ Themes</button>' +
+          '<button class="va-back" data-nav="level">‹ Biomes</button>' +
           '<span class="va-crumb">' + md(t.title) + '</span>' +
         '</div>' +
         '<p class="va-blurb">' + md(t.blurb) + '</p>' +
@@ -1207,7 +1280,7 @@ layout: default
       }
       return {
         word: w,
-        label: 'Word duel — which one truly fits?',
+        label: 'Sword duel — which word truly fits?',
         prompt: '<div class="mean">' + blankSentence(pick(exs)) + '</div>',
         options: optRow([esc(w.w), esc(foil)], 0),
         after: '⚔️ <b>' + esc(w.w) + '</b>: ' + md(w.mean) + network(w)
@@ -1235,14 +1308,14 @@ layout: default
         if (sibs.length < 3) return;
         qs.push({
           word: w,
-          label: 'Don’t get fooled — which word means…',
+          label: 'Trapped chest — which word means…',
           prompt: '<div class="mean">' + md(w.mean) + '</div>',
           options: optRow([w].concat(sibs).map(function (o) { return esc(o.w); }), 0),
           after: '🪤 <b>' + esc(w.w) + '</b> — ' + md(w.story)
         });
         qs.push({
           word: w,
-          label: 'Don’t get fooled — what does it mean?',
+          label: 'Trapped chest — what does it mean?',
           prompt: wordPrompt(w, true),
           options: optRow([w].concat(sibs).map(function (o) { return md(o.mean); }), 0),
           after: '🪤 ' + md(w.story) + network(w)
@@ -1285,10 +1358,10 @@ layout: default
         qs.push({
           label: 'Which word does NOT belong?',
           prompt: '<div class="word" style="font-size:1.6rem">🕵️</div>' +
-                  '<div class="say">three of these share a family — one is an impostor</div>',
+                  '<div class="say">three of these share a family — one is a creeper in disguise</div>',
           options: optRow(three.map(function (o) { return esc(o.w); })
             .concat([esc(intr.w)]), 3),
-          after: '🕵️ <b>' + esc(intr.w) + '</b> is the impostor. ' + why
+          after: '💥 <b>' + esc(intr.w) + '</b> is the creeper. ' + why
         });
       });
       return qs;
@@ -1435,8 +1508,8 @@ layout: default
         return results({
           stars: 0, score: s.score, crown: win,
           title: win
-            ? (firstCrown ? 'Boss defeated — crown won! 👑' : 'Crown defended! 👑')
-            : 'The boss survived… 🐉',
+            ? (firstCrown ? 'Ender Dragon defeated — crown won! 👑' : 'Crown defended! 👑')
+            : 'The dragon flew off… 🐉',
           line: s.correct + ' / ' + s.qs.length + ' correct' +
                 (win ? '' : ' — you need 80% to take the crown')
         });
@@ -1444,9 +1517,9 @@ layout: default
       if (s.gid === 'mission') {
         return results({
           stars: 0, score: s.score,
-          title: acc >= 0.9 ? 'Mission crushed! 🚀'
+          title: acc >= 0.9 ? 'Mission crushed! ⚔️'
                : acc >= 0.6 ? 'Mission complete! ✅'
-               : 'Mission done — every word logged 📬',
+               : 'Mission done — every word logged 🗺️',
           line: s.correct + ' / ' + s.qs.length + ' correct · best streak 🔥' + s.best
         });
       }
@@ -1521,16 +1594,16 @@ layout: default
         const other = distractorWords(w, 1)[0];
         if (!other) return;
         shownMean = other.mean;
-        after = '🎭 Really: ' + md(w.mean);
+        after = '🧟 Really: ' + md(w.mean);
       }
       s.qs = [{
         word: w,
-        label: 'Fact or fake?',
+        label: 'Villager truth or zombie fake?',
         prompt: '<div class="word" style="font-size:1.6rem">' + esc(w.w) + '</div>' +
                 '<div class="mean" style="margin-top:.4rem">“' + md(shownMean) + '”</div>',
         options: [
-          { html: '✅ Fact', ok: truth },
-          { html: '❌ Fake', ok: !truth }
+          { html: '🧑‍🌾 Truth', ok: truth },
+          { html: '🧟 Fake', ok: !truth }
         ],
         after: after
       }];
@@ -1584,7 +1657,7 @@ layout: default
       if (!qs.length) return;
       S.level = null;
       S.theme = { id: '__mission', level: null, kind: 'mix',
-                  title: '📬 Today’s Mission', words: words };
+                  title: '🗺️ Today’s Mission', words: words };
       S.game = 'mission';
       setAccent('#60a5fa');
       S.sess = { gid: 'mission', qs: qs, i: 0, score: 0, correct: 0,
@@ -1608,8 +1681,8 @@ layout: default
         save();
         return results({
           stars: 0, score: 2 * s.total,
-          line: 'Deck complete — all ' + s.total + ' words flipped to ✅',
-          title: 'Deck cleared! ✨'
+          line: 'Deck complete — all ' + s.total + ' words enchanted ✅',
+          title: 'Enchanting complete! ✨'
         });
       }
       const w = s.deck[0];
@@ -1617,7 +1690,7 @@ layout: default
       render(
         '<div class="va-hud">' +
           '<button class="va-back" data-nav="quit">✕</button>' +
-          '<span class="va-pill">🃏 ' + s.got + ' / ' + s.total + ' learned</span>' +
+          '<span class="va-pill">📖 ' + s.got + ' / ' + s.total + ' enchanted</span>' +
           '<span class="va-spacer"></span>' +
           '<span class="va-pill">' + s.deck.length + ' to go</span>' +
         '</div>' +
@@ -1726,7 +1799,7 @@ layout: default
           '<span class="va-pill acc">⚡ ' + s.score + '</span>' +
         '</div>' +
         progressBar(s.wi / s.total) +
-        '<div class="va-qlabel">Unscramble the word</div>' +
+        '<div class="va-qlabel">Craft the word from the letter-blocks</div>' +
         '<div class="va-clue">' + md(w.mean) +
           ' <span style="opacity:.55">(' + esc(w.pos) + ')</span></div>' +
         '<div class="va-slots" data-slots>' + slots + '</div>' +
@@ -1881,7 +1954,7 @@ layout: default
           (hasVoice ? 'Listen, then spell it' : 'Read the clue, then spell it') +
         '</div>' +
         (hasVoice
-          ? '<button class="va-hear" data-a="hear">🔊 Hear the word</button>'
+          ? '<button class="va-hear" data-a="hear">🔊 Hear the echo</button>'
           : '<div class="va-q"><div class="word" style="font-size:1.3rem">“' +
             esc(w.say) + '”</div></div>') +
         '<div class="va-clue" style="margin-top:1rem">' + md(w.mean) +
@@ -1967,7 +2040,7 @@ layout: default
       const grid = cards.map(function (c, i) {
         return '<div class="va-mem-card" data-i="' + i + '">' +
           '<div class="va-mem-in">' +
-            '<div class="va-mem-face f">❔</div>' +
+            '<div class="va-mem-face f">📦</div>' +
             '<div class="va-mem-face b">' + c.html + '</div>' +
           '</div>' +
         '</div>';
@@ -1975,7 +2048,7 @@ layout: default
       render(
         '<div class="va-hud">' +
           '<button class="va-back" data-nav="quit">✕</button>' +
-          '<span class="va-pill">🧠 Match word ↔ meaning</span>' +
+          '<span class="va-pill">📦 Open chests — match word ↔ meaning</span>' +
           '<span class="va-spacer"></span>' +
           '<span class="va-pill" data-moves>Moves: 0</span>' +
         '</div>' +
@@ -2042,9 +2115,9 @@ layout: default
       }
       save();
       const titles = r.title ? [r.title] :
-        r.stars === 3 ? ['Legendary! 🏆', 'Flawless-ish! 💎', 'On fire! 🔥'] :
-        r.stars === 2 ? ['Strong run! 💪', 'Almost perfect! 🎯'] :
-        ['Warmed up! 🌤️', 'Good start — run it back! 🔁'];
+        r.stars === 3 ? ['Diamond run! 💎', 'Achievement unlocked! 🏆', 'On fire like a blaze! 🔥'] :
+        r.stars === 2 ? ['Strong crafting! 💪', 'Almost a perfect build! 🎯'] :
+        ['Respawned and ready! 🌱', 'Good start — run it back! 🔁'];
       let starRow = '';
       if (game.starred) {
         starRow = '<div class="va-starrow">' +
@@ -2071,7 +2144,7 @@ layout: default
               (isMission ? 'New mission' : 'Play again') + '</button>' +
             (isMission ? '' :
               '<button class="va-btn ghost" data-a="games">🎮 More games</button>' +
-              '<button class="va-btn ghost" data-a="themes">📚 Themes</button>') +
+              '<button class="va-btn ghost" data-a="themes">🗺️ Biomes</button>') +
             (isMission ? '<button class="va-btn ghost" data-a="home">🏠 Home</button>' : '') +
           '</div>' +
         '</div>'
@@ -2089,7 +2162,7 @@ layout: default
     function confetti() {
       const box = document.createElement('div');
       box.className = 'va-burst';
-      const em = ['🎉', '⭐', '✨', '🎊', '💫', '🏅'];
+      const em = ['💎', '⛏️', '🟩', '✨', '⚡', '🏅'];
       let spans = '';
       for (let i = 0; i < 34; i++) {
         spans += '<span style="left:' + (Math.random() * 100) + 'vw;' +
