@@ -164,6 +164,51 @@ def group_link(level, title):
     return "[%s](/teaching/vocabulary/%s/#grp-%s)" % (title, level, slug(title))
 
 
+def build_mission_words(b):
+    """Roster of every word the Vocabulary Arcade's story campaign teaches,
+    mission by mission, each linked to its full card on the level pages."""
+    missions = getattr(data, "MISSIONS", [])
+    if not missions:
+        return
+
+    # distinct words across all missions
+    distinct = set()
+    for m in missions:
+        for st in m["stages"]:
+            for w in st["words"]:
+                distinct.add(w.lower())
+
+    b.append('<h2 id="mission-words">Story mission words</h2>')
+    b.append("")
+    b.append(
+        "The [Vocabulary Arcade](/teaching/vocabulary/arcade/) has a "
+        "**%d-mission story campaign** — a Minecraft journey where each mission "
+        "teaches a handful of new words, then makes you master every one "
+        "(answer it right twice) to finish. Below is the full roster: **every "
+        "one of the %d words** the campaign teaches, mission by mission. "
+        "Each word links to its full card. Which words he has actually mastered "
+        "is tracked live inside the Arcade itself (medals on each word)."
+        % (len(missions), len(distinct))
+    )
+    b.append("")
+    b.append("| # | Mission | Level | Words he learns |")
+    b.append("|--:|---------|-------|-----------------|")
+    for i, m in enumerate(missions, 1):
+        level = m["level"]
+        words = []
+        seen = set()
+        for st in m["stages"]:
+            for w in st["words"]:
+                if w.lower() in seen:
+                    continue
+                seen.add(w.lower())
+                words.append(word_link(level, w))
+        title = ("%s %s" % (m.get("emoji", ""), m["title"])).strip()
+        b.append("| %d | %s | %s | %s |"
+                 % (i, title, level, ", ".join(words)))
+    b.append("")
+
+
 def build_index(total):
     fm = front_matter({
         "title": "Vocabulary",
@@ -186,6 +231,9 @@ def build_index(total):
         "to jump straight to any root, group, or single word." % total
     )
     b.append("")
+
+    # --- Story mission words (the Arcade campaign roster) -----------------
+    build_mission_words(b)
 
     # --- Roots covered -----------------------------------------------------
     b.append('<h2 id="roots-covered">Roots covered</h2>')

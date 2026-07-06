@@ -335,29 +335,42 @@ raid the ocean monument / mine deep and fortify / cross the Nether /
 conquer the End) whose stories and example sentences are Minecraft
 scenarios.
 
-The arcade also has **Story Missions** (July 2026) — a **26-mission
+The arcade also has **Story Missions** (July 2026) — a **50-mission
 campaign** (home-screen card → mission map). Data lives in `MISSIONS` at the
 end of `vocab_data.py`; each mission walks a curated word set through staged
 narrative beats: story screen → learn-cards for the stage's new words →
 quiz questions (mixed builders via `questQFor`). Word sourcing: if a mission
 sets `"group"` it draws only from that GROUPS entry (title match); **without
-`group` it draws from anywhere in the mission's `level`** (used by the 20
-expeditions, which curate existing intermediate/advanced words). Rules the
-engine enforces (`prep()`): every staged word must resolve in its source, and
-the **last stage must have `"words": []`** — the final gauntlet where every
+`group` it draws from anywhere in the mission's `level`** (used by the 44
+expeditions, which curate existing basic/intermediate/advanced words). Rules
+the engine enforces (`prep()`): every staged word must resolve in its source,
+and the **last stage must have `"words": []`** — the final gauntlet where every
 word needs `QNEED = 2` total correct answers. Wrong answers requeue the word
 (no failure state). Missions unlock sequentially; best stars persist in
 `P.quests[missionId]` (accuracy: ≥85% = 3★, ≥60% = 2★). Completion banks
 score + 25 XP into the mission's level. Quest answers feed `recordAnswer`,
 so mission words enter the Leitner review pipeline like any other word.
-Campaign order: the 6 story missions (night → forest → ocean → caves →
-nether → end, each linked to a Minecraft-mission GROUPS entry), then 10
-intermediate expeditions (desert → shipwreck → mineshaft → witchhut → peaks
-→ mushroom → jungle → raid → explorer → geyser) and 10 advanced ones
-(mansion → bastion → endcity → ancient → warden → stronghold → librarian →
-champion → soulsand → homecoming). The expeditions add no new words — they
-reuse the existing bank — so editing them only requires rebuilding
-`arcade.md`, not the static vocabulary pages.
+Campaign order (splice points chosen so `homecoming` stays the finale and
+tiers ramp): 6 story missions (night → forest → ocean → caves → nether →
+end) → 8 new **basic** expeditions (wolf → farm → sheep → fishing → diamonds
+→ house → spelunk → lava) → 10 intermediate expeditions (desert … geyser) →
+8 new **intermediate** ones (brew → trade → golem → redstone → frozenocean →
+savanna → turtle → ruins) → 9 advanced expeditions (mansion … soulsand) →
+8 new **advanced** ones (beacon → wither → enderman → ruinedportal →
+netherite → elytra → sniffer → trial) → homecoming (#50). The expeditions add
+no new words — they reuse the existing bank — so editing them only requires
+rebuilding `arcade.md`, not the static vocabulary pages. Outros chain into
+the next mission's intro; when reordering, keep those bridges in mind.
+
+**Mission-words index:** `build-vocab.py`'s `build_mission_words()` emits a
+"Story mission words" `<h2>` near the top of the Vocabulary index page
+(`teaching/vocabulary/index.md`) — a 50-row table (`# | Mission | Level |
+Words he learns`) listing every word each mission teaches, each linked to its
+card on the level pages via `word_link(mission_level, word)`. It's a static
+curriculum roster of all 255 distinct mission words (which the child has
+actually *mastered* is tracked live in the Arcade's localStorage medals, not
+here). Regenerate with `build-vocab.py` + re-encrypt `teaching/vocabulary/`
+whenever `MISSIONS` changes.
 
 The arcade has a **reinforcement engine** (spaced repetition, added July
 2026) — keep its design rules when editing:
