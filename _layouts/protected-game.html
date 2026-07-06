@@ -823,16 +823,24 @@ layout: default
           L.roots.push({ root: g.root, means: g.root_means, theme: t });
         }
       });
-      /* resolve story missions: link each to its group, map word names to
-         word objects; a mission that doesn't fully resolve is dropped */
+      /* resolve story missions: staged word names are looked up in the
+         mission's linked group (m.group) or, without one, anywhere in the
+         mission's level; a mission that doesn't fully resolve is dropped */
       MIS = [];
       (data.missions || []).forEach(function (m) {
         const L = D[m.level];
         if (!L) return;
-        const t = L.themes.find(function (x) { return x.title === m.group; });
-        if (!t) return;
+        let src = L.words;
+        if (m.group) {
+          const t = L.themes.find(function (x) { return x.title === m.group; });
+          if (!t) return;
+          src = t.words;
+        }
         const byName = {};
-        t.words.forEach(function (w) { byName[w.w.toLowerCase()] = w; });
+        src.forEach(function (w) {
+          const k = w.w.toLowerCase();
+          if (!byName[k]) byName[k] = w;
+        });
         let ok = true;
         const all = [];
         const stages = m.stages.map(function (st) {
@@ -846,7 +854,7 @@ layout: default
         if (!ok || !all.length || stages[stages.length - 1].words.length) return;
         MIS.push({ id: m.id, level: m.level, emoji: m.emoji, color: m.color,
                    title: m.title, teaser: m.teaser || '', intro: m.intro || '',
-                   outro: m.outro || '', theme: t, stages: stages, words: all });
+                   outro: m.outro || '', stages: stages, words: all });
       });
     }
 

@@ -335,20 +335,29 @@ raid the ocean monument / mine deep and fortify / cross the Nether /
 conquer the End) whose stories and example sentences are Minecraft
 scenarios.
 
-The arcade also has **Story Missions** (July 2026) — a 6-mission campaign
-(home-screen card → mission map). Data lives in `MISSIONS` at the end of
-`vocab_data.py`; each mission links to one GROUPS entry by exact title and
-walks its words through staged narrative beats: story screen → learn-cards
-for the stage's new words → quiz questions (mixed builders via
-`questQFor`). Rules the engine enforces: every staged word must exist in
-the linked group and cover it exactly; the **last stage must have
-`"words": []`** — it is the final gauntlet where every word needs
-`QNEED = 2` total correct answers to finish. Wrong answers requeue the word
+The arcade also has **Story Missions** (July 2026) — a **26-mission
+campaign** (home-screen card → mission map). Data lives in `MISSIONS` at the
+end of `vocab_data.py`; each mission walks a curated word set through staged
+narrative beats: story screen → learn-cards for the stage's new words →
+quiz questions (mixed builders via `questQFor`). Word sourcing: if a mission
+sets `"group"` it draws only from that GROUPS entry (title match); **without
+`group` it draws from anywhere in the mission's `level`** (used by the 20
+expeditions, which curate existing intermediate/advanced words). Rules the
+engine enforces (`prep()`): every staged word must resolve in its source, and
+the **last stage must have `"words": []`** — the final gauntlet where every
+word needs `QNEED = 2` total correct answers. Wrong answers requeue the word
 (no failure state). Missions unlock sequentially; best stars persist in
 `P.quests[missionId]` (accuracy: ≥85% = 3★, ≥60% = 2★). Completion banks
 score + 25 XP into the mission's level. Quest answers feed `recordAnswer`,
 so mission words enter the Leitner review pipeline like any other word.
-Campaign order: night → forest → ocean → caves → nether → end.
+Campaign order: the 6 story missions (night → forest → ocean → caves →
+nether → end, each linked to a Minecraft-mission GROUPS entry), then 10
+intermediate expeditions (desert → shipwreck → mineshaft → witchhut → peaks
+→ mushroom → jungle → raid → explorer → geyser) and 10 advanced ones
+(mansion → bastion → endcity → ancient → warden → stronghold → librarian →
+champion → soulsand → homecoming). The expeditions add no new words — they
+reuse the existing bank — so editing them only requires rebuilding
+`arcade.md`, not the static vocabulary pages.
 
 The arcade has a **reinforcement engine** (spaced repetition, added July
 2026) — keep its design rules when editing:
