@@ -415,6 +415,26 @@ layout: default
   .va .va-bar { background: rgba(0,0,0,0.5); }
   .va .va-bar i { background: var(--lc, #7efc20); }
   .va .va-hud .va-pill.acc { color: #7efc20; border-color: #3f7a2a; }
+  /* story missions */
+  .va .va-level.lk { opacity: 0.45; cursor: default; }
+  .va .va-level.lk:hover { transform: none; border-color: var(--line); }
+  .va .va-learn {
+    max-width: 560px; margin: 0 auto; background: var(--card);
+    border: 1px solid var(--line); border-radius: 2px;
+    padding: 1.2rem 1.3rem; font-size: 0.95rem; line-height: 1.55;
+    box-shadow: inset 2px 2px 0 rgba(255,255,255,0.06),
+                inset -2px -3px 0 rgba(0,0,0,0.3);
+  }
+  .va .va-learn h4 { margin: 0 0 0.2rem; font-size: 0.78rem;
+                     letter-spacing: 0.06em; text-transform: uppercase;
+                     opacity: 0.55; }
+  .va .va-learn .sec { margin-bottom: 0.8rem; }
+  .va .va-learn .sec:last-child { margin-bottom: 0; }
+  .va .va-story {
+    text-align: center; opacity: 0.92; font-size: 1.05rem;
+    max-width: 560px; margin: 0 auto; line-height: 1.6;
+  }
+
   /* gate matches the skin */
   #protected-gate .gate-card {
     border-radius: 2px; border: 3px solid #2a1f14;
@@ -673,6 +693,7 @@ layout: default
     P.done = P.done || {};   /* themeId|flash -> true */
     P.words = P.words || {}; /* wordKey -> {b,due,s,r,x} (box, due-ts, seen, right, wrong) */
     P.crowns = P.crowns || {}; /* themeId -> true (boss battle won) */
+    P.quests = P.quests || {}; /* missionId -> best stars (story missions) */
     P.streak = P.streak || { cur: 0, best: 0, last: '' }; /* daily mission streak */
     function save() {
       try { localStorage.setItem(PKEY, JSON.stringify(P)); } catch (_) {}
@@ -769,6 +790,7 @@ layout: default
     /* ── data prep ────────────────────────────────────────────────────── */
 
     let D = null; /* per-level: { themes, words, synPool, antPool, roots } */
+    let MIS = []; /* story missions, resolved against their word groups */
 
     function prep(data) {
       D = {};
@@ -800,6 +822,31 @@ layout: default
         if (g.kind === 'root') {
           L.roots.push({ root: g.root, means: g.root_means, theme: t });
         }
+      });
+      /* resolve story missions: link each to its group, map word names to
+         word objects; a mission that doesn't fully resolve is dropped */
+      MIS = [];
+      (data.missions || []).forEach(function (m) {
+        const L = D[m.level];
+        if (!L) return;
+        const t = L.themes.find(function (x) { return x.title === m.group; });
+        if (!t) return;
+        const byName = {};
+        t.words.forEach(function (w) { byName[w.w.toLowerCase()] = w; });
+        let ok = true;
+        const all = [];
+        const stages = m.stages.map(function (st) {
+          const ws = (st.words || []).map(function (n) {
+            return byName[n.toLowerCase()];
+          });
+          if (ws.some(function (w) { return !w; })) ok = false;
+          ws.forEach(function (w) { all.push(w); });
+          return { story: st.story, words: ws };
+        });
+        if (!ok || !all.length || stages[stages.length - 1].words.length) return;
+        MIS.push({ id: m.id, level: m.level, emoji: m.emoji, color: m.color,
+                   title: m.title, teaser: m.teaser || '', intro: m.intro || '',
+                   outro: m.outro || '', theme: t, stages: stages, words: all });
       });
     }
 
@@ -861,6 +908,23 @@ layout: default
             '<div class="xp">⚡ ' + (P.xp.mission || 0) + ' XP</div>' +
           '</span>' +
         '</button>';
+      if (MIS.length) {
+        const qDone = MIS.filter(function (m) { return P.quests[m.id]; }).length;
+        const qPct = Math.round(100 * qDone / MIS.length);
+        cards +=
+          '<button class="va-level" data-quests style="--lc:#f59e0b">' +
+            '<span class="em">⚔️</span>' +
+            '<span class="body">' +
+              '<div class="name">Story Missions</div>' +
+              '<div class="tag">A word-mastery journey: forest, ocean, caves, the Nether, the End</div>' +
+              '<div class="meta">' + qDone + ' of ' + MIS.length + ' missions complete</div>' +
+              '<div class="va-bar"><i style="width:' + qPct + '%"></i></div>' +
+            '</span>' +
+            '<span class="side">' +
+              '<div class="stars">' + (qDone ? '🏆 ' + qDone : '🗡️') + '</div>' +
+            '</span>' +
+          '</button>';
+      }
       LEVELS.forEach(function (l) {
         const m = LMETA[l];
         const st = levelStars(l), mx = levelMaxStars(l);
@@ -896,6 +960,7 @@ layout: default
         '<div class="va-levels">' + cards + '</div>'
       );
       on('[data-mission]', 'click', startMission);
+      on('[data-quests]', 'click', goQuests);
       on('.va-level[data-l]', 'click', function (e) {
         goLevel(e.currentTarget.dataset.l);
       });
@@ -1394,6 +1459,7 @@ layout: default
     }
 
     function quitSession() {
+      if (S.theme && S.theme.id === '__quest') return goQuests();
       if (S.theme && S.theme.id === '__mission') return goHome();
       goTheme(S.theme);
     }
@@ -1447,8 +1513,9 @@ layout: default
         '</button>';
       }).join('');
       render(
-        hud(s.timed ? clockLabel() : (s.i + 1) + ' / ' + s.qs.length) +
-        (s.timed ? '' : progressBar(s.i / s.qs.length)) +
+        hud(s.hudMid ? s.hudMid() :
+            s.timed ? clockLabel() : (s.i + 1) + ' / ' + s.qs.length) +
+        (s.timed ? '' : progressBar(s.barFrac ? s.barFrac() : s.i / s.qs.length)) +
         '<div class="va-qlabel">' + q.label + '</div>' +
         '<div class="va-q">' + q.prompt + '</div>' +
         '<div class="va-opts' + (two ? ' two' : '') + '">' + opts + '</div>' +
@@ -1472,6 +1539,7 @@ layout: default
       const okIdx = q.options.findIndex(function (o) { return o.ok; });
       const ok = q.options[i].ok;
       recordAnswer(q.word, ok);
+      if (s.onAns) s.onAns(ok, q);
       if (ok) {
         btns[i].classList.add('good');
         s.streak++;
@@ -1663,6 +1731,268 @@ layout: default
       S.sess = { gid: 'mission', qs: qs, i: 0, score: 0, correct: 0,
                  streak: 0, best: 0, answered: false };
       renderQ();
+    }
+
+    /* ── story missions: a staged journey; master every word to win ────── */
+
+    const QNEED = 2; /* correct answers per word to call it mastered */
+
+    function questChip(w) {
+      const m = medal(w);
+      return '<button class="va-chip" data-w="' + esc(w.w) + '" title="' +
+             esc(w.say) + '">' + esc(w.w) + (m ? ' ' + m : '') + ' 🔈</button>';
+    }
+
+    function goQuests() {
+      S.level = null; S.theme = null; S.sess = null;
+      setAccent('#f59e0b');
+      const done = MIS.filter(function (m) { return P.quests[m.id]; }).length;
+      let open = true;
+      const rows = MIS.map(function (m, i) {
+        const stars = P.quests[m.id] || 0;
+        const locked = !open;
+        if (!stars) open = false;
+        return '<button class="va-level' + (locked ? ' lk' : '') +
+          '" data-q="' + (locked ? '' : m.id) + '" style="--lc:' + m.color + '"' +
+          (locked ? ' disabled' : '') + '>' +
+          '<span class="em">' + (locked ? '🔒' : m.emoji) + '</span>' +
+          '<span class="body">' +
+            '<div class="name">Mission ' + (i + 1) + ': ' + esc(m.title) + '</div>' +
+            '<div class="tag">' + (locked
+              ? 'Complete the mission above to unlock'
+              : esc(m.teaser)) + '</div>' +
+            '<div class="meta">' + LMETA[m.level].emoji + ' ' + LMETA[m.level].name +
+              ' · ' + m.words.length + ' words to master</div>' +
+          '</span>' +
+          '<span class="side"><div class="stars">' +
+            (stars ? '★'.repeat(stars) + '<span style="opacity:.25">' +
+                     '★'.repeat(3 - stars) + '</span>'
+                   : (locked ? '' : '▶ play')) +
+          '</div></span>' +
+        '</button>';
+      }).join('');
+      render(
+        '<div class="va-top">' +
+          '<button class="va-back" data-nav="home">‹ Home</button>' +
+          '<span class="va-crumb">⚔️ Story Missions</span>' +
+          '<span class="va-spacer"></span>' +
+          '<span class="va-pill">🏆 ' + done + ' / ' + MIS.length + '</span>' +
+        '</div>' +
+        '<p class="va-blurb">One journey, ' + MIS.length + ' missions. Each one ' +
+          'teaches a few words as the story unfolds — master every word (' +
+          QNEED + ' correct answers) to survive the final challenge and ' +
+          'unlock the next mission.</p>' +
+        '<div class="va-levels">' + rows + '</div>'
+      );
+      on('.va-back', 'click', goHome);
+      on('.va-level[data-q]', 'click', function (e) {
+        const id = e.currentTarget.dataset.q;
+        if (!id) return;
+        goBriefing(MIS.find(function (m) { return m.id === id; }));
+      });
+    }
+
+    function goBriefing(m) {
+      S.level = null; S.theme = null; S.sess = null;
+      setAccent(m.color);
+      render(
+        '<div class="va-top">' +
+          '<button class="va-back" data-nav="map">‹ Missions</button>' +
+          '<span class="va-crumb">' + m.emoji + ' Mission ' +
+            (MIS.indexOf(m) + 1) + '</span>' +
+        '</div>' +
+        '<div class="va-hero"><h1>' + m.emoji + ' ' + esc(m.title) + '</h1></div>' +
+        '<div class="va-story">' + md(m.intro) + '</div>' +
+        '<div class="va-qlabel" style="margin-top:1.5rem">Your mission kit — master all ' +
+          m.words.length + ' words (' + QNEED + ' correct answers each)</div>' +
+        '<div class="va-chiprow" style="justify-content:center">' +
+          m.words.map(questChip).join('') + '</div>' +
+        '<div style="text-align:center;margin-top:1.3rem">' +
+          '<button class="va-btn" data-a="start">▶ Start mission</button>' +
+        '</div>'
+      );
+      on('.va-back', 'click', goQuests);
+      on('.va-chip', 'click', function (e) { speak(e.currentTarget.dataset.w); });
+      on('[data-a="start"]', 'click', function () { startQuest(m); });
+    }
+
+    function startQuest(m) {
+      S.level = m.level; S.game = 'quest';
+      S.theme = { id: '__quest', level: m.level, kind: 'mix',
+                  title: m.title, words: m.words };
+      const need = {};
+      m.words.forEach(function (w) { need[wkey(w)] = 0; });
+      const sess = { gid: 'quest', m: m, si: 0, li: 0, need: need,
+                     qs: [], i: 0, score: 0, correct: 0, total: 0,
+                     streak: 0, best: 0, answered: false, lastK: null };
+      sess.hudMid = function () {
+        return m.emoji + ' Stage ' + (sess.si + 1) + ' / ' + m.stages.length;
+      };
+      sess.barFrac = function () { return questFrac(sess); };
+      sess.onAns = function (ok, q) {
+        sess.total++;
+        const k = q.word && wkey(q.word);
+        if (ok && k && k in sess.need) {
+          sess.need[k] = Math.min(QNEED, sess.need[k] + 1);
+        }
+      };
+      sess.next = questQuiz;
+      S.sess = sess;
+      setAccent(m.color);
+      questStory();
+    }
+
+    function questFrac(s) {
+      let got = 0;
+      s.m.words.forEach(function (w) { got += s.need[wkey(w)]; });
+      return got / (s.m.words.length * QNEED);
+    }
+
+    function questStory() {
+      const s = S.sess, m = s.m, st = m.stages[s.si];
+      const isFinal = s.si === m.stages.length - 1;
+      render(
+        hud(s.hudMid()) +
+        progressBar(questFrac(s)) +
+        '<div class="va-q" style="margin:1.4rem 0 1rem">' +
+          '<div class="word" style="font-size:2.6rem">' + m.emoji + '</div>' +
+        '</div>' +
+        '<div class="va-story">' + md(st.story) + '</div>' +
+        (st.words.length
+          ? '<div class="va-qlabel" style="margin-top:1.4rem">New words ahead</div>' +
+            '<div class="va-chiprow" style="justify-content:center">' +
+            st.words.map(questChip).join('') + '</div>'
+          : '') +
+        '<div style="text-align:center;margin-top:1.3rem">' +
+          '<button class="va-btn" data-a="go">' +
+            (st.words.length ? '📖 Learn the words'
+             : isFinal ? '⚔️ Face the final challenge' : '▶ Continue') +
+          '</button>' +
+        '</div>'
+      );
+      on('[data-nav="quit"]', 'click', quitSession);
+      on('.va-chip', 'click', function (e) { speak(e.currentTarget.dataset.w); });
+      on('[data-a="go"]', 'click', function () {
+        s.li = 0;
+        if (st.words.length) questLearn(); else questQuiz();
+      });
+    }
+
+    function questLearn() {
+      const s = S.sess, st = s.m.stages[s.si];
+      if (s.li >= st.words.length) return questQuiz();
+      const w = st.words[s.li];
+      const exs = boldExs(w);
+      const ex = exs.length ? pick(exs) : pick(w.ex || ['']);
+      render(
+        hud('📖 New word ' + (s.li + 1) + ' / ' + st.words.length) +
+        progressBar(questFrac(s)) +
+        '<div class="va-q" style="margin-top:1rem">' + wordPrompt(w, true) + '</div>' +
+        '<div class="va-learn">' +
+          '<div class="sec"><h4>Meaning</h4>' + md(w.mean) + '</div>' +
+          '<div class="sec"><h4>💡 Story</h4>' + md(w.story) + '</div>' +
+          (ex ? '<div class="sec"><h4>✏️ In the mission</h4>' + md(ex) + '</div>' : '') +
+          '<div class="sec"><h4>🟢 Similar</h4>' + esc(w.syn) + '</div>' +
+          '<div class="sec"><h4>🔴 Opposite</h4>' + esc(w.ant) + '</div>' +
+        '</div>' +
+        '<div style="text-align:center;margin-top:1.2rem">' +
+          '<button class="va-btn" data-a="got">✓ Got it — onward</button>' +
+        '</div>'
+      );
+      on('[data-nav="quit"]', 'click', quitSession);
+      on('.va-say-btn', 'click', function (e) {
+        e.stopPropagation(); speak(e.currentTarget.dataset.say);
+      });
+      speak(w.w);
+      on('[data-a="got"]', 'click', function () {
+        touchWord(w);
+        s.li++;
+        questLearn();
+      });
+    }
+
+    function questQFor(w) {
+      const types = ['w2m', 'm2w'];
+      if (boldExs(w).length) types.push('blank', 'duel');
+      if (w._syn.length) types.push('syn');
+      if (w._ant.length) types.push('ant');
+      const ty = pick(types);
+      let q = null;
+      if (ty === 'w2m' || ty === 'm2w') q = quizQFor(w, ty);
+      else if (ty === 'blank') q = blankQFor(w);
+      else if (ty === 'duel') q = duelQFor(w);
+      else q = synQFor(w, ty);
+      if (!q) q = quizQFor(w, 'w2m');
+      return q;
+    }
+
+    function questQuiz() {
+      const s = S.sess;
+      if (!s || s.gid !== 'quest') return;
+      const m = s.m;
+      const isFinal = s.si === m.stages.length - 1;
+      const pool = (isFinal ? m.words : m.stages[s.si].words)
+        .filter(function (w) {
+          return s.need[wkey(w)] < (isFinal ? QNEED : 1);
+        });
+      if (!pool.length) {
+        if (isFinal) return questFinish();
+        s.si++;
+        return questStory();
+      }
+      let cand = pool;
+      if (pool.length > 1 && s.lastK) {
+        cand = pool.filter(function (w) { return wkey(w) !== s.lastK; });
+        if (!cand.length) cand = pool;
+      }
+      const w = pick(cand);
+      s.lastK = wkey(w);
+      const q = questQFor(w);
+      if (!q) { s.need[wkey(w)] = QNEED; return questQuiz(); }
+      s.qs = [q]; s.i = 0;
+      renderQ();
+    }
+
+    function questFinish() {
+      clearTimer();
+      const s = S.sess, m = s.m;
+      const acc = s.total ? s.correct / s.total : 0;
+      const stars = acc >= 0.85 ? 3 : acc >= 0.6 ? 2 : 1;
+      const first = !P.quests[m.id];
+      if (stars > (P.quests[m.id] || 0)) P.quests[m.id] = stars;
+      const gained = s.score + 25; /* completion bonus */
+      P.xp[m.level] = (P.xp[m.level] || 0) + gained;
+      save();
+      S.sess = null;
+      const idx = MIS.indexOf(m);
+      const next = MIS[idx + 1] || null;
+      render(
+        '<div class="va-results">' +
+          '<div class="big">' + m.emoji + '</div>' +
+          '<h2>Mission complete!</h2>' +
+          '<div class="va-starrow">' +
+            [1, 2, 3].map(function (n) {
+              return '<span class="' + (n <= stars ? 'on' : '') + '">★</span>';
+            }).join('') + '</div>' +
+          '<div class="va-story" style="margin-bottom:1.3rem">' + md(m.outro) + '</div>' +
+          '<div class="va-statrow">' +
+            '<span class="va-pill acc">⚡ +' + gained + ' XP</span>' +
+            '<span class="va-pill">' + m.words.length + ' words mastered · ' +
+              s.correct + ' / ' + s.total + ' correct</span>' +
+            (first ? '<span class="va-pill" style="border-color:#facc15;color:#facc15">🏆 Mission badge earned</span>' : '') +
+          '</div>' +
+          '<div class="va-resbtns">' +
+            (next ? '<button class="va-btn" data-a="next">▶ Next mission: ' +
+                    next.emoji + ' ' + esc(next.title) + '</button>' : '') +
+            '<button class="va-btn ghost" data-a="map">🗺️ Mission map</button>' +
+            '<button class="va-btn ghost" data-a="home">🏠 Home</button>' +
+          '</div>' +
+        '</div>'
+      );
+      confetti();
+      on('[data-a="next"]', 'click', function () { goBriefing(next); });
+      on('[data-a="map"]', 'click', goQuests);
+      on('[data-a="home"]', 'click', goHome);
     }
 
     /* ── flashcards ───────────────────────────────────────────────────── */

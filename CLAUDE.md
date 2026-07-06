@@ -329,10 +329,26 @@ Enchanting Table, quiz = Target Practice, blank = Block Placer, scr =
 Crafting Table, spell = Echo Cave, odd = Creeper Hunt, syn = Minecart
 Sprint, ant = Nether Portal, tf = Villager or Zombie, mem = Chest Match,
 root = Root Mine, duel = Sword Duel, fool = Trapped Chest, boss = Ender
-Dragon (game ids unchanged). `vocab_data.py` ends with three "⛏️ Minecraft
-mission:" meaning-groups (survive the first night / mine deep and fortify /
+Dragon (game ids unchanged). `vocab_data.py` ends with six "⛏️ Minecraft
+mission:" meaning-groups (survive the first night / escape the Dark Forest /
+raid the ocean monument / mine deep and fortify / cross the Nether /
 conquer the End) whose stories and example sentences are Minecraft
 scenarios.
+
+The arcade also has **Story Missions** (July 2026) — a 6-mission campaign
+(home-screen card → mission map). Data lives in `MISSIONS` at the end of
+`vocab_data.py`; each mission links to one GROUPS entry by exact title and
+walks its words through staged narrative beats: story screen → learn-cards
+for the stage's new words → quiz questions (mixed builders via
+`questQFor`). Rules the engine enforces: every staged word must exist in
+the linked group and cover it exactly; the **last stage must have
+`"words": []`** — it is the final gauntlet where every word needs
+`QNEED = 2` total correct answers to finish. Wrong answers requeue the word
+(no failure state). Missions unlock sequentially; best stars persist in
+`P.quests[missionId]` (accuracy: ≥85% = 3★, ≥60% = 2★). Completion banks
+score + 25 XP into the mission's level. Quest answers feed `recordAnswer`,
+so mission words enter the Leitner review pipeline like any other word.
+Campaign order: night → forest → ocean → caves → nether → end.
 
 The arcade has a **reinforcement engine** (spaced repetition, added July
 2026) — keep its design rules when editing:

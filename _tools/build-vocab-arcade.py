@@ -36,6 +36,8 @@ import vocab_data as data  # noqa: E402
 
 WORD_KEYS = ("w", "pos", "say", "mean", "story", "ex", "syn", "ant")
 GROUP_KEYS = ("level", "kind", "title", "blurb", "root", "root_means")
+MISSION_KEYS = ("id", "level", "emoji", "color", "title", "group",
+                "teaser", "intro", "outro")
 
 
 def build_payload():
@@ -44,7 +46,13 @@ def build_payload():
         out = {k: g[k] for k in GROUP_KEYS if g.get(k)}
         out["words"] = [{k: w[k] for k in WORD_KEYS if w.get(k)} for w in g["words"]]
         groups.append(out)
-    return json.dumps({"v": 1, "groups": groups},
+    missions = []
+    for m in getattr(data, "MISSIONS", []):
+        out = {k: m[k] for k in MISSION_KEYS if m.get(k)}
+        out["stages"] = [{"story": s["story"], "words": s.get("words", [])}
+                         for s in m["stages"]]
+        missions.append(out)
+    return json.dumps({"v": 1, "groups": groups, "missions": missions},
                       separators=(",", ":"), ensure_ascii=False)
 
 
@@ -81,9 +89,10 @@ def main():
         f.write(front)
 
     n_words = sum(len(g["words"]) for g in data.GROUPS)
+    n_missions = len(getattr(data, "MISSIONS", []))
     print(f"✅  Wrote {os.path.relpath(OUT, ROOT)} "
           f"({len(data.GROUPS)} themes, {n_words} words, "
-          f"{len(blob) // 1024} KB encrypted)")
+          f"{n_missions} missions, {len(blob) // 1024} KB encrypted)")
 
 
 if __name__ == "__main__":
