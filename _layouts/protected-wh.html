@@ -1166,28 +1166,54 @@ layout: default
       window.scrollTo(0, 0);
     }
 
+    /* split a string into emoji graphemes (ZWJ sequences stay whole) */
+    function graphemes(s) {
+      try {
+        const seg = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+        return Array.from(seg.segment(s), function (x) { return x.segment; });
+      } catch (_) {
+        return Array.from(s);
+      }
+    }
+
+    /* Don't let the scene give the answer away: drop any scene emoji that
+       also appears in an answer option (matching base emoji counts too, so
+       a scene 💇 is removed when an option shows 💇‍♀️). */
+    function cleanScene(q) {
+      if (!q.scene || !q.opts) return q.scene;
+      const optEmoji = q.opts.map(function (o) { return o[0] || ''; });
+      const kept = graphemes(q.scene).filter(function (g) {
+        if (g.trim() === '') return true;
+        return !optEmoji.some(function (e) {
+          return e.indexOf(g) !== -1 || g.indexOf(e) !== -1;
+        });
+      });
+      return kept.join('');
+    }
+
     /* scene above a question: a real photo when the question has one
        (falls back to the emoji scene if the photo fails to load) */
     function addScene(q) {
+      const scene = cleanScene(q);
       if (q.img) {
         const ph = document.createElement('img');
         ph.className = 'wq-photo';
         ph.src = q.img;
         ph.alt = '';
         ph.addEventListener('error', function () {
-          if (!q.scene) { ph.remove(); return; }
+          if (!scene) { ph.remove(); return; }
           const sc = document.createElement('div');
           sc.className = 'wq-scene';
-          sc.textContent = q.scene;
+          sc.textContent = scene;
           ph.replaceWith(sc);
         });
         el.appendChild(ph);
         return;
       }
-      if (q.scene) {
+      if (scene) {
         const sc = document.createElement('div');
         sc.className = 'wq-scene';
-        sc.textContent = q.scene;
+        sc.textContent = scene;
         el.appendChild(sc);
       }
     }
@@ -1294,10 +1320,14 @@ layout: default
       const teach = [m.teach].concat(q.teach ? [q.teach] : []);
       const correctOpt = q.opts.filter(function (o) { return o[2]; })[0];
 
+      /* advanced tier: text-only options — he should read and reason,
+         not match pictures */
+      const hideEmoji = (q.lvl || 1) >= 4;
       shuffle(q.opts).forEach(function (o) {
         const b = document.createElement('button');
         b.className = 'wq-opt';
-        b.innerHTML = '<span class="em">' + o[0] + '</span><span>' + esc(o[1]) + '</span>';
+        b.innerHTML = (hideEmoji ? '' :
+          '<span class="em">' + o[0] + '</span>') + '<span>' + esc(o[1]) + '</span>';
         if (o[2]) correctBtn = b;
         b.addEventListener('click', function () {
           if (!fbHolder.fb) fbHolder.fb = document.getElementById('wq-fb');

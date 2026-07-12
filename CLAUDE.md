@@ -429,6 +429,13 @@ learner who loves numbers, so keep its design rules when editing:
   `assets/images/wh/`, ≤640px wide). The build resolves keys to paths and
   silently drops unknown keys; the engine shows the photo instead of the
   emoji scene and falls back to the emoji if the photo fails to load.
+- **No icon giveaways** (July 2026) — the engine's `cleanScene()` strips
+  any scene emoji that also appears in an answer option (grapheme-aware,
+  so a scene 💇 is removed when an option shows 💇‍♀️), and **level-4
+  questions render text-only options** (reading and reasoning, not
+  picture-matching). When writing questions, scenes should show the
+  SETTING/problem only — never the answer's emoji; the engine strip is
+  just a backstop.
 - **Autism-friendly engine** (in `_layouts/protected-wh.html`): no timers,
   nothing auto-advances (big Next button), identical layout every question,
   questions auto-read via speechSynthesis (toggleable), quiet sine-tone
