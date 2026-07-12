@@ -26,6 +26,7 @@ Usage:
 import base64
 import json
 import os
+import random
 import re
 import secrets
 import hashlib
@@ -202,6 +203,38 @@ def read_front_matter_blob(path):
     return m.group(1) if m else None
 
 
+# ── test series ──────────────────────────────────────────────────────────
+#
+# 50 fixed papers, 8 questions per point tier in real test order. The
+# seeded least-used-first draw spreads every problem evenly across the
+# series and keeps any two papers different. Papers are stored as
+# "topicId|probIndex" keys, so they stay stable across rebuilds as long
+# as problem order within a topic doesn't change.
+
+def build_tests(topics, n_tests=50, per=8, seed=20260712):
+    rng = random.Random(seed)
+    keys_by_pts = {3: [], 4: [], 5: []}
+    for t in topics:
+        for i in range(len(t["probs"])):
+            keys_by_pts[t["pts"]].append(f"{t['id']}|{i}")
+    for pts, keys in keys_by_pts.items():
+        assert len(keys) >= per, f"tier {pts} has only {len(keys)} problems"
+    use = {}
+    tests = []
+    for _ in range(n_tests):
+        paper = []
+        for pts in (3, 4, 5):
+            pool = sorted(keys_by_pts[pts],
+                          key=lambda k: (use.get(k, 0), rng.random()))
+            pick = pool[:per]
+            for k in pick:
+                use[k] = use.get(k, 0) + 1
+            rng.shuffle(pick)
+            paper.extend(pick)
+        tests.append(paper)
+    return tests
+
+
 # ── build ────────────────────────────────────────────────────────────────
 
 def validate(topic):
@@ -257,9 +290,11 @@ def main():
     order = {tid: i for i, tid in enumerate(extra.TOPIC_ORDER)}
     topics.sort(key=lambda t: (t["pts"], order.get(t["id"], 99), t["name"]))
 
+    tests = build_tests(topics)
+
     payload = json.dumps({"v": 1, "topics": [
         {k: v for k, v in t.items() if not k.startswith("_")} for t in topics
-    ]}, separators=(",", ":"), ensure_ascii=False)
+    ], "tests": tests}, separators=(",", ":"), ensure_ascii=False)
 
     blob = encrypt_text(passphrase, payload)
     front = "\n".join([
@@ -281,6 +316,7 @@ def main():
     print(f"wrote {OUT}")
     print(f"  topics: {len(topics)}  problems: {sum(n.values())} "
           f"(3pt: {n[3]}, 4pt: {n[4]}, 5pt: {n[5]})  payload: {len(payload):,} ch")
+    print(f"  test series: {len(tests)} papers x {len(tests[0])} questions")
     print(f"  skipped unparseable workbook problems: {total_skipped}")
 
 

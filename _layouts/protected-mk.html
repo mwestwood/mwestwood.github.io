@@ -222,6 +222,14 @@ layout: default
   .mk-pal button.flg::after { content: '⚑'; position: absolute; top: -0.55rem;
     right: -0.25rem; font-size: 0.7rem; color: var(--t4); }
 
+  /* test-series grid */
+  .mk-pal.series { justify-content: flex-start; gap: 0.4rem; }
+  .mk-pal.series button { width: 3.1rem; height: 3.1rem; display: flex;
+    flex-direction: column; align-items: center; justify-content: center;
+    gap: 0.1rem; font-size: 0.95rem; }
+  .mk-pal.series button .st { font-size: 0.55rem; color: var(--t4);
+    line-height: 1; letter-spacing: 0.05em; }
+
   /* results */
   .mk-results { text-align: center; padding: 1rem 0 2rem; }
   .mk-results .em { font-size: 3.4rem; }
@@ -452,7 +460,7 @@ layout: default
     let P = null;
     function defaults() {
       return { v: 1, xp: 0, rec: {}, stars: {}, streak: { n: 0, last: '' },
-               tests: [], best: {}, pouch: [] };
+               tests: [], best: {}, pouch: [], series: {} };
     }
     function load() {
       try { P = JSON.parse(localStorage.getItem(PKEY) || 'null'); } catch (_) {}
@@ -590,14 +598,18 @@ layout: default
 
     function home() {
       const doneToday = P.streak.last === today();
-      const best = P.best.full != null ? P.best.full + '/96' : '—';
+      const nSeries = (D.tests || []).length;
+      const nDone = Object.keys(P.series).length;
+      const best = nSeries ? nDone + '/' + nSeries
+                 : (P.best.full != null ? P.best.full + '/96' : '—');
       let h = '<div class="mk-hero"><span class="roo">🦘</span>' +
         '<h1>Kangaroo Arena</h1><p>Train the strategy. Win the points.</p></div>';
       h += '<div class="mk-stats">' +
         '<div class="mk-stat"><div class="v">⚡' + P.xp + '</div><div class="l">XP</div></div>' +
         '<div class="mk-stat"><div class="v">🔥' + P.streak.n + '</div><div class="l">Streak</div></div>' +
         '<div class="mk-stat"><div class="v">' + nMastered() + '/' + nProbs() + '</div><div class="l">Mastered</div></div>' +
-        '<div class="mk-stat"><div class="v">' + best + '</div><div class="l">Best test</div></div>' +
+        '<div class="mk-stat"><div class="v">' + best + '</div><div class="l">' +
+        (nSeries ? 'Tests won' : 'Best test') + '</div></div>' +
         '</div>';
       h += '<div class="mk-modes">';
       h += '<button class="mk-mode" id="mode-workout"><span class="em">🏋️</span><span>' +
@@ -813,38 +825,66 @@ layout: default
     };
 
     function testSetup() {
+      const SER = D.tests || [];
       let h = topBar();
       h += '<div class="mk-hero"><span class="roo">⏱️</span><h1>Mock Test</h1>' +
         '<p>Just like the real Math Kangaroo: 3-, 4- and 5-point sections, one timer, no hints.</p></div>';
       h += '<div class="mk-modes">';
-      h += '<button class="mk-mode" id="mk-full"><span class="em">🏔️</span><span>' +
-        '<span class="name">Full Test</span><br><span class="tag">24 questions · 75 minutes · 96 points' +
-        (P.best.full != null ? '<br>Best: <b>' + P.best.full + '</b>' : '') + '</span></span></button>';
+      if (!SER.length) {
+        h += '<button class="mk-mode" id="mk-full"><span class="em">🏔️</span><span>' +
+          '<span class="name">Full Test</span><br><span class="tag">24 questions · 75 minutes · 96 points' +
+          (P.best.full != null ? '<br>Best: <b>' + P.best.full + '</b>' : '') + '</span></span></button>';
+      }
       h += '<button class="mk-mode" id="mk-sprint"><span class="em">⚡</span><span>' +
-        '<span class="name">Sprint</span><br><span class="tag">12 questions · 35 minutes · 48 points' +
+        '<span class="name">Sprint</span><br><span class="tag">12 random questions · 35 minutes · 48 points' +
         (P.best.sprint != null ? '<br>Best: <b>' + P.best.sprint + '</b>' : '') + '</span></span></button>';
       h += '</div>';
+      if (SER.length) {
+        const nDone = Object.keys(P.series).length;
+        h += '<div class="mk-sect">Test series — ' + nDone + ' of ' + SER.length + ' conquered</div>' +
+          '<p style="opacity:0.65;font-size:0.9rem;margin:0 0 0.6rem">Each paper: 24 fixed questions ' +
+          '(8 per point tier) · 75 minutes · 96 points. Beat your best!</p>';
+        h += '<div class="mk-pal series">';
+        SER.forEach((_, i) => {
+          const rec = P.series[i + 1];
+          h += '<button data-n="' + (i + 1) + '" class="' + (rec ? 'ansd' : '') + '">' +
+            (i + 1) + (rec ? '<span class="st">' + '★'.repeat(rec.stars) + '</span>' : '') +
+            '</button>';
+        });
+        h += '</div>';
+      }
       if (P.tests.length) {
         h += '<div class="mk-sect">Recent tests</div><div class="mk-review">';
         P.tests.slice(-5).reverse().forEach(r => {
+          const nm = r.name || (TEST_CFG[r.mode] && TEST_CFG[r.mode].name) || r.mode;
           h += '<div class="mk-rev"><summary style="display:flex;padding:0.65rem 0.9rem">' +
-            '<span>' + r.date + ' · ' + TEST_CFG[r.mode].name + '</span>' +
+            '<span>' + r.date + ' · ' + nm + '</span>' +
             '<span class="mk-spacer"></span><b>' + r.score + ' / ' + r.max + '</b></summary></div>';
         });
         h += '</div>';
       }
       screen(h);
       el('mk-back').onclick = home;
-      el('mk-full').onclick = () => startTest('full');
+      const full = el('mk-full');
+      if (full) full.onclick = () => startTest('full');
       el('mk-sprint').onclick = () => startTest('sprint');
+      root.querySelectorAll('.mk-pal.series button').forEach(b => {
+        b.onclick = () => startTest('full', +b.getAttribute('data-n'));
+      });
     }
 
-    function startTest(mode) {
-      const cfg = TEST_CFG[mode];
-      const keys = pickFrom(tierKeys(3), cfg.per)
-        .concat(pickFrom(tierKeys(4), cfg.per))
-        .concat(pickFrom(tierKeys(5), cfg.per));
-      T = { mode: mode, cfg: cfg, keys: keys,
+    function startTest(mode, seriesN) {
+      let keys, cfg;
+      if (seriesN) {
+        keys = D.tests[seriesN - 1].slice();
+        cfg = { name: 'Test ' + seriesN, min: 75, max: 96 };
+      } else {
+        cfg = TEST_CFG[mode];
+        keys = pickFrom(tierKeys(3), cfg.per)
+          .concat(pickFrom(tierKeys(4), cfg.per))
+          .concat(pickFrom(tierKeys(5), cfg.per));
+      }
+      T = { mode: mode, cfg: cfg, keys: keys, seriesN: seriesN || null,
             ans: new Array(keys.length).fill(null),
             flag: new Array(keys.length).fill(false),
             i: 0, end: Date.now() + cfg.min * 60000 };
@@ -944,18 +984,28 @@ layout: default
         recordAnswer(k, ok, false);   /* test XP comes as a completion bonus */
       });
       P.xp += Math.round(score / 3);
-      const entry = { date: today(), mode: T.mode, score: score, max: T.cfg.max };
+      const entry = { date: today(), mode: T.mode, name: T.cfg.name,
+                      score: score, max: T.cfg.max };
       P.tests.push(entry);
       if (P.tests.length > 20) P.tests.shift();
-      if (P.best[T.mode] == null || score > P.best[T.mode]) P.best[T.mode] = score;
+      const pct = score / T.cfg.max;
+      if (T.seriesN) {
+        const prev = P.series[T.seriesN];
+        if (!prev || score > prev.score) {
+          P.series[T.seriesN] = { score: score,
+            stars: pct >= 0.85 ? 3 : pct >= 0.6 ? 2 : 1 };
+        }
+      } else if (P.best[T.mode] == null || score > P.best[T.mode]) {
+        P.best[T.mode] = score;
+      }
       save();
 
-      const pct = score / T.cfg.max;
       if (pct >= 0.75) burst(['🦘', '🏆', '🎉', '⭐']);
       let h = '<div class="mk-results"><span class="em">' +
         (pct >= 0.75 ? '🏆' : pct >= 0.5 ? '💪' : '🌱') + '</span>' +
         '<h2>' + T.cfg.name + ' — scored!</h2>' +
         (timeUp ? '<p>⏰ Time ran out — answered questions were scored.</p>' : '') +
+        (T.seriesN ? starsRow(pct >= 0.85 ? 3 : pct >= 0.6 ? 2 : 1) : '') +
         '<div class="mk-scoreline">' + score + ' / ' + T.cfg.max + ' points</div>' +
         '<p>+' + Math.round(score / 3) + ' XP</p>';
       h += '<div class="mk-tierbars">';
