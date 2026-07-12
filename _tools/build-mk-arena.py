@@ -119,6 +119,11 @@ def split_inline_opts(line):
 
 
 def parse_problem(title, body):
+    # a problem ends at the next H2 — otherwise interleaved strategy
+    # sections and end-of-page tips bleed into the last solution
+    cut = re.search(r'^## ', body, re.M)
+    if cut:
+        body = body[:cut.start()]
     lines = body.split('\n')
     opts, ans, opt_start, opt_end = None, None, None, None
     in_code = False
@@ -222,6 +227,17 @@ def main():
         if not page:
             continue
         total_skipped += len(page.pop("_skipped"))
+        # curation: drop figure-dependent/broken workbook problems, rewrite
+        # the ones whose data survives in text form (see mk_extra_data.py)
+        kept = []
+        for p in page["probs"]:
+            k = (page["id"], p["t"])
+            if k in extra.DROP:
+                total_skipped += 1
+                continue
+            p.update(extra.REWRITE.get(k, {}))
+            kept.append(p)
+        page["probs"] = kept
         if page["probs"]:
             topics.append(page)
 

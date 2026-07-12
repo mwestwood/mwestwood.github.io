@@ -490,3 +490,89 @@ EXTEND = {
    "s": "Row sums: 15, 15, **11** → the bad number is in row 3.\nColumn sums: 15, **11**, 15 → the bad number is in column 2.\n\nThe crossing cell is the middle of the bottom row — the second **5**.\n\nIt must make row 3 sum to 15: 15 − 4 − 2 = **9**. (Check column 2: 1 + 5 + 9 = 15 ✓)"},
  ],
 }
+
+
+# ── curation of problems parsed from the MK pages ───────────────────────
+#
+# DROP: problems that cannot stand without the original workbook figure
+# (or are internally broken in the source). REWRITE: problems whose data
+# survives in text form but whose wording referenced a missing picture or
+# was telegraphic solution-notes — replaced with a self-contained question
+# (fields given here override the parsed ones).
+
+DROP = {
+    # solution derives an order that isn't among the options
+    ("p4-ordering-sequences", "Cars in a Line"),
+    # options are literally placeholders ("specific order", "…")
+    ("p4-ordering-sequences", "Kids in a Line"),
+    # no arrangement given at all
+    ("p4-ordering-sequences", "Kids' Final Position (Right to Left)"),
+    # "which card?" depends entirely on the workbook picture
+    ("p5-fun-calculation", "Identify the Card"),
+    # "a specific point on another face" — undefined without the figure
+    ("p5-3d-perimeter", "Ant Around a Stack of Cubes"),
+    # duplicate of "L-Shaped Garden" (same numbers), vague without diagram
+    ("p5-perimeter", "Perimeter with Hidden Sides"),
+    # source itself says the answer depends on the workbook diagram
+    ("p4-perimeter", "Cindy's Doll House Rooftop"),
+}
+
+REWRITE = {
+    ("p4-lineup", "DiDi and DuDu"): {
+        "q": "**21 dogs** stand in a line. DiDi has **14 dogs to her left** and 6 to her right. DuDu has **2 fewer dogs on his left than on his right**.\n\nHow many dogs stand **between** DiDi and DuDu?",
+        "s": "DiDi has 14 dogs to her left, so she stands at position **15**.\n\nDuDu: left + right = 20 dogs, and left = right − 2:\n\n```\n(right − 2) + right = 20  →  right = 11, left = 9\n```\n\nDuDu stands at position **10**.\n\nBetween positions 10 and 15 stand the dogs at 11, 12, 13, 14 → **4 dogs**.",
+    },
+    ("p4-lineup", "Red Velvet and Chocolate Cake"): {
+        "q": "**23 cakes** stand in a row. The red velvet cake has **7 cakes on one side and 15 on the other**. The chocolate cake stands **exactly in the middle** of the row.\n\nHow many cakes are **between** the red velvet and the chocolate cake?",
+        "s": "Red velvet: 7 on one side + itself + 15 on the other = 23 ✓ — it stands at position **8** (counting from the 7-cake side).\n\nMiddle of 23 cakes: (23 + 1) ÷ 2 = position **12**.\n\nBetween positions 8 and 12 stand the cakes at 9, 10, 11 → **3 cakes**.",
+    },
+    ("p4-lineup", "Kate's Performance Array"): {
+        "q": "Dancers stand in a rectangular formation — every row has the same number of dancers. Kate stands **4th from the front** and **7th from the back**. In her row, **5 dancers stand to her left** and **1 to her right**.\n\nHow many dancers are in the whole formation?",
+        "s": "Rows: 4 + 7 − 1 = **10** (Kate's own row is counted from both ends, so subtract 1).\n\nDancers per row: 5 + 1 (Kate) + 1 = **7**.\n\nTotal: 10 × 7 = **70**.",
+    },
+    ("p4-lineup", "Sam's Classroom"): {
+        "q": "The desks in Sam's classroom form a perfect grid. Sam has **5 rows in front** of him and **2 rows behind** him. In his own row, **2 students sit to his left** and **1 to his right**.\n\nHow many students are in the classroom?",
+        "s": "Rows: 5 + 1 (Sam's row) + 2 = **8**.\n\nStudents per row: 2 + 1 (Sam) + 1 = **4**.\n\nTotal: 8 × 4 = **32**.",
+    },
+    ("p4-perimeter", "Grandpa's Small Yard (5 × 30 m)"): {
+        "q": "Grandpa's yard is a **5 m × 30 m** rectangle. One **5 m side runs along the house** and needs no fence; the other **three sides** get a painted fence. Painting **5 m of fence uses 1 gallon** of paint, and paint costs **$20 per gallon**.\n\nHow much does the paint cost?",
+        "a": 3,
+        "s": "Fence length: 30 + 5 + 30 = **65 m** (the 5 m side on the house is free).\n\nGallons: 65 ÷ 5 = **13**.\n\nCost: 13 × $20 = **$260**.",
+    },
+    ("p4-perimeter", "Grandpa's Large Yard (15 × 40 m)"): {
+        "q": "Grandpa's second yard is **15 m × 40 m**, with one **15 m side along the house** (no fence needed). The other **three sides** get a painted fence. **1 gallon of paint covers 5 m** of fence, and paint is sold only in **3-gallon cans at $60 per can** — whole cans only.\n\nHow much does Grandpa pay?",
+    },
+    ("p4-perimeter", "Grandpa's Third Yard (12 × 30 m)"): {
+        "q": "Grandpa's third yard is **12 m × 30 m**, with one **12 m side along the house**. He fences and paints the other **three sides**. Every **8 m of fence needs 2 gallons** of paint, and paint costs **$10 per gallon**.\n\nWhat is the total paint cost?",
+    },
+    ("p4-perimeter", "Rectangle and Square with Equal Perimeter"): {
+        "q": "A rectangle is **4 cm wide**, and its length is **3 times** its width. A **square** has the same perimeter as the rectangle.\n\nHow long is each side of the square?",
+    },
+    ("p4-perimeter", "Rectangle and Equilateral Triangle with Equal Perimeter"): {
+        "q": "A rectangle is **6 cm wide**, and its length is **5 times** its width. An **equilateral triangle** (3 equal sides) has the same perimeter as the rectangle.\n\nHow long is each side of the triangle?",
+    },
+    ("p4-fun-math", "Which Cup is Sweetest?"): {
+        "q": "Four cups each start with the **same amount of sugar syrup**. Then water is added:\n\n- Cup A: a **large** amount of water\n- Cup B: a **small** amount of water\n- Cup C: a **medium** amount of water\n- Cup D: a **medium-large** amount of water\n\nWhich cup tastes the **sweetest**?",
+    },
+    ("p4-fun-math", "Triangle to Ring"): {
+        "q": "Six coins are stacked in a triangle:\n\n```\n  ●\n ● ●\n● ● ●\n```\n\nWhat is the **minimum number of coins** you must move so that the six coins form a **ring** (a circle of coins around an empty middle)?",
+        "s": "Four coins can stay where they are: the two middle-row coins and the two bottom-corner coins already surround the bottom-middle coin's spot.\n\nMove the **top coin** and the **bottom-middle coin** into the two empty spots just below the bottom corners — now six coins sit in a circle around an empty center.\n\n**2 moves.**",
+    },
+    ("p5-dice", "Opposite Faces of a Standard Die"): {
+        "q": "On a standard die, **opposite faces always sum to 7**:\n\n- **1 is opposite 6**\n- **2 is opposite 5**\n- **3 is opposite 4**\n\nA die sits on the table with **2 on the front**, **3 on top**, and **6 on the right**.\n\nWhat number is on the **bottom**?",
+    },
+    ("p5-fun-calculation", "Equalise the Plates"): {
+        "q": "Two plates hold number tiles:\n\n```\nPlate 1 (heavier): 9  8  1    → total 18\nPlate 2 (lighter): 5  4  3    → total 12\n```\n\nYou may swap **one tile from each plate** so that both plates end up with the **same total**.\n\nWhich pair of tiles do you swap?",
+        "s": "Plate 1 is 18 − 12 = **6 more** than Plate 2. A swap moves the difference by **twice** the gap between the swapped tiles, so the tiles must differ by 6 ÷ 2 = **3**, with the bigger one on Plate 1.\n\nOn these plates: **8** (Plate 1) and **5** (Plate 2) differ by exactly 3.\n\nCheck: Plate 1 becomes 9 + 5 + 1 = 15, Plate 2 becomes 8 + 4 + 3 = 15 ✓\n\n(9 and 6 also differ by 3 — but there is no 6 on Plate 2, so that swap is impossible.)",
+    },
+    ("p5-picture-reasoning", "Triangle Coloring"): {
+        "q": "Terry builds a big triangle from 9 small triangles: **3 red (R), 3 yellow (Y), 3 blue (B)**. Any two small triangles **sharing an edge** must have different colors. Five triangles are already placed; the numbered ones are still empty:\n\n```\n        ▲R\n     ▲2 ▽1 ▲Y\n  ▲B ▽3 ▲B ▽4 ▲5\n```\n\n(▲ points up, ▽ points down. Each ▽ shares an edge with the ▲ on its left, the ▲ on its right, and the ▲ directly **above** it.)\n\nWhich statement is true?",
+    },
+    ("p5-fun-math", "Shape Substitution (Maximize)"): {
+        "q": "Vivian replaces the letters **A, B, C, D** with four **different digits from 1–9**, then computes\n\n```\nABCD − CA + DBC\n```\n\nwhere ABCD is a four-digit number, CA a two-digit number, and DBC a three-digit number.\n\nWhen that value is as **large as possible**, what is **A + D × B**?",
+    },
+    ("p4-equal-balance", "Cat, Dog, and Mouse"): {
+        "o": ["18", "20", "21", "22", "24"],
+        "a": 3,
+    },
+}
