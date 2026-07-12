@@ -486,6 +486,16 @@ re-encryption) modes:
   topic page), then a 6-question session with instant feedback and the full
   step-by-step solution after every answer; stars by accuracy (≥85% 3★,
   ≥60% 2★) kept as best per topic.
+- **Learn mode (per topic)** — a coaching flow before quizzing: strategy
+  page → 1–2 **worked examples** whose solutions unfold one step at a time
+  ("Next step", built by splitting the solution markdown into paragraph
+  chunks, code fences kept whole — `chunksOf()`) with the correct option
+  highlighted at the end → 3 guided "your turn" questions → 🎓 completion
+  (+15 XP first time, 📖 badge on the topic card, `P.learned[tid]`).
+  Every practice question also has a **💡 Hint** button (reveals the first
+  solution chunk), and every answered question shows a collapsible
+  "📖 Strategy reminder" with the topic's strategy card. All of this is
+  engine-only — no data or re-encryption involved.
 - **Daily Workout** — 10 mixed questions (3×3pt + 4×4pt + 3×5pt); first
   completion each day bumps the streak and pays +25 XP.
 - **Mock Test** — a **Test Series of 50 fixed papers** (Test 1–50, each

@@ -197,6 +197,33 @@ layout: default
     text-transform: uppercase; opacity: 0.6; margin-bottom: 0.4rem;
     font-weight: 700; }
 
+  /* hints + lessons */
+  .mk-hintrow { text-align: right; margin-top: 0.5rem; }
+  .mk-hintbtn { background: none; border: 1px dashed var(--roo);
+    color: var(--roo); border-radius: 999px; padding: 0.3rem 0.95rem;
+    font-size: 0.88rem; cursor: pointer; font-weight: 700; }
+  .mk-hintbtn:hover { background: rgba(245,158,11,0.12); }
+  .mk-hint { background: rgba(245,158,11,0.08); border: 1px solid var(--line);
+    border-left: 4px solid var(--roo); border-radius: 12px;
+    padding: 0.7rem 1rem; margin-top: 0.7rem; font-size: 0.95rem; }
+  .mk-hint .ttl { font-size: 0.75rem; letter-spacing: 0.09em;
+    text-transform: uppercase; opacity: 0.6; font-weight: 700;
+    margin-bottom: 0.3rem; }
+  .mk-steps { background: rgba(245,158,11,0.06); border: 1px solid var(--line);
+    border-left: 4px solid var(--roo); border-radius: 12px;
+    padding: 0.8rem 1.1rem; margin-top: 0.9rem; font-size: 0.98rem; }
+  .mk-steps .ttl { font-size: 0.78rem; letter-spacing: 0.09em;
+    text-transform: uppercase; opacity: 0.6; margin-bottom: 0.4rem;
+    font-weight: 700; }
+  .mk-steps .stp { animation: mkPop 0.3s; margin-top: 0.6rem; }
+  .mk-steps .stp:first-child { margin-top: 0; }
+  .mk-exlabel { display: inline-block; background: rgba(245,158,11,0.15);
+    border: 1px solid var(--roo); color: var(--roo); border-radius: 999px;
+    padding: 0.2rem 0.9rem; font-size: 0.82rem; font-weight: 800;
+    letter-spacing: 0.05em; }
+  .mk-remind { margin-top: 0.7rem; }
+  .mk-remind summary { font-size: 0.9rem; opacity: 0.85; }
+
   .mk-next { display: block; margin: 1.1rem auto 0; background: var(--good);
     border: none; color: #14321f; border-radius: 999px;
     padding: 0.65rem 2.6rem; font-size: 1.15rem; font-weight: 800;
@@ -460,7 +487,7 @@ layout: default
     let P = null;
     function defaults() {
       return { v: 1, xp: 0, rec: {}, stars: {}, streak: { n: 0, last: '' },
-               tests: [], best: {}, pouch: [], series: {} };
+               tests: [], best: {}, pouch: [], series: {}, learned: {} };
     }
     function load() {
       try { P = JSON.parse(localStorage.getItem(PKEY) || 'null'); } catch (_) {}
@@ -546,6 +573,23 @@ layout: default
     }
 
     /* ── rendering helpers ─────────────────────────────────────────── */
+    /* split solution markdown into teaching steps (paragraph blocks,
+       keeping ``` code fences whole) */
+    function chunksOf(mdText) {
+      const lines = (mdText || '').split('\n');
+      const out = [];
+      let cur = [], fence = false;
+      for (const ln of lines) {
+        if (/^```/.test(ln.trim())) fence = !fence;
+        if (!fence && ln.trim() === '' && !/^```/.test(ln.trim())) {
+          if (cur.length) { out.push(cur.join('\n')); cur = []; }
+        } else {
+          cur.push(ln);
+        }
+      }
+      if (cur.length) out.push(cur.join('\n'));
+      return out.length ? out : [mdText || ''];
+    }
     function md(s) { return marked.parse(s || '', { gfm: true, breaks: true }); }
     function mdi(s) { return marked.parseInline(s || '', { gfm: true }); }
     function esc(s) {
@@ -638,7 +682,8 @@ layout: default
           h += '<button class="mk-topic" data-tid="' + t.id + '" style="--tc:var(--' + tierClass(pts) + ')">' +
             '<span class="em">' + t.icon + '</span><span>' +
             '<span class="name">' + esc(t.name) + '</span>' +
-            '<span class="sub">' + m + '/' + t.probs.length + ' mastered</span>' +
+            '<span class="sub">' + m + '/' + t.probs.length + ' mastered' +
+            (P.learned[t.id] ? ' · 📖' : '') + '</span>' +
             '<span class="st">' + '★'.repeat(st) + '</span>' +
             '</span></button>';
         });
@@ -654,12 +699,14 @@ layout: default
       });
     }
 
-    /* ── topic intro (strategy card) ───────────────────────────────── */
+    /* ── topic intro ───────────────────────────────────────────────── */
     function topicIntro(tid) {
       const t = byId[tid];
+      const learned = !!P.learned[tid];
       let h = topBar('<span class="mk-badge ' + tierClass(t.pts) + '">' + t.pts + ' pts</span>');
       h += '<div class="mk-hero"><span class="roo">' + t.icon + '</span><h1>' +
-           esc(t.name) + '</h1><p>' + t.probs.length + ' problems in this trail</p></div>';
+           esc(t.name) + '</h1><p>' + t.probs.length + ' problems in this trail' +
+           (learned ? ' · lesson done 📖✓' : '') + '</p></div>';
       if (t.strat) {
         h += '<div class="mk-strat mk-md">' + md(t.strat) + '</div>';
       }
@@ -667,10 +714,120 @@ layout: default
         h += '<p class="mk-link" style="text-align:center">📖 <a href="' + t.url +
              '">Full notes &amp; worked examples</a></p>';
       }
-      h += '<div class="mk-btnrow"><button class="mk-btn go" id="mk-go">Start training →</button></div>';
+      h += '<div class="mk-btnrow">' +
+        '<button class="mk-btn' + (learned ? '' : ' go') + '" id="mk-learn">📖 ' +
+        (learned ? 'Review the lesson' : 'Learn the strategy') + '</button>' +
+        '<button class="mk-btn' + (learned ? ' go' : '') + '" id="mk-go">🎯 ' +
+        (learned ? 'Start training' : 'Train') + ' →</button></div>';
       screen(h);
       el('mk-back').onclick = home;
       el('mk-go').onclick = () => startTrail(tid);
+      el('mk-learn').onclick = () => startLearn(tid);
+    }
+
+    /* ── Learn mode: strategy → watch me solve → your turn ─────────── */
+    let L = null; /* {tid, phase, ex, step, tryKeys, tryI} */
+
+    function startLearn(tid) {
+      const t = byId[tid];
+      const nEx = Math.min(2, Math.max(1, t.probs.length - 3));
+      const exKeys = t.probs.slice(0, nEx).map((_, i) => key(tid, i));
+      const rest = t.probs.map((_, i) => key(tid, i)).slice(nEx);
+      L = { tid: tid, phase: 'strat', ex: 0, step: 0,
+            exKeys: exKeys, tryKeys: pickFrom(rest, 3), tryI: 0 };
+      lessonStrat();
+    }
+
+    function lessonBar(label) {
+      const t = byId[L.tid];
+      return topBar('<span class="mk-pill">' + label + '</span>' +
+        '<span class="mk-badge ' + tierClass(t.pts) + '">' + t.pts + ' pts</span>') +
+        '<div class="mk-hero" style="margin-bottom:0.6rem"><p>📖 Lesson · ' +
+        t.icon + ' ' + esc(t.name) + '</p></div>';
+    }
+
+    function lessonStrat() {
+      const t = byId[L.tid];
+      let h = lessonBar('Step 1 · The strategy');
+      h += '<div class="mk-strat mk-md">' + md(t.strat ||
+        '**Watch how each problem is taken apart step by step — then try it yourself.**') + '</div>';
+      h += '<div class="mk-btnrow"><button class="mk-btn go" id="mk-next-phase">' +
+        'Show me how it works →</button></div>';
+      screen(h);
+      el('mk-back').onclick = () => topicIntro(L.tid);
+      el('mk-next-phase').onclick = () => { L.phase = 'ex'; L.ex = 0; L.step = 0; lessonExample(); };
+    }
+
+    function lessonExample() {
+      const p = prob(L.exKeys[L.ex]);
+      const steps = chunksOf(p.s);
+      const lastStep = L.step >= steps.length - 1;
+      let h = lessonBar('Step 2 · Watch me solve');
+      h += '<div class="mk-qcard">' +
+        '<div class="mk-qhead"><span class="mk-exlabel">Worked example ' + (L.ex + 1) +
+        ' of ' + L.exKeys.length + '</span><span class="ttl">' + esc(p.t) + '</span></div>' +
+        '<div class="mk-qbody mk-md">' + md(p.q) + '</div>' +
+        '<div class="mk-opts">';
+      p.o.forEach((o, j) => {
+        h += '<button class="mk-opt' + (lastStep && j === p.a ? ' good' : ' dim') +
+          '" disabled><span class="ltr">' + LTRS[j] + '</span><span>' + mdi(o) + '</span></button>';
+      });
+      h += '</div>';
+      h += '<div class="mk-steps"><div class="ttl">Solving it together — step by step</div>';
+      for (let s = 0; s <= L.step && s < steps.length; s++) {
+        h += '<div class="stp mk-md">' + md(steps[s]) + '</div>';
+      }
+      h += '</div>';
+      if (lastStep) {
+        h += '<div class="mk-feedback good" style="margin-top:0.8rem">' +
+          'So the answer is ' + LTRS[p.a] + ' <span class="mk-hop">🦘</span></div>';
+      }
+      h += '</div>';
+      h += '<div class="mk-btnrow">';
+      if (!lastStep) {
+        h += '<button class="mk-btn go" id="mk-step">Next step →</button>';
+      } else if (L.ex + 1 < L.exKeys.length) {
+        h += '<button class="mk-btn go" id="mk-next-ex">Watch one more →</button>';
+      } else {
+        h += '<button class="mk-btn go" id="mk-try">Now you try! →</button>';
+      }
+      h += '</div>';
+      screen(h);
+      el('mk-back').onclick = () => topicIntro(L.tid);
+      const st = el('mk-step');
+      if (st) st.onclick = () => { L.step++; lessonExample(); };
+      const nx = el('mk-next-ex');
+      if (nx) nx.onclick = () => { L.ex++; L.step = 0; lessonExample(); };
+      const tr = el('mk-try');
+      if (tr) tr.onclick = () => {
+        if (L.tryKeys.length) {
+          R = { keys: L.tryKeys, i: 0, right: 0, wrong: [], mode: 'learn',
+                tid: L.tid, title: '📖 Your turn · ' + byId[L.tid].icon + ' ' +
+                byId[L.tid].name };
+          question();
+        } else {
+          lessonDone();
+        }
+      };
+    }
+
+    function lessonDone() {
+      const t = byId[L.tid];
+      const first = !P.learned[L.tid];
+      P.learned[L.tid] = 1;
+      if (first) P.xp += 15;
+      save();
+      burst(['📖', '🦘', '✨']);
+      screen('<div class="mk-results"><span class="em">🎓</span>' +
+        '<h2>Strategy learned!</h2>' +
+        '<p>' + t.icon + ' <b>' + esc(t.name) + '</b>' +
+        (first ? ' · +15 XP' : ' · reviewed') + '</p>' +
+        '<p>Now cement it: a training run makes it stick.</p>' +
+        '<div class="mk-btnrow">' +
+        '<button class="mk-btn go" id="mk-go">🎯 Train this trail</button>' +
+        '<button class="mk-btn" id="mk-home">Home</button></div></div>');
+      el('mk-go').onclick = () => startTrail(L.tid);
+      el('mk-home').onclick = home;
     }
 
     /* ── practice runner (trails / workout / pouch) ────────────────── */
@@ -720,6 +877,8 @@ layout: default
       h += '<div class="mk-qcard">' +
         '<div class="mk-qhead"><span class="ttl">' + t.icon + ' ' + esc(p.t) + '</span></div>' +
         '<div class="mk-qbody mk-md">' + md(p.q) + '</div>' +
+        '<div class="mk-hintrow"><button class="mk-hintbtn" id="mk-hint">💡 Hint</button></div>' +
+        '<div id="mk-hintbox"></div>' +
         '<div class="mk-opts" id="mk-opts">';
       p.o.forEach((o, j) => {
         h += '<button class="mk-opt" data-j="' + j + '"><span class="ltr">' +
@@ -728,6 +887,11 @@ layout: default
       h += '</div><div class="mk-feedback" id="mk-fb"></div><div id="mk-solwrap"></div></div>';
       screen(h);
       el('mk-back').onclick = confirmQuit;
+      el('mk-hint').onclick = () => {
+        el('mk-hintbox').innerHTML = '<div class="mk-hint"><div class="ttl">' +
+          '💡 First step</div><div class="mk-md">' + md(chunksOf(p.s)[0]) + '</div></div>';
+        el('mk-hint').style.display = 'none';
+      };
       root.querySelectorAll('.mk-opt').forEach(b => {
         b.onclick = () => answer(+b.getAttribute('data-j'));
       });
@@ -763,11 +927,17 @@ layout: default
       el('mk-solwrap').innerHTML =
         '<div class="mk-sol"><div class="ttl">Step-by-step</div>' +
         '<div class="mk-md">' + md(p.s) + '</div></div>' +
+        (t.strat ? '<details class="mk-rev mk-remind"><summary>📖 Strategy reminder · ' +
+          t.icon + ' ' + esc(t.name) + '</summary><div class="body mk-md">' +
+          md(t.strat) + '</div></details>' : '') +
         '<button class="mk-next" id="mk-next">' +
         (R.i + 1 < R.keys.length ? 'Next →' : 'Finish 🏁') + '</button>';
+      const hb = el('mk-hint');
+      if (hb) hb.style.display = 'none';
       el('mk-next').onclick = () => {
         R.i++;
         if (R.i < R.keys.length) question();
+        else if (R.mode === 'learn') lessonDone();
         else practiceDone();
       };
       el('mk-next').focus();
