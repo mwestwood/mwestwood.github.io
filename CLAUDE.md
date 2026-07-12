@@ -445,6 +445,64 @@ games never requires re-encryption, only content changes in `wh_data.py` do.
 `encrypt-batch.py` skips this page (empty body). Player progress
 (points/stars) lives in localStorage under `wh-quest-v1`.
 
+### Rebuild the Kangaroo Arena (Math Kangaroo practice game)
+
+```bash
+python3 _tools/build-mk-arena.py "passphrase"
+```
+
+Generates `teaching/mk/arena.md` (`layout: protected-mk`, nav_order 1 under
+MK, permalink `/teaching/mk/arena/`). Unlike the other game builders, most
+of the question bank has **no plaintext data file**: the builder decrypts
+the existing MK topic pages (`teaching/mk/mk-*.md`) **in memory** and parses
+their `### Problem N — Title` blocks (question / A–E options — inline
+`&nbsp;`-separated or one-per-line — / `**Answer: X**` / step-by-step
+solution). Problems without a parseable option list (teaching-note pages
+like color-cubes, form-solid-figure, most of dice) are skipped. So the
+arena must be **rebuilt whenever a MK topic page is edited or added**.
+Topic ids are `p<pts>-<slug>` from the filename (`mk-lv3-4-4pt-w2-lineup.md`
+→ `p4-lineup`); the pts prefix keeps the two fun-math / perimeter pages
+distinct.
+
+`_tools/mk_extra_data.py` (committed — original problems, like `wh_data.py`)
+adds what the workbook pages lack: the whole **3-point warm-up tier**
+(`p3-patterns`, `p3-counting`, `p3-hops`), new 4/5-pt strategy decks from
+recent Kangaroo papers (calendar logic, paper folding, max/min, enumeration,
+logic elimination, hidden digits, pour/weigh/compare), `EXTEND` problems
+appended to parsed topics (cube nets → `p5-dice`, magic square →
+`p4-fun-math`), plus `ICONS` and `TOPIC_ORDER`. Every problem is
+`{t, q, o, a, s}` — markdown question, 4–5 options, answer index, markdown
+solution. Figures are markdown tables / code-block art (no images).
+
+Engine (`_layouts/protected-mk.html`, public code — editing it never needs
+re-encryption) modes:
+
+- **Skill Trails** — pick a topic card (grouped 3-Point Meadow / 4-Point
+  Trail / 5-Point Mountain); strategy card first (with a link to the full
+  topic page), then a 6-question session with instant feedback and the full
+  step-by-step solution after every answer; stars by accuracy (≥85% 3★,
+  ≥60% 2★) kept as best per topic.
+- **Daily Workout** — 10 mixed questions (3×3pt + 4×4pt + 3×5pt); first
+  completion each day bumps the streak and pays +25 XP.
+- **Mock Test** — real format: Full (24 Q · 75 min · 96 pts) or Sprint
+  (12 Q · 35 min · 48 pts), 8/4 questions per point tier in test order,
+  question palette with flagging, answers changeable, no feedback until
+  hand-in, auto-submit at 0:00; results show per-tier bars + a review
+  accordion with every solution; history (last 20) and best scores saved.
+- **Joey's Pouch** — every missed problem (any mode) lands here; answering
+  it correctly anywhere redeems it.
+
+Selection everywhere prefers problems whose last answer was wrong, then
+never-seen, then seen-but-unmastered (mastered = ≥2 right and last answer
+correct). Per-problem records are keyed `topicId|probIndex`, so records
+survive rebuilds as long as problem order within a topic doesn't change.
+Progress lives in localStorage under `mk-arena-v1`.
+
+**Gotcha:** the site build collapses inline `<script>` in layouts to one
+line — a `//` comment swallows the rest of the script ("Unexpected end of
+input", game silently dead at the gate). Use `/* */` comments only, in this
+and the other game layouts.
+
 ### Inspect encrypted content without changing it
 
 ```bash

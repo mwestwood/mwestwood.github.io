@@ -1,0 +1,1012 @@
+---
+layout: default
+---
+
+<style>
+  /* ── Password gate (same look as protected.html) ─────────────────────── */
+  #protected-gate {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; min-height: 40vh; padding: 2rem 1rem;
+  }
+  .gate-card {
+    background: var(--sidebar-color, #f5f6fa);
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 8px; padding: 2.5rem 2rem; max-width: 400px; width: 100%;
+    text-align: center; box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .gate-lock { font-size: 2.5rem; margin-bottom: 0.75rem; line-height: 1; }
+  .gate-title { font-size: 1.25rem; font-weight: 600;
+    color: var(--body-text-color, #27262b); margin: 0 0 0.5rem 0; }
+  .gate-subtitle { font-size: 0.875rem; color: var(--body-text-color, #5c5962);
+    opacity: 0.75; margin: 0 0 1.5rem 0; }
+  .gate-input-row { display: flex; gap: 0.5rem; width: 100%; }
+  #gate-password { flex: 1; padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color, #d0d0d0); border-radius: 4px;
+    font-size: 1rem; background: var(--body-background-color, #fff);
+    color: var(--body-text-color, #27262b); outline: none; }
+  #gate-password:focus { border-color: var(--links-color, #7253ed); }
+  #gate-submit { padding: 0.5rem 1.1rem; background: var(--links-color, #7253ed);
+    color: #fff; border: none; border-radius: 4px; font-size: 0.95rem;
+    font-weight: 600; cursor: pointer; white-space: nowrap; }
+  #gate-submit:hover { opacity: 0.88; }
+  #gate-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+  #gate-error { margin-top: 0.85rem; font-size: 0.875rem; color: #c0392b;
+    min-height: 1.25rem; display: none; }
+  #gate-status { margin-top: 0.85rem; font-size: 0.875rem;
+    color: var(--body-text-color, #5c5962); opacity: 0.7;
+    min-height: 1.25rem; display: none; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0;
+    margin: -1px; overflow: hidden; clip: rect(0,0,0,0);
+    white-space: nowrap; border: 0; }
+
+  /* ── Kangaroo Arena ──────────────────────────────────────────────────── */
+  #arena-root { display: none; }
+
+  .mk { --roo: #f59e0b; --good: #4ade80; --bad: #f87171;
+        --t3: #4ade80; --t4: #facc15; --t5: #c084fc;
+        --card: rgba(255,255,255,0.05); --line: rgba(255,255,255,0.14);
+        max-width: 780px; }
+  .mk, .mk * { box-sizing: border-box; }
+  .mk button { font-family: inherit; }
+
+  .mk-top { display: flex; align-items: center; gap: 0.6rem;
+            margin-bottom: 1rem; flex-wrap: wrap; }
+  .mk-back { background: var(--card); border: 1px solid var(--line);
+    color: inherit; border-radius: 999px; padding: 0.45rem 1.1rem;
+    font-size: 1rem; cursor: pointer; }
+  .mk-back:hover { border-color: var(--roo); }
+  .mk-spacer { flex: 1; }
+  .mk-pill { font-size: 0.92rem; padding: 0.35rem 0.85rem; border-radius: 999px;
+    background: var(--card); border: 1px solid var(--line);
+    white-space: nowrap; color: inherit; }
+  .mk-pill.xp { border-color: var(--roo); color: var(--roo); font-weight: 700; }
+  .mk-pill.timer { font-weight: 800; font-size: 1.05rem;
+    font-variant-numeric: tabular-nums; }
+  .mk-pill.timer.low { border-color: var(--bad); color: var(--bad);
+    animation: mkPulse 1s infinite; }
+
+  .mk-hero { text-align: center; margin: 0.4rem 0 1.2rem; }
+  .mk-hero .roo { font-size: 3.2rem; line-height: 1; display: inline-block; }
+  .mk-hero h1 { margin: 0.2rem 0 0.3rem; font-size: 1.9rem; }
+  .mk-hero p { margin: 0; opacity: 0.7; font-size: 1rem; }
+
+  .mk-stats { display: flex; gap: 0.5rem; justify-content: center;
+    flex-wrap: wrap; margin: 0 0 1.4rem; }
+  .mk-stat { background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 0.5rem 1rem; text-align: center;
+    min-width: 5.2rem; }
+  .mk-stat .v { font-size: 1.25rem; font-weight: 800; color: var(--roo); }
+  .mk-stat .l { font-size: 0.72rem; opacity: 0.65; text-transform: uppercase;
+    letter-spacing: 0.06em; }
+
+  .mk-sect { font-size: 0.82rem; letter-spacing: 0.1em;
+    text-transform: uppercase; opacity: 0.55; margin: 1.6rem 0 0.6rem; }
+  .mk-sect.t3 { color: var(--t3); opacity: 0.9; }
+  .mk-sect.t4 { color: var(--t4); opacity: 0.9; }
+  .mk-sect.t5 { color: var(--t5); opacity: 0.9; }
+
+  .mk-modes { display: grid; gap: 0.7rem;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+  .mk-mode { display: flex; align-items: center; gap: 0.85rem; text-align: left;
+    background: var(--card); border: 1px solid var(--line);
+    border-left: 6px solid var(--roo); border-radius: 14px;
+    padding: 0.95rem 1rem; color: inherit; cursor: pointer;
+    transition: transform 0.12s, border-color 0.12s; }
+  .mk-mode:hover { transform: translateY(-2px); border-color: var(--roo); }
+  .mk-mode .em { font-size: 2.1rem; }
+  .mk-mode .name { font-weight: 800; font-size: 1.12rem; }
+  .mk-mode .tag { font-size: 0.83rem; opacity: 0.7; margin-top: 0.15rem;
+    line-height: 1.4; }
+  .mk-mode .done { color: var(--good); font-weight: 700; }
+
+  .mk-topics { display: grid; gap: 0.6rem;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+  .mk-topic { display: flex; align-items: center; gap: 0.7rem; text-align: left;
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 0.7rem 0.85rem; color: inherit; cursor: pointer;
+    transition: transform 0.12s, border-color 0.12s; }
+  .mk-topic:hover { transform: translateY(-2px); border-color: var(--tc, var(--roo)); }
+  .mk-topic .em { font-size: 1.7rem; }
+  .mk-topic .name { display: block; font-weight: 700; font-size: 0.98rem;
+    line-height: 1.3; }
+  .mk-topic .sub { display: block; font-size: 0.8rem; opacity: 0.65;
+    margin-top: 0.15rem; }
+  .mk-topic .st { display: block; font-size: 0.85rem; color: var(--t4);
+    letter-spacing: 0.08em; min-height: 1em; margin-top: 0.15rem; }
+
+  .mk-badge { display: inline-block; font-weight: 800; border-radius: 8px;
+    padding: 0.06rem 0.55rem; color: #1a1a1e; font-size: 0.85rem; }
+  .mk-badge.t3 { background: var(--t3); }
+  .mk-badge.t4 { background: var(--t4); }
+  .mk-badge.t5 { background: var(--t5); }
+
+  /* strategy / intro card */
+  .mk-strat { background: var(--card); border: 1px solid var(--line);
+    border-radius: 16px; padding: 1.1rem 1.3rem; margin: 0 auto 1rem; }
+  .mk-strat h2:first-child { margin-top: 0.2rem; }
+  .mk-link { font-size: 0.9rem; opacity: 0.8; }
+
+  /* markdown blocks (questions, solutions, strategies) */
+  .mk-md { line-height: 1.65; }
+  .mk-md pre { background: rgba(0,0,0,0.35); border: 1px solid var(--line);
+    border-radius: 10px; padding: 0.7rem 0.9rem; overflow-x: auto;
+    font-size: 0.95rem; line-height: 1.5; }
+  .mk-md code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .mk-md p > code, .mk-md li > code { background: rgba(0,0,0,0.3);
+    border-radius: 5px; padding: 0.05rem 0.35rem; }
+  .mk-md table { border-collapse: collapse; margin: 0.6rem auto; }
+  .mk-md th, .mk-md td { border: 1px solid var(--line);
+    padding: 0.3rem 0.65rem; text-align: center; }
+  .mk-md th { background: rgba(255,255,255,0.06); }
+  .mk-md blockquote { border-left: 4px solid var(--roo); margin: 0.6rem 0;
+    padding: 0.15rem 0.9rem; opacity: 0.9; }
+  .mk-md img { max-width: 100%; }
+
+  /* question screen */
+  .mk-prog { display: flex; gap: 0.3rem; justify-content: center;
+    margin: 0.2rem 0 1rem; flex-wrap: wrap; }
+  .mk-dot { width: 0.75rem; height: 0.75rem; border-radius: 50%;
+    background: rgba(255,255,255,0.12); }
+  .mk-dot.done { background: var(--good); }
+  .mk-dot.miss { background: var(--bad); }
+  .mk-dot.now { background: var(--roo); transform: scale(1.3); }
+
+  .mk-qcard { background: var(--card); border: 1px solid var(--line);
+    border-radius: 16px; padding: 1.1rem 1.3rem; margin-bottom: 1rem; }
+  .mk-qhead { display: flex; align-items: center; gap: 0.55rem;
+    flex-wrap: wrap; margin-bottom: 0.6rem; font-size: 0.9rem; }
+  .mk-qhead .ttl { font-weight: 700; opacity: 0.85; }
+  .mk-qhead .flag { margin-left: auto; background: none; color: inherit;
+    border: 1px solid var(--line); border-radius: 999px;
+    padding: 0.25rem 0.8rem; cursor: pointer; font-size: 0.85rem; }
+  .mk-qhead .flag.on { border-color: var(--t4); color: var(--t4); }
+  .mk-qbody { font-size: 1.08rem; }
+
+  .mk-opts { display: grid; gap: 0.55rem; margin: 0.9rem 0 0; }
+  .mk-opt { display: flex; align-items: flex-start; gap: 0.75rem;
+    width: 100%; text-align: left; background: var(--card);
+    border: 2px solid var(--line); border-radius: 12px;
+    padding: 0.6rem 0.8rem; color: inherit; font-size: 1.02rem;
+    line-height: 1.45; cursor: pointer; transition: border-color 0.12s; }
+  .mk-opt:hover:not(:disabled) { border-color: var(--roo); }
+  .mk-opt:disabled { cursor: default; }
+  .mk-opt .ltr { flex: none; font-weight: 800; width: 1.7rem; height: 1.7rem;
+    border-radius: 8px; display: flex; align-items: center;
+    justify-content: center; background: rgba(255,255,255,0.09);
+    font-size: 0.9rem; margin-top: 0.05rem; }
+  .mk-opt.sel { border-color: var(--roo); background: rgba(245,158,11,0.12); }
+  .mk-opt.sel .ltr { background: var(--roo); color: #1a1a1e; }
+  .mk-opt.good { border-color: var(--good);
+    background: rgba(74,222,128,0.14); animation: mkPop 0.4s; }
+  .mk-opt.good .ltr { background: var(--good); color: #14321f; }
+  .mk-opt.miss { border-color: var(--bad); background: rgba(248,113,113,0.12);
+    animation: mkNudge 0.35s; }
+  .mk-opt.miss .ltr { background: var(--bad); color: #3a1414; }
+  .mk-opt.dim { opacity: 0.45; }
+
+  .mk-feedback { text-align: center; margin-top: 1rem; font-size: 1.15rem;
+    font-weight: 800; min-height: 1.6rem; }
+  .mk-feedback.good { color: var(--good); }
+  .mk-feedback.bad { color: var(--bad); }
+  .mk-hop { display: inline-block; animation: mkHop 0.6s; }
+
+  .mk-sol { background: rgba(74,222,128,0.07); border: 1px solid var(--line);
+    border-left: 4px solid var(--good); border-radius: 12px;
+    padding: 0.8rem 1.1rem; margin-top: 0.9rem; font-size: 0.98rem; }
+  .mk-sol .ttl { font-size: 0.78rem; letter-spacing: 0.09em;
+    text-transform: uppercase; opacity: 0.6; margin-bottom: 0.4rem;
+    font-weight: 700; }
+
+  .mk-next { display: block; margin: 1.1rem auto 0; background: var(--good);
+    border: none; color: #14321f; border-radius: 999px;
+    padding: 0.65rem 2.6rem; font-size: 1.15rem; font-weight: 800;
+    cursor: pointer; animation: mkPop 0.4s; }
+  .mk-next:hover { opacity: 0.9; }
+  .mk-btn { background: var(--card); border: 1px solid var(--line);
+    color: inherit; border-radius: 999px; padding: 0.6rem 1.6rem;
+    font-size: 1.02rem; font-weight: 700; cursor: pointer; }
+  .mk-btn:hover { border-color: var(--roo); }
+  .mk-btn.go { background: var(--roo); border-color: var(--roo); color: #1a1a1e; }
+  .mk-btnrow { display: flex; gap: 0.7rem; justify-content: center;
+    flex-wrap: wrap; margin-top: 1.2rem; }
+
+  /* mock test palette */
+  .mk-pal { display: flex; gap: 0.3rem; flex-wrap: wrap;
+    justify-content: center; margin: 0.2rem 0 1rem; }
+  .mk-pal button { width: 2.1rem; height: 2.1rem; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--card); color: inherit;
+    font-weight: 700; cursor: pointer; font-size: 0.85rem; position: relative; }
+  .mk-pal button.ansd { background: rgba(245,158,11,0.25);
+    border-color: var(--roo); }
+  .mk-pal button.now { outline: 2px solid var(--roo); }
+  .mk-pal button.flg::after { content: '⚑'; position: absolute; top: -0.55rem;
+    right: -0.25rem; font-size: 0.7rem; color: var(--t4); }
+
+  /* results */
+  .mk-results { text-align: center; padding: 1rem 0 2rem; }
+  .mk-results .em { font-size: 3.4rem; }
+  .mk-results h2 { margin: 0.4rem 0 0.6rem; }
+  .mk-starrow { font-size: 2.6rem; letter-spacing: 0.4rem; margin: 0.4rem 0 0.8rem; }
+  .mk-starrow span { opacity: 0.22; display: inline-block; }
+  .mk-starrow span.on { opacity: 1; color: var(--t4); animation: mkPop 0.5s both; }
+  .mk-starrow span.on:nth-child(2) { animation-delay: 0.18s; }
+  .mk-starrow span.on:nth-child(3) { animation-delay: 0.36s; }
+  .mk-scoreline { font-size: 1.6rem; font-weight: 800; color: var(--roo);
+    margin: 0.6rem 0; }
+  .mk-tierbars { max-width: 380px; margin: 1rem auto; text-align: left; }
+  .mk-tierbar { display: flex; align-items: center; gap: 0.6rem;
+    margin: 0.4rem 0; font-size: 0.95rem; }
+  .mk-tierbar .lbl { width: 4.6rem; font-weight: 700; }
+  .mk-tierbar .bar { flex: 1; height: 0.85rem; border-radius: 999px;
+    background: rgba(255,255,255,0.08); overflow: hidden; }
+  .mk-tierbar .fill { height: 100%; border-radius: 999px; }
+  .mk-tierbar .n { width: 3.6rem; text-align: right; opacity: 0.8; }
+
+  /* review list */
+  .mk-review { text-align: left; margin-top: 1.2rem; }
+  .mk-rev { background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; margin-bottom: 0.6rem; overflow: hidden; }
+  .mk-rev summary { padding: 0.65rem 0.9rem; cursor: pointer;
+    font-size: 0.98rem; display: flex; align-items: center; gap: 0.5rem;
+    list-style: none; }
+  .mk-rev summary::-webkit-details-marker { display: none; }
+  .mk-rev summary .mark { font-weight: 800; }
+  .mk-rev summary .mark.ok { color: var(--good); }
+  .mk-rev summary .mark.no { color: var(--bad); }
+  .mk-rev .body { padding: 0.2rem 1rem 0.9rem; border-top: 1px solid var(--line); }
+
+  .mk-empty { text-align: center; opacity: 0.7; padding: 2rem 0; }
+
+  .mk-burst { position: fixed; inset: 0; pointer-events: none; z-index: 999;
+    overflow: hidden; }
+  .mk-burst span { position: absolute; top: -6vh; font-size: 1.5rem;
+    animation: mkFall linear forwards; }
+
+  @keyframes mkFall { to { transform: translateY(115vh) rotate(680deg); } }
+  @keyframes mkPop { 0% { transform: scale(0.3); }
+    70% { transform: scale(1.22); } 100% { transform: scale(1); } }
+  @keyframes mkNudge { 25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); } }
+  @keyframes mkHop { 0%,100% { transform: translateY(0); }
+    40% { transform: translateY(-0.6em) rotate(-8deg); } }
+  @keyframes mkPulse { 50% { opacity: 0.55; } }
+
+  @media (max-width: 520px) {
+    .mk-hero h1 { font-size: 1.55rem; }
+    .mk-qbody { font-size: 1rem; }
+  }
+</style>
+
+<!-- Password gate -->
+<div id="protected-gate">
+  <div class="gate-card">
+    <div class="gate-lock" aria-hidden="true">🔒</div>
+    <p class="gate-title">{{ page.title | default: "Protected Page" }}</p>
+    <p class="gate-subtitle">This page is password-protected. Enter the passphrase to unlock.</p>
+    <div class="gate-input-row">
+      <label for="gate-password" class="sr-only">Passphrase</label>
+      <input id="gate-password" type="password" placeholder="Passphrase" autocomplete="off" autofocus />
+      <button id="gate-submit">Unlock</button>
+    </div>
+    <div id="gate-error" role="alert" aria-live="polite">Incorrect passphrase — please try again.</div>
+    <div id="gate-status" role="status" aria-live="polite">Decrypting…</div>
+  </div>
+</div>
+
+<div id="arena-root"><div class="mk" id="mk"></div></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* Encrypted blob injected by Jekyll from front matter field `encrypted` */
+  const ENCRYPTED_B64 = {{ page.encrypted | jsonify }};
+
+  const STORAGE_KEY = 'mwestwood-passphrase';
+
+  /* ── Gate (same crypto as protected.html) ───────────────────────────── */
+
+  function b64ToBytes(b64) {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+
+  async function deriveKey(passphrase, salt) {
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw', enc.encode(passphrase), { name: 'PBKDF2' }, false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: salt, iterations: 100000, hash: 'SHA-256' },
+      keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+  }
+
+  async function decrypt(passphrase) {
+    const blob = b64ToBytes(ENCRYPTED_B64);
+    const salt = blob.slice(0, 16);
+    const iv = blob.slice(16, 28);
+    const ct = blob.slice(28);
+    const key = await deriveKey(passphrase, salt);
+    const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, ct);
+    return new TextDecoder().decode(plaintext);
+  }
+
+  function loadMarked() {
+    return new Promise(function (resolve, reject) {
+      if (typeof marked !== 'undefined') { resolve(); return; }
+      var s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/marked@12/marked.min.js';
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  const gate = document.getElementById('protected-gate');
+  const rootWrap = document.getElementById('arena-root');
+  const input = document.getElementById('gate-password');
+  const btn = document.getElementById('gate-submit');
+  const errEl = document.getElementById('gate-error');
+  const statusEl = document.getElementById('gate-status');
+
+  function showError(msg) {
+    errEl.textContent = msg || 'Incorrect passphrase — please try again.';
+    errEl.style.display = 'block';
+    statusEl.style.display = 'none';
+    btn.disabled = false;
+    input.select();
+  }
+
+  function showStatus(msg) {
+    statusEl.textContent = msg;
+    statusEl.style.display = 'block';
+    errEl.style.display = 'none';
+  }
+
+  function reveal(text) {
+    let data;
+    try { data = JSON.parse(text); }
+    catch (e) { showError('Data error: could not parse problem bank.'); return; }
+    loadMarked().then(function () {
+      gate.style.display = 'none';
+      rootWrap.style.display = 'block';
+      Arena.boot(data);
+    }).catch(function () {
+      showError('Could not load the markdown renderer — check your connection.');
+    });
+  }
+
+  async function tryUnlock(passphrase, cache) {
+    try {
+      showStatus('Decrypting…');
+      btn.disabled = true;
+      const text = await decrypt(passphrase);
+      if (cache) {
+        try { localStorage.setItem(STORAGE_KEY, passphrase); } catch (_) {}
+      }
+      reveal(text);
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'OperationError') {
+        showError('Incorrect passphrase — please try again.');
+      } else if (e instanceof TypeError && e.message.includes('subtle')) {
+        showError('Error: Web Crypto API unavailable. This page requires HTTPS.');
+      } else {
+        showError('Error (' + e.name + '): ' + e.message);
+      }
+    }
+  }
+
+  async function init() {
+    if (!ENCRYPTED_B64) { showError('No encrypted data on this page.'); return; }
+    try {
+      const cached = localStorage.getItem(STORAGE_KEY);
+      if (cached) {
+        showStatus('Unlocking…');
+        btn.disabled = true;
+        input.disabled = true;
+        try {
+          const text = await decrypt(cached);
+          reveal(text);
+          return;
+        } catch (_) {
+          localStorage.removeItem(STORAGE_KEY);
+          btn.disabled = false;
+          input.disabled = false;
+          statusEl.style.display = 'none';
+        }
+      }
+    } catch (_) {}
+  }
+
+  btn.addEventListener('click', function () {
+    const pw = input.value;
+    if (!pw) { input.focus(); return; }
+    tryUnlock(pw, true);
+  });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') btn.click();
+  });
+
+  /* ═══════════════════════ Kangaroo Arena ══════════════════════════════
+     Math-Kangaroo practice game. Data: {topics:[{id,name,pts,icon,strat,
+     url?,probs:[{t,q,o,a,s}]}]}. Modes:
+       - Skill Trails: practice one strategy topic (6 Q, instant feedback,
+         full step-by-step solution after every answer, stars by accuracy)
+       - Daily Workout: 10 mixed questions across all tiers; keeps a streak
+       - Mock Test: real-format timed test (24 Q / 75 min, or 12 Q sprint),
+         3-4-5-point tiers, no feedback until scored, full review at the end
+       - Joey's Pouch: every missed problem waits here for redemption
+     Per-problem memory {seen,right,wrong,lastCorrect} drives selection:
+     missed and unseen problems come up first. Progress in localStorage
+     under 'mk-arena-v1'. */
+
+  const Arena = (function () {
+    const PKEY = 'mk-arena-v1';
+    const root = document.getElementById('mk');
+    let D = null;          /* {topics} */
+    let byId = {};         /* topic id -> topic */
+    let TIMER = null;      /* active countdown interval */
+
+    /* ── progress ──────────────────────────────────────────────────── */
+    let P = null;
+    function defaults() {
+      return { v: 1, xp: 0, rec: {}, stars: {}, streak: { n: 0, last: '' },
+               tests: [], best: {}, pouch: [] };
+    }
+    function load() {
+      try { P = JSON.parse(localStorage.getItem(PKEY) || 'null'); } catch (_) {}
+      if (!P || typeof P !== 'object') P = defaults();
+      const d = defaults();
+      for (const k in d) if (!(k in P)) P[k] = d[k];
+    }
+    function save() {
+      try { localStorage.setItem(PKEY, JSON.stringify(P)); } catch (_) {}
+    }
+    function today() {
+      const d = new Date();
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') +
+             '-' + String(d.getDate()).padStart(2, '0');
+    }
+    function yesterday() {
+      const d = new Date(Date.now() - 86400000);
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') +
+             '-' + String(d.getDate()).padStart(2, '0');
+    }
+
+    function key(tid, i) { return tid + '|' + i; }
+    function prob(k) {
+      const s = k.split('|');
+      const t = byId[s[0]];
+      return t ? t.probs[+s[1]] : null;
+    }
+    function topicOf(k) { return byId[k.split('|')[0]]; }
+    function rec(k) { return P.rec[k]; }
+    function mastered(k) {
+      const r = P.rec[k];
+      return !!(r && r.r >= 2 && r.lc);
+    }
+
+    function recordAnswer(k, ok, giveXp) {
+      let r = P.rec[k];
+      if (!r) r = P.rec[k] = { s: 0, r: 0, w: 0, lc: false };
+      r.s++;
+      if (ok) { r.r++; r.lc = true; }
+      else { r.w++; r.lc = false; }
+      if (ok && giveXp) P.xp += topicOf(k).pts;
+      if (!ok) {
+        if (P.pouch.indexOf(k) === -1) P.pouch.push(k);
+        if (P.pouch.length > 60) P.pouch.shift();
+      } else {
+        const i = P.pouch.indexOf(k);
+        if (i !== -1) P.pouch.splice(i, 1);
+      }
+      save();
+    }
+
+    /* ── selection ─────────────────────────────────────────────────── */
+    function shuffle(a) {
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+    /* priority: last answer wrong > never seen > seen but not mastered > mastered */
+    function prio(k) {
+      const r = P.rec[k];
+      if (!r) return 1;
+      if (!r.lc) return 0;
+      if (!mastered(k)) return 2;
+      return 3;
+    }
+    function pickFrom(keys, n) {
+      const groups = [[], [], [], []];
+      keys.forEach(k => groups[prio(k)].push(k));
+      let out = [];
+      for (const g of groups) {
+        if (out.length >= n) break;
+        out = out.concat(shuffle(g).slice(0, n - out.length));
+      }
+      return out;
+    }
+    function topicKeys(t) { return t.probs.map((_, i) => key(t.id, i)); }
+    function tierKeys(pts) {
+      let ks = [];
+      D.topics.forEach(t => { if (t.pts === pts) ks = ks.concat(topicKeys(t)); });
+      return ks;
+    }
+
+    /* ── rendering helpers ─────────────────────────────────────────── */
+    function md(s) { return marked.parse(s || '', { gfm: true, breaks: true }); }
+    function mdi(s) { return marked.parseInline(s || '', { gfm: true }); }
+    function esc(s) {
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    }
+    function stopTimer() { if (TIMER) { clearInterval(TIMER); TIMER = null; } }
+    function screen(html) {
+      stopTimer();
+      root.innerHTML = html;
+      window.scrollTo(0, 0);
+    }
+    function el(id) { return document.getElementById(id); }
+    function burst(ems) {
+      const b = document.createElement('div');
+      b.className = 'mk-burst';
+      let h = '';
+      for (let i = 0; i < 26; i++) {
+        h += '<span style="left:' + (Math.random() * 100) + 'vw;' +
+             'animation-duration:' + (2 + Math.random() * 2.2) + 's;' +
+             'animation-delay:' + (Math.random() * 0.7) + 's">' +
+             ems[i % ems.length] + '</span>';
+      }
+      b.innerHTML = h;
+      document.body.appendChild(b);
+      setTimeout(() => b.remove(), 5200);
+    }
+    const LTRS = ['A', 'B', 'C', 'D', 'E'];
+    function starsRow(n) {
+      let h = '<div class="mk-starrow">';
+      for (let i = 1; i <= 3; i++)
+        h += '<span class="' + (i <= n ? 'on' : '') + '">★</span>';
+      return h + '</div>';
+    }
+    function tierClass(pts) { return 't' + pts; }
+    function topBar(extra) {
+      return '<div class="mk-top"><button class="mk-back" id="mk-back">← Back</button>' +
+             '<span class="mk-spacer"></span>' + (extra || '') +
+             '<span class="mk-pill xp">⚡ ' + P.xp + ' XP</span></div>';
+    }
+
+    /* ── home ──────────────────────────────────────────────────────── */
+    function nMastered() {
+      let n = 0;
+      D.topics.forEach(t => t.probs.forEach((_, i) => { if (mastered(key(t.id, i))) n++; }));
+      return n;
+    }
+    function nProbs() {
+      let n = 0; D.topics.forEach(t => { n += t.probs.length; }); return n;
+    }
+
+    function home() {
+      const doneToday = P.streak.last === today();
+      const best = P.best.full != null ? P.best.full + '/96' : '—';
+      let h = '<div class="mk-hero"><span class="roo">🦘</span>' +
+        '<h1>Kangaroo Arena</h1><p>Train the strategy. Win the points.</p></div>';
+      h += '<div class="mk-stats">' +
+        '<div class="mk-stat"><div class="v">⚡' + P.xp + '</div><div class="l">XP</div></div>' +
+        '<div class="mk-stat"><div class="v">🔥' + P.streak.n + '</div><div class="l">Streak</div></div>' +
+        '<div class="mk-stat"><div class="v">' + nMastered() + '/' + nProbs() + '</div><div class="l">Mastered</div></div>' +
+        '<div class="mk-stat"><div class="v">' + best + '</div><div class="l">Best test</div></div>' +
+        '</div>';
+      h += '<div class="mk-modes">';
+      h += '<button class="mk-mode" id="mode-workout"><span class="em">🏋️</span><span>' +
+        '<span class="name">Daily Workout</span><br><span class="tag">10 mixed questions' +
+        (doneToday ? ' — <span class="done">done today ✓</span>' : ' — keep the streak alive!') +
+        '</span></span></button>';
+      h += '<button class="mk-mode" id="mode-test"><span class="em">⏱️</span><span>' +
+        '<span class="name">Mock Test</span><br><span class="tag">The real deal: timed, scored, reviewed</span></span></button>';
+      h += '<button class="mk-mode" id="mode-pouch"><span class="em">🎒</span><span>' +
+        '<span class="name">Joey’s Pouch</span><br><span class="tag">' +
+        (P.pouch.length ? P.pouch.length + ' missed problem' + (P.pouch.length > 1 ? 's' : '') + ' to win back' : 'Empty — nothing to redeem!') +
+        '</span></span></button>';
+      h += '</div>';
+
+      const tiers = [[3, '3-Point Meadow', 'warm-ups'], [4, '4-Point Trail', 'core strategies'],
+                     [5, '5-Point Mountain', 'the hard stuff']];
+      tiers.forEach(([pts, label, sub]) => {
+        const ts = D.topics.filter(t => t.pts === pts);
+        if (!ts.length) return;
+        h += '<div class="mk-sect ' + tierClass(pts) + '">' + label + ' · ' + sub + '</div>';
+        h += '<div class="mk-topics">';
+        ts.forEach(t => {
+          let m = 0;
+          t.probs.forEach((_, i) => { if (mastered(key(t.id, i))) m++; });
+          const st = P.stars[t.id] || 0;
+          h += '<button class="mk-topic" data-tid="' + t.id + '" style="--tc:var(--' + tierClass(pts) + ')">' +
+            '<span class="em">' + t.icon + '</span><span>' +
+            '<span class="name">' + esc(t.name) + '</span>' +
+            '<span class="sub">' + m + '/' + t.probs.length + ' mastered</span>' +
+            '<span class="st">' + '★'.repeat(st) + '</span>' +
+            '</span></button>';
+        });
+        h += '</div>';
+      });
+      screen('<div class="mk-top"><span class="mk-spacer"></span>' +
+        '<span class="mk-pill xp">⚡ ' + P.xp + ' XP</span></div>' + h);
+      el('mode-workout').onclick = startWorkout;
+      el('mode-test').onclick = testSetup;
+      el('mode-pouch').onclick = startPouch;
+      root.querySelectorAll('.mk-topic').forEach(b => {
+        b.onclick = () => topicIntro(b.getAttribute('data-tid'));
+      });
+    }
+
+    /* ── topic intro (strategy card) ───────────────────────────────── */
+    function topicIntro(tid) {
+      const t = byId[tid];
+      let h = topBar('<span class="mk-badge ' + tierClass(t.pts) + '">' + t.pts + ' pts</span>');
+      h += '<div class="mk-hero"><span class="roo">' + t.icon + '</span><h1>' +
+           esc(t.name) + '</h1><p>' + t.probs.length + ' problems in this trail</p></div>';
+      if (t.strat) {
+        h += '<div class="mk-strat mk-md">' + md(t.strat) + '</div>';
+      }
+      if (t.url) {
+        h += '<p class="mk-link" style="text-align:center">📖 <a href="' + t.url +
+             '">Full notes &amp; worked examples</a></p>';
+      }
+      h += '<div class="mk-btnrow"><button class="mk-btn go" id="mk-go">Start training →</button></div>';
+      screen(h);
+      el('mk-back').onclick = home;
+      el('mk-go').onclick = () => startTrail(tid);
+    }
+
+    /* ── practice runner (trails / workout / pouch) ────────────────── */
+    let R = null; /* {keys, i, right, wrong[], mode, tid?, title} */
+
+    function startTrail(tid) {
+      const t = byId[tid];
+      R = { keys: pickFrom(topicKeys(t), 6), i: 0, right: 0, wrong: [],
+            mode: 'trail', tid: tid, title: t.icon + ' ' + t.name };
+      question();
+    }
+    function startWorkout() {
+      const keys = pickFrom(tierKeys(3), 3)
+        .concat(pickFrom(tierKeys(4), 4))
+        .concat(pickFrom(tierKeys(5), 3));
+      R = { keys: keys, i: 0, right: 0, wrong: [], mode: 'workout',
+            title: '🏋️ Daily Workout' };
+      question();
+    }
+    function startPouch() {
+      if (!P.pouch.length) { home(); return; }
+      R = { keys: shuffle(P.pouch.slice()).slice(0, 10), i: 0, right: 0,
+            wrong: [], mode: 'pouch', title: '🎒 Joey’s Pouch' };
+      question();
+    }
+
+    function progDots(res) {
+      let h = '<div class="mk-prog">';
+      R.keys.forEach((_, j) => {
+        let c = 'mk-dot';
+        if (j < R.i) c += res[j] ? ' done' : ' miss';
+        else if (j === R.i) c += ' now';
+        h += '<span class="' + c + '"></span>';
+      });
+      return h + '</div>';
+    }
+
+    function question() {
+      const k = R.keys[R.i];
+      const p = prob(k);
+      const t = topicOf(k);
+      R.res = R.res || [];
+      let h = topBar('<span class="mk-pill">' + (R.i + 1) + ' / ' + R.keys.length + '</span>' +
+        '<span class="mk-badge ' + tierClass(t.pts) + '">' + t.pts + ' pts</span>');
+      h += '<div class="mk-hero" style="margin-bottom:0.6rem"><p>' + R.title + '</p></div>';
+      h += progDots(R.res);
+      h += '<div class="mk-qcard">' +
+        '<div class="mk-qhead"><span class="ttl">' + t.icon + ' ' + esc(p.t) + '</span></div>' +
+        '<div class="mk-qbody mk-md">' + md(p.q) + '</div>' +
+        '<div class="mk-opts" id="mk-opts">';
+      p.o.forEach((o, j) => {
+        h += '<button class="mk-opt" data-j="' + j + '"><span class="ltr">' +
+             LTRS[j] + '</span><span>' + mdi(o) + '</span></button>';
+      });
+      h += '</div><div class="mk-feedback" id="mk-fb"></div><div id="mk-solwrap"></div></div>';
+      screen(h);
+      el('mk-back').onclick = confirmQuit;
+      root.querySelectorAll('.mk-opt').forEach(b => {
+        b.onclick = () => answer(+b.getAttribute('data-j'));
+      });
+    }
+
+    function confirmQuit() {
+      if (R.i === 0 || confirm('Leave this session? Progress on unanswered questions is not saved.')) home();
+    }
+
+    function answer(j) {
+      const k = R.keys[R.i];
+      const p = prob(k);
+      const t = topicOf(k);
+      const ok = j === p.a;
+      R.res[R.i] = ok;
+      if (ok) R.right++; else R.wrong.push(k);
+      recordAnswer(k, ok, true);
+      const btns = root.querySelectorAll('.mk-opt');
+      btns.forEach((b, idx) => {
+        b.disabled = true;
+        if (idx === p.a) b.classList.add('good');
+        else if (idx === j) b.classList.add('miss');
+        else b.classList.add('dim');
+      });
+      const fb = el('mk-fb');
+      if (ok) {
+        fb.className = 'mk-feedback good';
+        fb.innerHTML = '<span class="mk-hop">🦘</span> Correct! +' + t.pts + ' XP';
+      } else {
+        fb.className = 'mk-feedback bad';
+        fb.innerHTML = 'Not this time — the answer is ' + LTRS[p.a] + '. Into the pouch it goes!';
+      }
+      el('mk-solwrap').innerHTML =
+        '<div class="mk-sol"><div class="ttl">Step-by-step</div>' +
+        '<div class="mk-md">' + md(p.s) + '</div></div>' +
+        '<button class="mk-next" id="mk-next">' +
+        (R.i + 1 < R.keys.length ? 'Next →' : 'Finish 🏁') + '</button>';
+      el('mk-next').onclick = () => {
+        R.i++;
+        if (R.i < R.keys.length) question();
+        else practiceDone();
+      };
+      el('mk-next').focus();
+    }
+
+    function practiceDone() {
+      const n = R.keys.length;
+      const acc = R.right / n;
+      let stars = acc >= 0.85 ? 3 : acc >= 0.6 ? 2 : 1;
+      let bonusLine = '';
+      if (R.mode === 'trail') {
+        if ((P.stars[R.tid] || 0) < stars) P.stars[R.tid] = stars;
+      }
+      if (R.mode === 'workout') {
+        const td = today();
+        if (P.streak.last !== td) {
+          P.streak.n = (P.streak.last === yesterday()) ? P.streak.n + 1 : 1;
+          P.streak.last = td;
+          P.xp += 25;
+          bonusLine = '<p>🔥 Streak: <b>' + P.streak.n + ' day' +
+            (P.streak.n > 1 ? 's' : '') + '</b> (+25 XP bonus)</p>';
+        }
+      }
+      if (R.mode === 'pouch' && R.right > 0) {
+        bonusLine = '<p>🎒 ' + R.right + ' problem' + (R.right > 1 ? 's' : '') +
+          ' redeemed from the pouch!</p>';
+      }
+      save();
+      if (acc >= 0.85) burst(['🦘', '⭐', '🎉', '✨']);
+      let h = '<div class="mk-results"><span class="em">' +
+        (acc >= 0.85 ? '🏆' : acc >= 0.6 ? '💪' : '🌱') + '</span>' +
+        '<h2>' + R.title + '</h2>' +
+        (R.mode === 'trail' ? starsRow(stars) : '') +
+        '<div class="mk-scoreline">' + R.right + ' / ' + n + ' correct</div>' +
+        bonusLine +
+        (R.wrong.length ? '<p>Missed problems wait in 🎒 Joey’s Pouch.</p>' : '<p>Perfect pouch — nothing missed!</p>') +
+        '<div class="mk-btnrow">' +
+        (R.mode === 'trail' ? '<button class="mk-btn" id="mk-again">Train again</button>' : '') +
+        (R.mode === 'pouch' && P.pouch.length ? '<button class="mk-btn" id="mk-again">Keep redeeming</button>' : '') +
+        '<button class="mk-btn go" id="mk-home">Home</button></div></div>';
+      screen(h);
+      el('mk-home').onclick = home;
+      const again = el('mk-again');
+      if (again) again.onclick = () => {
+        if (R.mode === 'pouch') startPouch(); else startTrail(R.tid);
+      };
+    }
+
+    /* ── mock test ─────────────────────────────────────────────────── */
+    let T = null; /* {keys, ans[], flag[], i, end, cfg} */
+
+    const TEST_CFG = {
+      full:   { name: 'Full Test', per: 8, min: 75, max: 96 },
+      sprint: { name: 'Sprint',    per: 4, min: 35, max: 48 },
+    };
+
+    function testSetup() {
+      let h = topBar();
+      h += '<div class="mk-hero"><span class="roo">⏱️</span><h1>Mock Test</h1>' +
+        '<p>Just like the real Math Kangaroo: 3-, 4- and 5-point sections, one timer, no hints.</p></div>';
+      h += '<div class="mk-modes">';
+      h += '<button class="mk-mode" id="mk-full"><span class="em">🏔️</span><span>' +
+        '<span class="name">Full Test</span><br><span class="tag">24 questions · 75 minutes · 96 points' +
+        (P.best.full != null ? '<br>Best: <b>' + P.best.full + '</b>' : '') + '</span></span></button>';
+      h += '<button class="mk-mode" id="mk-sprint"><span class="em">⚡</span><span>' +
+        '<span class="name">Sprint</span><br><span class="tag">12 questions · 35 minutes · 48 points' +
+        (P.best.sprint != null ? '<br>Best: <b>' + P.best.sprint + '</b>' : '') + '</span></span></button>';
+      h += '</div>';
+      if (P.tests.length) {
+        h += '<div class="mk-sect">Recent tests</div><div class="mk-review">';
+        P.tests.slice(-5).reverse().forEach(r => {
+          h += '<div class="mk-rev"><summary style="display:flex;padding:0.65rem 0.9rem">' +
+            '<span>' + r.date + ' · ' + TEST_CFG[r.mode].name + '</span>' +
+            '<span class="mk-spacer"></span><b>' + r.score + ' / ' + r.max + '</b></summary></div>';
+        });
+        h += '</div>';
+      }
+      screen(h);
+      el('mk-back').onclick = home;
+      el('mk-full').onclick = () => startTest('full');
+      el('mk-sprint').onclick = () => startTest('sprint');
+    }
+
+    function startTest(mode) {
+      const cfg = TEST_CFG[mode];
+      const keys = pickFrom(tierKeys(3), cfg.per)
+        .concat(pickFrom(tierKeys(4), cfg.per))
+        .concat(pickFrom(tierKeys(5), cfg.per));
+      T = { mode: mode, cfg: cfg, keys: keys,
+            ans: new Array(keys.length).fill(null),
+            flag: new Array(keys.length).fill(false),
+            i: 0, end: Date.now() + cfg.min * 60000 };
+      testQuestion();
+    }
+
+    function fmtTime(ms) {
+      const s = Math.max(0, Math.round(ms / 1000));
+      return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+    }
+
+    function tickTimer() {
+      const left = T.end - Date.now();
+      const elT = el('mk-timer');
+      if (elT) {
+        elT.textContent = '⏱ ' + fmtTime(left);
+        if (left < 5 * 60000) elT.classList.add('low');
+      }
+      if (left <= 0) { stopTimer(); scoreTest(true); }
+    }
+
+    function palette() {
+      let h = '<div class="mk-pal">';
+      T.keys.forEach((_, j) => {
+        let c = [];
+        if (T.ans[j] != null) c.push('ansd');
+        if (j === T.i) c.push('now');
+        if (T.flag[j]) c.push('flg');
+        h += '<button class="' + c.join(' ') + '" data-j="' + j + '">' + (j + 1) + '</button>';
+      });
+      return h + '</div>';
+    }
+
+    function testQuestion() {
+      const k = T.keys[T.i];
+      const p = prob(k);
+      const t = topicOf(k);
+      let h = '<div class="mk-top">' +
+        '<button class="mk-back" id="mk-back">✕ Quit</button>' +
+        '<span class="mk-spacer"></span>' +
+        '<span class="mk-pill timer" id="mk-timer">⏱ ' + fmtTime(T.end - Date.now()) + '</span>' +
+        '<button class="mk-back" id="mk-submit" style="border-color:var(--roo)">Hand in 🏁</button></div>';
+      h += palette();
+      h += '<div class="mk-qcard">' +
+        '<div class="mk-qhead">' +
+        '<span class="mk-badge ' + tierClass(t.pts) + '">' + t.pts + ' pts</span>' +
+        '<span class="ttl">Question ' + (T.i + 1) + ' of ' + T.keys.length + '</span>' +
+        '<button class="flag' + (T.flag[T.i] ? ' on' : '') + '" id="mk-flag">⚑ ' +
+        (T.flag[T.i] ? 'Flagged' : 'Flag') + '</button></div>' +
+        '<div class="mk-qbody mk-md">' + md(p.q) + '</div>' +
+        '<div class="mk-opts">';
+      p.o.forEach((o, j) => {
+        h += '<button class="mk-opt' + (T.ans[T.i] === j ? ' sel' : '') +
+          '" data-j="' + j + '"><span class="ltr">' + LTRS[j] +
+          '</span><span>' + mdi(o) + '</span></button>';
+      });
+      h += '</div></div>';
+      h += '<div class="mk-btnrow">' +
+        '<button class="mk-btn" id="mk-prev"' + (T.i === 0 ? ' disabled' : '') + '>← Prev</button>' +
+        '<button class="mk-btn" id="mk-nextq"' + (T.i === T.keys.length - 1 ? ' disabled' : '') + '>Next →</button></div>';
+      screen(h);
+      TIMER = setInterval(tickTimer, 1000);
+      el('mk-back').onclick = () => {
+        if (confirm('Quit the test? Nothing will be scored.')) { stopTimer(); home(); }
+      };
+      el('mk-submit').onclick = () => {
+        const blank = T.ans.filter(a => a == null).length;
+        if (!blank || confirm(blank + ' question' + (blank > 1 ? 's are' : ' is') +
+            ' unanswered. Hand in anyway?')) {
+          stopTimer(); scoreTest(false);
+        }
+      };
+      el('mk-flag').onclick = () => { T.flag[T.i] = !T.flag[T.i]; testQuestion(); };
+      el('mk-prev').onclick = () => { if (T.i > 0) { T.i--; testQuestion(); } };
+      el('mk-nextq').onclick = () => { if (T.i < T.keys.length - 1) { T.i++; testQuestion(); } };
+      root.querySelectorAll('.mk-pal button').forEach(b => {
+        b.onclick = () => { T.i = +b.getAttribute('data-j'); testQuestion(); };
+      });
+      root.querySelectorAll('.mk-opt').forEach(b => {
+        b.onclick = () => {
+          const j = +b.getAttribute('data-j');
+          T.ans[T.i] = (T.ans[T.i] === j) ? null : j;   /* tap again to clear */
+          testQuestion();
+        };
+      });
+    }
+
+    function scoreTest(timeUp) {
+      let score = 0;
+      const perTier = { 3: [0, 0], 4: [0, 0], 5: [0, 0] }; /* [got, of] */
+      T.keys.forEach((k, j) => {
+        const p = prob(k);
+        const pts = topicOf(k).pts;
+        const ok = T.ans[j] === p.a;
+        perTier[pts][1] += pts;
+        if (ok) { score += pts; perTier[pts][0] += pts; }
+        recordAnswer(k, ok, false);   /* test XP comes as a completion bonus */
+      });
+      P.xp += Math.round(score / 3);
+      const entry = { date: today(), mode: T.mode, score: score, max: T.cfg.max };
+      P.tests.push(entry);
+      if (P.tests.length > 20) P.tests.shift();
+      if (P.best[T.mode] == null || score > P.best[T.mode]) P.best[T.mode] = score;
+      save();
+
+      const pct = score / T.cfg.max;
+      if (pct >= 0.75) burst(['🦘', '🏆', '🎉', '⭐']);
+      let h = '<div class="mk-results"><span class="em">' +
+        (pct >= 0.75 ? '🏆' : pct >= 0.5 ? '💪' : '🌱') + '</span>' +
+        '<h2>' + T.cfg.name + ' — scored!</h2>' +
+        (timeUp ? '<p>⏰ Time ran out — answered questions were scored.</p>' : '') +
+        '<div class="mk-scoreline">' + score + ' / ' + T.cfg.max + ' points</div>' +
+        '<p>+' + Math.round(score / 3) + ' XP</p>';
+      h += '<div class="mk-tierbars">';
+      [3, 4, 5].forEach(pts => {
+        const [got, of] = perTier[pts];
+        const w = of ? Math.round(100 * got / of) : 0;
+        h += '<div class="mk-tierbar"><span class="lbl">' + pts + '-point</span>' +
+          '<span class="bar"><span class="fill" style="width:' + w +
+          '%;background:var(--t' + pts + ')"></span></span>' +
+          '<span class="n">' + got + '/' + of + '</span></div>';
+      });
+      h += '</div>';
+      h += '<div class="mk-review"><div class="mk-sect">Review every question</div>';
+      T.keys.forEach((k, j) => {
+        const p = prob(k);
+        const t = topicOf(k);
+        const ok = T.ans[j] === p.a;
+        const your = T.ans[j] == null ? '—' : LTRS[T.ans[j]];
+        h += '<details class="mk-rev"><summary>' +
+          '<span class="mark ' + (ok ? 'ok' : 'no') + '">' + (ok ? '✓' : '✗') + '</span>' +
+          '<span>Q' + (j + 1) + ' · ' + t.icon + ' ' + esc(p.t) + '</span>' +
+          '<span class="mk-spacer"></span>' +
+          '<span class="mk-pill">' + your + ' → ' + LTRS[p.a] + '</span></summary>' +
+          '<div class="body"><div class="mk-md">' + md(p.q) + '</div>' +
+          '<p><b>Correct answer: ' + LTRS[p.a] + '.</b> ' + mdi(p.o[p.a]) + '</p>' +
+          '<div class="mk-sol"><div class="ttl">Step-by-step</div>' +
+          '<div class="mk-md">' + md(p.s) + '</div></div></div></details>';
+      });
+      h += '</div><div class="mk-btnrow">' +
+        '<button class="mk-btn" id="mk-retest">New test</button>' +
+        '<button class="mk-btn go" id="mk-home">Home</button></div></div>';
+      screen(h);
+      el('mk-home').onclick = home;
+      el('mk-retest').onclick = testSetup;
+    }
+
+    /* ── boot ──────────────────────────────────────────────────────── */
+    function boot(data) {
+      D = data;
+      byId = {};
+      D.topics.forEach(t => { byId[t.id] = t; });
+      /* drop pouch keys that no longer resolve (bank was rebuilt) */
+      load();
+      P.pouch = P.pouch.filter(k => prob(k));
+      save();
+      home();
+    }
+
+    return { boot: boot };
+  })();
+
+  init();
+})();
+</script>
