@@ -403,6 +403,36 @@ The arcade has a **reinforcement engine** (spaced repetition, added July
 Player progress (XP/stars/words/crowns/streak) lives in localStorage under
 `vocab-arcade-v1`; all new fields are backward-compatible with old saves.
 
+### Rebuild Word Maze (interactive game page)
+
+```bash
+python3 _tools/build-vocab-maze.py "passphrase"
+```
+
+Generates `teaching/vocabulary/maze.md` (`layout: protected-maze`) from
+`_tools/maze_data.py` (gitignored, local-only — same rule as
+`vocab_data.py`) — two word tiers (intermediate/advanced) packed as JSON
+and encrypted into front matter. The game engine (maze generation,
+arrow-key/WASD/D-pad/swipe movement, word gates, 10 levels) is public code
+in `_layouts/protected-maze.html`; editing the game never requires
+re-encryption, only word changes do. Design rules to keep when editing:
+
+- **Mazes are perfect** (recursive backtracker — exactly one path between
+  any two cells), so the 🔒 word gates placed on the start→exit path can
+  never be walked around.
+- **Gates demand mastery**: a wrong answer shows a teaching card (meaning,
+  example, synonyms) and re-asks until correct; words missed at a gate are
+  re-queued at a later gate, and any still unmastered are re-tested in a
+  "final check" at the 🏁 flag before the level can be won.
+- Levels 1–3 use intermediate words, 4–5 mixed, 6–10 advanced; maze size
+  grows 9×9 → 23×23. A level unlocks when the previous one has ≥1 star
+  (3 stars = no misses).
+- Question types: word→meaning, meaning→word, fill-in-the-blank (uses the
+  word's `ex` sentence — it must contain the exact base form once).
+
+`encrypt-batch.py` skips this page (empty body). Player progress
+(stars/learned words) lives in localStorage under `vocab-maze-v1`.
+
 ### Rebuild WH Question Quest (interactive game page)
 
 ```bash

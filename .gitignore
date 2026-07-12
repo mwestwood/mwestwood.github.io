@@ -18,3 +18,8 @@ __pycache__/
 # generates (teaching/vocabulary/*.md) ARE committed; the plaintext is not,
 # matching the site's "never commit unencrypted content" rule.
 _tools/vocab_data.py
+
+# Plaintext Word Maze word bank — same rule as vocab_data.py above: the
+# encrypted page it generates (teaching/vocabulary/maze.md) IS committed,
+# the plaintext source is not.
+_tools/maze_data.py

@@ -1,0 +1,967 @@
+---
+layout: default
+---
+
+<style>
+  /* ── Password gate (same look as protected.html) ─────────────────────── */
+  #protected-gate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 40vh;
+    padding: 2rem 1rem;
+  }
+  .gate-card {
+    background: var(--sidebar-color, #f5f6fa);
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 8px;
+    padding: 2.5rem 2rem;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .gate-lock { font-size: 2.5rem; margin-bottom: 0.75rem; line-height: 1; }
+  .gate-title {
+    font-size: 1.25rem; font-weight: 600;
+    color: var(--body-text-color, #27262b); margin: 0 0 0.5rem 0;
+  }
+  .gate-subtitle {
+    font-size: 0.875rem; color: var(--body-text-color, #5c5962);
+    opacity: 0.75; margin: 0 0 1.5rem 0;
+  }
+  .gate-input-row { display: flex; gap: 0.5rem; width: 100%; }
+  #gate-password {
+    flex: 1; padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color, #d0d0d0); border-radius: 4px;
+    font-size: 1rem; background: var(--body-background-color, #fff);
+    color: var(--body-text-color, #27262b); outline: none;
+    transition: border-color 0.15s;
+  }
+  #gate-password:focus { border-color: var(--links-color, #7253ed); }
+  #gate-submit {
+    padding: 0.5rem 1.1rem; background: var(--links-color, #7253ed);
+    color: #fff; border: none; border-radius: 4px; font-size: 0.95rem;
+    font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+  #gate-submit:hover { opacity: 0.88; }
+  #gate-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+  #gate-error {
+    margin-top: 0.85rem; font-size: 0.875rem; color: #c0392b;
+    min-height: 1.25rem; display: none;
+  }
+  #gate-status {
+    margin-top: 0.85rem; font-size: 0.875rem;
+    color: var(--body-text-color, #5c5962); opacity: 0.7;
+    min-height: 1.25rem; display: none;
+  }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+
+  /* ── Word Maze ───────────────────────────────────────────────────────── */
+  #maze-root { display: none; }
+
+  .vm { --acc: #4ade80; --good: #4ade80; --bad: #f87171;
+        --card: rgba(255,255,255,0.05); --line: rgba(255,255,255,0.12);
+        max-width: 780px; }
+  .vm, .vm * { box-sizing: border-box; }
+  .vm button { font-family: inherit; }
+
+  .vm-top {
+    display: flex; align-items: center; gap: 0.6rem;
+    margin-bottom: 1rem; flex-wrap: wrap;
+  }
+  .vm-back {
+    background: var(--card); border: 1px solid var(--line);
+    color: inherit; border-radius: 999px; padding: 0.3rem 0.85rem;
+    font-size: 0.85rem; cursor: pointer;
+  }
+  .vm-back:hover { border-color: var(--acc); }
+  .vm-crumb { font-weight: 700; font-size: 1.05rem; }
+  .vm-spacer { flex: 1; }
+  .vm-pill {
+    font-size: 0.8rem; padding: 0.25rem 0.7rem; border-radius: 999px;
+    background: var(--card); border: 1px solid var(--line); white-space: nowrap;
+  }
+  .vm-pill.acc { border-color: var(--acc); color: var(--acc); font-weight: 600; }
+  .vm-pill.btn { cursor: pointer; }
+
+  .vm-hero { text-align: center; margin: 0.5rem 0 1.6rem; }
+  .vm-hero h1 { margin: 0 0 0.3rem; font-size: 2rem; }
+  .vm-hero p { margin: 0; opacity: 0.7; font-size: 0.95rem; }
+
+  .vm-levels { display: grid; gap: 0.9rem; }
+  .vm-level {
+    display: flex; align-items: center; gap: 1rem; width: 100%;
+    text-align: left; background: var(--card); border: 1px solid var(--line);
+    border-radius: 14px; padding: 1rem 1.2rem; color: inherit;
+    cursor: pointer; transition: transform 0.12s, border-color 0.12s;
+  }
+  .vm-level:hover:not(:disabled) { transform: translateY(-2px);
+                                   border-color: var(--lc, var(--acc)); }
+  .vm-level:disabled { cursor: not-allowed; opacity: 0.45; }
+  .vm-level .em { font-size: 2rem; }
+  .vm-level .body { flex: 1; min-width: 0; }
+  .vm-level .name { font-weight: 700; font-size: 1.1rem; }
+  .vm-level .meta { font-size: 0.8rem; opacity: 0.6; margin-top: 0.2rem; }
+  .vm-level .side { text-align: right; font-size: 0.95rem; white-space: nowrap; }
+  .vm-level .stars { color: #facc15; font-weight: 700; letter-spacing: 0.1em; }
+
+  /* play screen */
+  .vm-cwrap { display: flex; justify-content: center; }
+  #vm-canvas {
+    border: 1px solid var(--line); border-radius: 10px;
+    background: #1c1b21; touch-action: none; max-width: 100%;
+  }
+  .vm-help { text-align: center; font-size: 0.8rem; opacity: 0.55;
+             margin-top: 0.5rem; }
+  .vm-chips { display: flex; gap: 0.45rem; flex-wrap: wrap;
+              justify-content: center; margin-top: 0.7rem; min-height: 1.9rem; }
+  .vm-chip {
+    background: var(--card); border: 1px solid var(--acc); color: inherit;
+    border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.82rem;
+    cursor: pointer;
+  }
+  .vm-chip:hover { background: rgba(74,222,128,0.12); }
+
+  .vm-dpad {
+    display: grid; grid-template-columns: repeat(3, 56px);
+    grid-template-rows: repeat(2, 48px); gap: 0.4rem;
+    justify-content: center; margin-top: 0.9rem;
+  }
+  .vm-dpad button {
+    background: var(--card); border: 1px solid var(--line); color: inherit;
+    border-radius: 10px; font-size: 1.1rem; cursor: pointer;
+    -webkit-user-select: none; user-select: none;
+  }
+  .vm-dpad button:active { background: rgba(255,255,255,0.14); }
+  .vm-dpad .up { grid-column: 2; grid-row: 1; }
+  .vm-dpad .left { grid-column: 1; grid-row: 2; }
+  .vm-dpad .down { grid-column: 2; grid-row: 2; }
+  .vm-dpad .right { grid-column: 3; grid-row: 2; }
+
+  /* challenge modal */
+  .vm-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    background: rgba(0,0,0,0.6); display: flex;
+    align-items: center; justify-content: center; padding: 1rem;
+  }
+  .vm-modal {
+    background: #26252c; border: 1px solid var(--line); border-radius: 16px;
+    padding: 1.4rem 1.5rem; max-width: 520px; width: 100%;
+    max-height: 88vh; overflow-y: auto;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  }
+  .vm-qlabel { text-align: center; font-size: 0.78rem; letter-spacing: 0.08em;
+               text-transform: uppercase; opacity: 0.55; margin: 0 0 0.7rem; }
+  .vm-q { text-align: center; margin-bottom: 1.1rem; }
+  .vm-q .word { font-size: 1.8rem; font-weight: 800; }
+  .vm-q .mean { font-size: 1.05rem; line-height: 1.55; }
+  .vm-say {
+    background: none; border: none; cursor: pointer; font-size: 1.1rem;
+    vertical-align: middle; padding: 0 0.2rem; opacity: 0.7;
+  }
+  .vm-say:hover { opacity: 1; }
+  .vm-opts { display: grid; gap: 0.55rem; }
+  .vm-opt {
+    width: 100%; text-align: left; background: var(--card);
+    border: 1.5px solid var(--line); border-radius: 12px;
+    padding: 0.7rem 0.9rem; color: inherit; font-size: 0.95rem;
+    line-height: 1.45; cursor: pointer; transition: border-color 0.12s;
+    display: flex; gap: 0.7rem; align-items: baseline;
+  }
+  .vm-opt:hover:not(:disabled) { border-color: var(--acc); }
+  .vm-opt:disabled { cursor: default; opacity: 0.9; }
+  .vm-opt .key { font-size: 0.72rem; opacity: 0.45; border: 1px solid var(--line);
+                 border-radius: 4px; padding: 0 0.35rem; flex: none; }
+  .vm-opt.good { border-color: var(--good); background: rgba(74,222,128,0.13); }
+  .vm-opt.bad { border-color: var(--bad); background: rgba(248,113,113,0.13);
+                animation: vmShake 0.3s; }
+  .vm-teach {
+    margin-top: 1rem; background: rgba(74,222,128,0.08);
+    border: 1px solid rgba(74,222,128,0.35); border-radius: 12px;
+    padding: 0.9rem 1rem; font-size: 0.92rem; line-height: 1.55;
+  }
+  .vm-teach .tw { font-weight: 800; }
+  .vm-actions { display: flex; justify-content: center; gap: 0.6rem;
+                margin-top: 1rem; }
+  .vm-btn {
+    background: var(--acc); border: none; color: #14141a; font-weight: 700;
+    border-radius: 999px; padding: 0.5rem 1.3rem; font-size: 0.95rem;
+    cursor: pointer;
+  }
+  .vm-btn:hover { opacity: 0.88; }
+  .vm-btn.ghost { background: var(--card); color: inherit;
+                  border: 1px solid var(--line); }
+  .vm-result { text-align: center; margin-top: 0.9rem; font-size: 0.95rem;
+               min-height: 1.4em; }
+
+  /* win screen */
+  .vm-win { text-align: center; padding: 1rem 0; }
+  .vm-win .em { font-size: 3.2rem; }
+  .vm-win h2 { margin: 0.4rem 0 0.2rem; }
+  .vm-win .stars { font-size: 2rem; color: #facc15; letter-spacing: 0.15em; }
+  .vm-win .sub { opacity: 0.7; font-size: 0.92rem; margin-top: 0.2rem; }
+  .vm-recap {
+    text-align: left; max-width: 520px; margin: 1.2rem auto 0;
+    display: grid; gap: 0.5rem;
+  }
+  .vm-recap .r {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 10px; padding: 0.6rem 0.9rem; font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .vm-recap .r b { color: var(--acc); }
+
+  @keyframes vmShake {
+    25% { transform: translateX(-5px); } 75% { transform: translateX(5px); }
+  }
+</style>
+
+<!-- Password gate -->
+<div id="protected-gate">
+  <div class="gate-card">
+    <div class="gate-lock" aria-hidden="true">🔒</div>
+    <p class="gate-title">{{ page.title | default: "Protected Page" }}</p>
+    <p class="gate-subtitle">This page is password-protected. Enter the passphrase to unlock.</p>
+    <div class="gate-input-row">
+      <label for="gate-password" class="sr-only">Passphrase</label>
+      <input id="gate-password" type="password" placeholder="Passphrase" autocomplete="off" autofocus />
+      <button id="gate-submit">Unlock</button>
+    </div>
+    <div id="gate-error" role="alert" aria-live="polite">Incorrect passphrase — please try again.</div>
+    <div id="gate-status" role="status" aria-live="polite">Decrypting…</div>
+  </div>
+</div>
+
+<div id="maze-root"><div class="vm" id="vm"></div></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* Encrypted blob injected by Jekyll from front matter field `encrypted` */
+  const ENCRYPTED_B64 = {{ page.encrypted | jsonify }};
+
+  const STORAGE_KEY = 'mwestwood-passphrase';
+
+  /* ── Gate (same crypto as protected.html) ───────────────────────────── */
+
+  function b64ToBytes(b64) {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+
+  async function deriveKey(passphrase, salt) {
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw', enc.encode(passphrase), { name: 'PBKDF2' }, false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: salt, iterations: 100000, hash: 'SHA-256' },
+      keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+  }
+
+  async function decrypt(passphrase) {
+    const blob = b64ToBytes(ENCRYPTED_B64);
+    const salt = blob.slice(0, 16);
+    const iv = blob.slice(16, 28);
+    const ct = blob.slice(28);
+    const key = await deriveKey(passphrase, salt);
+    const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, ct);
+    return new TextDecoder().decode(plaintext);
+  }
+
+  const gate = document.getElementById('protected-gate');
+  const rootWrap = document.getElementById('maze-root');
+  const input = document.getElementById('gate-password');
+  const btn = document.getElementById('gate-submit');
+  const errEl = document.getElementById('gate-error');
+  const statusEl = document.getElementById('gate-status');
+
+  function showError(msg) {
+    errEl.textContent = msg || 'Incorrect passphrase — please try again.';
+    errEl.style.display = 'block';
+    statusEl.style.display = 'none';
+    btn.disabled = false;
+    input.select();
+  }
+
+  function showStatus(msg) {
+    statusEl.textContent = msg;
+    statusEl.style.display = 'block';
+    errEl.style.display = 'none';
+  }
+
+  function reveal(text) {
+    let data;
+    try { data = JSON.parse(text); }
+    catch (e) { showError('Data error: could not parse word bank.'); return; }
+    gate.style.display = 'none';
+    rootWrap.style.display = 'block';
+    Maze.boot(data);
+  }
+
+  async function tryUnlock(passphrase, cache) {
+    try {
+      showStatus('Decrypting…');
+      btn.disabled = true;
+      const text = await decrypt(passphrase);
+      if (cache) {
+        try { localStorage.setItem(STORAGE_KEY, passphrase); } catch (_) {}
+      }
+      reveal(text);
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'OperationError') {
+        showError('Incorrect passphrase — please try again.');
+      } else if (e instanceof TypeError && e.message.includes('subtle')) {
+        showError('Error: Web Crypto API unavailable. This page requires HTTPS.');
+      } else {
+        showError('Error (' + e.name + '): ' + e.message);
+      }
+    }
+  }
+
+  async function init() {
+    if (!ENCRYPTED_B64) { showError('No encrypted data on this page.'); return; }
+    try {
+      const cached = localStorage.getItem(STORAGE_KEY);
+      if (cached) {
+        showStatus('Unlocking…');
+        btn.disabled = true;
+        input.disabled = true;
+        try {
+          const text = await decrypt(cached);
+          reveal(text);
+          return;
+        } catch (_) {
+          localStorage.removeItem(STORAGE_KEY);
+          btn.disabled = false;
+          input.disabled = false;
+          statusEl.style.display = 'none';
+        }
+      }
+    } catch (_) {}
+  }
+
+  btn.addEventListener('click', function () {
+    const pw = input.value;
+    if (!pw) { input.focus(); return; }
+    tryUnlock(pw, true);
+  });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') btn.click();
+  });
+
+  /* ═══════════════════════════ Word Maze ═══════════════════════════════ */
+
+  const Maze = (function () {
+
+    const el = document.getElementById('vm');
+
+    /* Maze sizes are odd (cells on odd coordinates, walls between). Every
+       maze is "perfect" — exactly one path between any two cells — so the
+       word gates placed on the start→exit path can never be walked around. */
+    const LEVELS = [
+      { name: 'Garden Path',      emoji: '🌱', size: 9,  gates: 2, tier: 'intermediate', lc: '#4ade80' },
+      { name: 'Hedge Maze',       emoji: '🌿', size: 11, gates: 3, tier: 'intermediate', lc: '#4ade80' },
+      { name: 'Foggy Forest',     emoji: '🌲', size: 13, gates: 3, tier: 'intermediate', lc: '#34d399' },
+      { name: 'Crystal Caves',    emoji: '💎', size: 13, gates: 4, tier: 'mixed',        lc: '#38bdf8' },
+      { name: 'Ancient Ruins',    emoji: '🏛️', size: 15, gates: 4, tier: 'mixed',        lc: '#38bdf8' },
+      { name: 'Desert Labyrinth', emoji: '🏜️', size: 15, gates: 5, tier: 'advanced',     lc: '#fbbf24' },
+      { name: 'Frozen Keep',      emoji: '🧊', size: 17, gates: 5, tier: 'advanced',     lc: '#fbbf24' },
+      { name: 'Volcano Vault',    emoji: '🌋', size: 19, gates: 6, tier: 'advanced',     lc: '#fb923c' },
+      { name: 'Shadow Castle',    emoji: '🏰', size: 21, gates: 6, tier: 'advanced',     lc: '#a78bfa' },
+      { name: "Wizard's Tower",   emoji: '🧙', size: 23, gates: 7, tier: 'advanced',     lc: '#a78bfa' }
+    ];
+    const TIER_LABEL = { intermediate: '🚀 Intermediate words',
+                         mixed: '🚀🏆 Mixed words',
+                         advanced: '🏆 Advanced words' };
+    const PLAYER = '🦊';
+
+    let TIERS = null;   /* { intermediate: [...], advanced: [...] } */
+    let S = null;       /* active play state */
+
+    /* ── helpers ──────────────────────────────────────────────────────── */
+
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function shuffle(a) {
+      a = a.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = a[i]; a[i] = a[j]; a[j] = t;
+      }
+      return a;
+    }
+    function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+    function speak(text) {
+      try {
+        if (!window.speechSynthesis) return;
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.rate = 0.85;
+        speechSynthesis.speak(u);
+      } catch (_) {}
+    }
+
+    /* quiet sine tones */
+    let AC = null;
+    function tone(freq, at, dur) {
+      if (!P.sound) return;
+      try {
+        AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+        const o = AC.createOscillator(), g = AC.createGain();
+        o.frequency.value = freq; o.type = 'sine';
+        g.gain.setValueAtTime(0.0001, AC.currentTime + at);
+        g.gain.linearRampToValueAtTime(0.12, AC.currentTime + at + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime + at + dur);
+        o.connect(g); g.connect(AC.destination);
+        o.start(AC.currentTime + at); o.stop(AC.currentTime + at + dur + 0.05);
+      } catch (_) {}
+    }
+    function sGood() { tone(660, 0, 0.12); tone(880, 0.12, 0.2); }
+    function sBad() { tone(196, 0, 0.25); }
+    function sWin() { tone(523, 0, 0.14); tone(659, 0.14, 0.14); tone(784, 0.28, 0.3); }
+
+    /* ── progress (localStorage) ──────────────────────────────────────── */
+
+    const PKEY = 'vocab-maze-v1';
+    let P = null;
+    try { P = JSON.parse(localStorage.getItem(PKEY) || 'null'); } catch (_) {}
+    if (!P || typeof P !== 'object') P = {};
+    P.stars = P.stars || {};      /* level index -> 0..3 */
+    P.learned = P.learned || {};  /* word -> 1 */
+    if (P.sound === undefined) P.sound = true;
+    function save() {
+      try { localStorage.setItem(PKEY, JSON.stringify(P)); } catch (_) {}
+    }
+    function unlocked(i) { return i === 0 || (P.stars[i - 1] || 0) > 0; }
+
+    /* ── maze generation ──────────────────────────────────────────────── */
+
+    function genMaze(size) {
+      const g = [];
+      for (let y = 0; y < size; y++) g.push(new Array(size).fill(1));
+      const stack = [[1, 1]];
+      g[1][1] = 0;
+      while (stack.length) {
+        const cur = stack[stack.length - 1];
+        const dirs = shuffle([[2, 0], [-2, 0], [0, 2], [0, -2]]);
+        let carved = false;
+        for (let i = 0; i < dirs.length; i++) {
+          const nx = cur[0] + dirs[i][0], ny = cur[1] + dirs[i][1];
+          if (nx > 0 && ny > 0 && nx < size - 1 && ny < size - 1 && g[ny][nx] === 1) {
+            g[ny][nx] = 0;
+            g[cur[1] + dirs[i][1] / 2][cur[0] + dirs[i][0] / 2] = 0;
+            stack.push([nx, ny]);
+            carved = true;
+            break;
+          }
+        }
+        if (!carved) stack.pop();
+      }
+      return g;
+    }
+
+    function solvePath(g, size) {
+      /* BFS from (1,1) to (size-2,size-2); the maze is perfect so this is
+         THE path — gates placed on it are unavoidable. */
+      const target = (size - 2) + ',' + (size - 2);
+      const prev = { '1,1': null };
+      const q = [[1, 1]];
+      while (q.length) {
+        const c = q.shift();
+        const ck = c[0] + ',' + c[1];
+        if (ck === target) break;
+        const ds = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+        for (let i = 0; i < 4; i++) {
+          const nx = c[0] + ds[i][0], ny = c[1] + ds[i][1];
+          const nk = nx + ',' + ny;
+          if (nx >= 0 && ny >= 0 && nx < size && ny < size &&
+              g[ny][nx] === 0 && !(nk in prev)) {
+            prev[nk] = ck;
+            q.push([nx, ny]);
+          }
+        }
+      }
+      const path = [];
+      let k = target;
+      while (k) {
+        const p = k.split(',');
+        path.unshift([+p[0], +p[1]]);
+        k = prev[k];
+      }
+      return path;
+    }
+
+    function placeGates(path, count) {
+      const gates = {};
+      let placed = 0;
+      for (let i = 1; i <= count; i++) {
+        const idx = Math.round(i * (path.length - 1) / (count + 1));
+        if (idx <= 0 || idx >= path.length - 1) continue;
+        const key = path[idx][0] + ',' + path[idx][1];
+        if (!gates[key]) { gates[key] = { open: false }; placed++; }
+      }
+      return { gates: gates, count: placed };
+    }
+
+    /* ── words ────────────────────────────────────────────────────────── */
+
+    function tierWords(tier) {
+      if (tier === 'mixed') return TIERS.intermediate.concat(TIERS.advanced);
+      return TIERS[tier];
+    }
+
+    function buildPool(tier) {
+      /* fresh words first, already-learned words after */
+      const words = shuffle(tierWords(tier));
+      const fresh = [], seen = [];
+      words.forEach(function (w) {
+        (P.learned[w.w] ? seen : fresh).push(w);
+      });
+      return fresh.concat(seen);
+    }
+
+    function makeQuestion(word) {
+      const others = shuffle(tierWords(S.level.tier)
+        .filter(function (w) { return w.w !== word.w; })).slice(0, 3);
+      const types = ['m2w', 'w2m'];
+      if (word.ex) types.push('blank');
+      const type = pick(types);
+      let label, promptHtml, opts;
+      if (type === 'w2m') {
+        label = 'What does this word mean?';
+        promptHtml = '<div class="word">' + esc(word.w) +
+          ' <button class="vm-say" data-say="' + esc(word.w) +
+          '" aria-label="Hear the word">🔊</button></div>';
+        opts = shuffle([{ t: word.mean, ok: 1 }].concat(
+          others.map(function (w) { return { t: w.mean, ok: 0 }; })));
+      } else if (type === 'blank') {
+        label = 'Complete the sentence';
+        const rx = new RegExp(word.w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+        promptHtml = '<div class="mean">“' +
+          esc(word.ex).replace(rx, '<b>_____</b>') + '”</div>';
+        opts = shuffle([{ t: word.w, ok: 1 }].concat(
+          others.map(function (w) { return { t: w.w, ok: 0 }; })));
+      } else {
+        label = 'Which word means…';
+        promptHtml = '<div class="mean">“' + esc(word.mean) + '”</div>';
+        opts = shuffle([{ t: word.w, ok: 1 }].concat(
+          others.map(function (w) { return { t: w.w, ok: 0 }; })));
+      }
+      return { label: label, promptHtml: promptHtml, opts: opts };
+    }
+
+    /* ── screens ──────────────────────────────────────────────────────── */
+
+    function home() {
+      S = null;
+      const learnedCount = Object.keys(P.learned).length;
+      let h = '<div class="vm-hero"><h1>🌀 Word Maze</h1>' +
+        '<p>Use the arrow keys to escape each maze — but every 🔒 gate ' +
+        'only opens for the right word.</p></div>';
+      if (learnedCount) {
+        h += '<div style="text-align:center;margin-bottom:1.2rem">' +
+          '<span class="vm-pill acc">📚 ' + learnedCount +
+          ' words mastered</span></div>';
+      }
+      h += '<div class="vm-levels">';
+      LEVELS.forEach(function (lv, i) {
+        const st = P.stars[i] || 0;
+        const open = unlocked(i);
+        h += '<button class="vm-level" data-l="' + i + '" style="--lc:' +
+          lv.lc + '"' + (open ? '' : ' disabled') + '>' +
+          '<span class="em">' + (open ? lv.emoji : '🔒') + '</span>' +
+          '<span class="body"><span class="name">Level ' + (i + 1) + ' — ' +
+          esc(lv.name) + '</span>' +
+          '<span class="meta" style="display:block">' + lv.size + '×' + lv.size +
+          ' maze · ' + lv.gates + ' word gates · ' + TIER_LABEL[lv.tier] +
+          '</span></span>' +
+          '<span class="side"><span class="stars">' +
+          '★★★'.slice(0, st) + '<span style="opacity:0.25">' +
+          '★★★'.slice(0, 3 - st) + '</span></span></span></button>';
+      });
+      h += '</div>';
+      el.innerHTML = h;
+      el.querySelectorAll('.vm-level').forEach(function (b) {
+        b.addEventListener('click', function () { start(+b.dataset.l); });
+      });
+    }
+
+    function start(li) {
+      const lv = LEVELS[li];
+      const grid = genMaze(lv.size);
+      const path = solvePath(grid, lv.size);
+      const placed = placeGates(path, lv.gates);
+      S = {
+        li: li, level: lv, grid: grid, size: lv.size,
+        px: 1, py: 1,
+        gates: placed.gates, total: placed.count, opened: 0,
+        pool: buildPool(lv.tier), review: [],
+        used: [],            /* words unlocked this level, for the recap   */
+        misses: 0,
+        visited: {},
+        cell: 20, q: null
+      };
+      S.visited['1,1'] = 1;
+
+      el.innerHTML =
+        '<div class="vm-top">' +
+        '<button class="vm-back" id="vm-quit">← All levels</button>' +
+        '<span class="vm-crumb">' + lv.emoji + ' Level ' + (li + 1) + ' — ' +
+        esc(lv.name) + '</span><span class="vm-spacer"></span>' +
+        '<span class="vm-pill acc" id="vm-keys">🔑 0/' + S.total + '</span>' +
+        '<span class="vm-pill" id="vm-miss">✖ 0</span>' +
+        '<span class="vm-pill btn" id="vm-sound">' +
+        (P.sound ? '🔊' : '🔇') + '</span></div>' +
+        '<div class="vm-cwrap"><canvas id="vm-canvas"></canvas></div>' +
+        '<div class="vm-help">Arrow keys / WASD to move · swipe on touch · ' +
+        'reach the 🏁 flag</div>' +
+        '<div class="vm-chips" id="vm-chips"></div>' +
+        '<div class="vm-dpad">' +
+        '<button class="up" data-d="up" aria-label="Up">▲</button>' +
+        '<button class="left" data-d="left" aria-label="Left">◀</button>' +
+        '<button class="down" data-d="down" aria-label="Down">▼</button>' +
+        '<button class="right" data-d="right" aria-label="Right">▶</button>' +
+        '</div>';
+
+      document.getElementById('vm-quit')
+        .addEventListener('click', home);
+      document.getElementById('vm-sound')
+        .addEventListener('click', function () {
+          P.sound = !P.sound; save();
+          this.textContent = P.sound ? '🔊' : '🔇';
+        });
+      el.querySelectorAll('.vm-dpad button').forEach(function (b) {
+        b.addEventListener('click', function () { move(b.dataset.d); });
+      });
+
+      /* swipe */
+      const cv = document.getElementById('vm-canvas');
+      let t0 = null;
+      cv.addEventListener('touchstart', function (e) {
+        t0 = [e.touches[0].clientX, e.touches[0].clientY];
+      }, { passive: true });
+      cv.addEventListener('touchend', function (e) {
+        if (!t0) return;
+        const dx = e.changedTouches[0].clientX - t0[0];
+        const dy = e.changedTouches[0].clientY - t0[1];
+        t0 = null;
+        if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+        if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? 'right' : 'left');
+        else move(dy > 0 ? 'down' : 'up');
+      }, { passive: true });
+
+      fit();
+      draw();
+    }
+
+    function fit() {
+      if (!S) return;
+      const cv = document.getElementById('vm-canvas');
+      if (!cv) return;
+      const avail = Math.min(el.clientWidth || 560, 560);
+      S.cell = Math.max(12, Math.floor(avail / S.size));
+      cv.width = cv.height = S.cell * S.size;
+    }
+    window.addEventListener('resize', function () { fit(); draw(); });
+
+    function draw() {
+      if (!S) return;
+      const cv = document.getElementById('vm-canvas');
+      if (!cv) return;
+      const ctx = cv.getContext('2d');
+      const c = S.cell;
+      ctx.fillStyle = '#1c1b21';
+      ctx.fillRect(0, 0, cv.width, cv.height);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      for (let y = 0; y < S.size; y++) {
+        for (let x = 0; x < S.size; x++) {
+          if (S.grid[y][x] === 1) {
+            ctx.fillStyle = '#3a3844';
+            ctx.fillRect(x * c, y * c, c, c);
+          } else if (S.visited[x + ',' + y]) {
+            ctx.fillStyle = 'rgba(74,222,128,0.18)';
+            ctx.beginPath();
+            ctx.arc(x * c + c / 2, y * c + c / 2, Math.max(1.5, c * 0.08), 0, 7);
+            ctx.fill();
+          }
+        }
+      }
+      ctx.font = Math.floor(c * 0.72) +
+        'px "Apple Color Emoji","Segoe UI Emoji",sans-serif';
+      for (const key in S.gates) {
+        if (S.gates[key].open) continue;
+        const p = key.split(',');
+        ctx.fillStyle = 'rgba(226,176,74,0.22)';
+        ctx.fillRect(+p[0] * c, +p[1] * c, c, c);
+        ctx.fillText('🔒', +p[0] * c + c / 2, +p[1] * c + c * 0.55);
+      }
+      ctx.fillText('🏁', (S.size - 2) * c + c / 2, (S.size - 2) * c + c * 0.55);
+      ctx.fillText(PLAYER, S.px * c + c / 2, S.py * c + c * 0.55);
+    }
+
+    function move(dir) {
+      if (!S || S.q) return;
+      const d = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[dir];
+      if (!d) return;
+      const nx = S.px + d[0], ny = S.py + d[1];
+      if (nx < 0 || ny < 0 || nx >= S.size || ny >= S.size) return;
+      if (S.grid[ny][nx] === 1) return;
+      const key = nx + ',' + ny;
+      if (S.gates[key] && !S.gates[key].open) {
+        challenge(key);
+        return;
+      }
+      S.px = nx; S.py = ny;
+      S.visited[key] = 1;
+      draw();
+      if (nx === S.size - 2 && ny === S.size - 2) reachExit();
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if (!S) return;
+      /* number keys answer an open challenge */
+      if (S.q && e.key >= '1' && e.key <= '4') {
+        const b = document.querySelectorAll('.vm-opt')[+e.key - 1];
+        if (b && !b.disabled) b.click();
+        return;
+      }
+      if (S.q) return;
+      const map = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left',
+                    ArrowRight: 'right', w: 'up', s: 'down', a: 'left',
+                    d: 'right', W: 'up', S: 'down', A: 'left', D: 'right' };
+      const dir = map[e.key];
+      if (!dir) return;
+      e.preventDefault();
+      move(dir);
+    });
+
+    /* ── word-gate challenge ──────────────────────────────────────────── */
+
+    function nextWord() {
+      if (S.review.length) return S.review.shift();
+      return S.pool.shift() || pick(tierWords(S.level.tier));
+    }
+
+    function challenge(gateKey) {
+      const word = nextWord();
+      S.q = { gateKey: gateKey, word: word, missedHere: false, final: !gateKey };
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const q = makeQuestion(S.q.word);
+      let ov = document.getElementById('vm-overlay');
+      if (!ov) {
+        ov = document.createElement('div');
+        ov.className = 'vm-overlay';
+        ov.id = 'vm-overlay';
+        document.body.appendChild(ov);
+      }
+      let h = '<div class="vm-modal">' +
+        '<p class="vm-qlabel">' +
+        (S.q.final ? '🏁 Final check — master your missed words'
+                   : '🔒 Word gate — ' + esc(q.label)) + '</p>' +
+        (S.q.final ? '<p class="vm-qlabel" style="margin-top:-0.4rem">' +
+          esc(q.label) + '</p>' : '') +
+        '<div class="vm-q">' + q.promptHtml + '</div>' +
+        '<div class="vm-opts">';
+      q.opts.forEach(function (o, i) {
+        h += '<button class="vm-opt" data-ok="' + o.ok + '">' +
+          '<span class="key">' + (i + 1) + '</span><span>' + esc(o.t) +
+          '</span></button>';
+      });
+      h += '</div><div class="vm-result" id="vm-result"></div></div>';
+      ov.innerHTML = h;
+
+      ov.querySelectorAll('.vm-say').forEach(function (b) {
+        b.addEventListener('click', function (e) {
+          e.stopPropagation();
+          speak(b.dataset.say);
+        });
+      });
+      ov.querySelectorAll('.vm-opt').forEach(function (b) {
+        b.addEventListener('click', function () { answer(b); });
+      });
+    }
+
+    function answer(b) {
+      const ov = document.getElementById('vm-overlay');
+      const ok = b.dataset.ok === '1';
+      ov.querySelectorAll('.vm-opt').forEach(function (x) { x.disabled = true; });
+      if (ok) {
+        b.classList.add('good');
+        sGood();
+        gateSolved();
+      } else {
+        b.classList.add('bad');
+        sBad();
+        S.misses++;
+        S.q.missedHere = true;
+        document.getElementById('vm-miss').textContent = '✖ ' + S.misses;
+        const w = S.q.word;
+        const modal = ov.querySelector('.vm-modal');
+        const teach = document.createElement('div');
+        teach.className = 'vm-teach';
+        teach.innerHTML = '📖 <span class="tw">' + esc(w.w) + '</span> — ' +
+          esc(w.mean) + (w.ex ? '<br><i>“' + esc(w.ex) + '”</i>' : '') +
+          (w.syn ? '<br>Similar words: <b>' + esc(w.syn) + '</b>' : '') +
+          '<div class="vm-actions"><button class="vm-btn" id="vm-retry">' +
+          'Got it — ask me again</button></div>';
+        modal.appendChild(teach);
+        document.getElementById('vm-retry')
+          .addEventListener('click', renderQuestion);
+      }
+    }
+
+    function gateSolved() {
+      const w = S.q.word;
+      if (S.q.missedHere) {
+        /* missed at this gate — it comes back at a later gate (or the
+           final check at the flag) before the maze can be finished */
+        S.review.push(w);
+      } else {
+        P.learned[w.w] = 1;
+        save();
+      }
+      if (S.used.indexOf(w) === -1) S.used.push(w);
+
+      const res = document.getElementById('vm-result');
+      const isFinal = S.q.final;
+      if (res) res.textContent = isFinal ? '✅ Mastered!' : '🔓 The gate opens!';
+
+      if (!isFinal) {
+        const g = S.gates[S.q.gateKey];
+        g.open = true;
+        S.opened++;
+        document.getElementById('vm-keys').textContent =
+          '🔑 ' + S.opened + '/' + S.total;
+        addChip(w);
+      }
+
+      setTimeout(function () {
+        closeOverlay();
+        S.q = null;
+        draw();
+        if (isFinal) reachExit();
+      }, 750);
+    }
+
+    function addChip(w) {
+      const chips = document.getElementById('vm-chips');
+      if (!chips) return;
+      const c = document.createElement('button');
+      c.className = 'vm-chip';
+      c.textContent = '🔑 ' + w.w;
+      c.title = w.mean;
+      c.addEventListener('click', function () { infoCard(w); });
+      chips.appendChild(c);
+    }
+
+    function infoCard(w) {
+      if (S && S.q) return;
+      let ov = document.getElementById('vm-overlay');
+      if (!ov) {
+        ov = document.createElement('div');
+        ov.className = 'vm-overlay';
+        ov.id = 'vm-overlay';
+        document.body.appendChild(ov);
+      }
+      ov.innerHTML = '<div class="vm-modal">' +
+        '<div class="vm-q"><div class="word">' + esc(w.w) +
+        ' <button class="vm-say" data-say="' + esc(w.w) + '">🔊</button></div>' +
+        '<div class="mean" style="margin-top:0.5rem">' + esc(w.mean) + '</div>' +
+        (w.ex ? '<div class="mean" style="opacity:0.7;margin-top:0.5rem"><i>“' +
+          esc(w.ex) + '”</i></div>' : '') +
+        (w.syn ? '<div class="mean" style="opacity:0.7;margin-top:0.5rem">' +
+          'Similar: ' + esc(w.syn) + '</div>' : '') + '</div>' +
+        '<div class="vm-actions"><button class="vm-btn ghost" id="vm-close">' +
+        'Close</button></div></div>';
+      ov.querySelector('.vm-say').addEventListener('click', function () {
+        speak(w.w);
+      });
+      document.getElementById('vm-close').addEventListener('click', closeOverlay);
+    }
+
+    function closeOverlay() {
+      const ov = document.getElementById('vm-overlay');
+      if (ov) ov.remove();
+    }
+
+    /* ── finishing ────────────────────────────────────────────────────── */
+
+    function reachExit() {
+      if (S.review.length) {
+        /* words missed at gates must be mastered before the exit opens */
+        challenge(null);
+        return;
+      }
+      win();
+    }
+
+    function win() {
+      sWin();
+      const stars = S.misses === 0 ? 3 : S.misses <= 2 ? 2 : 1;
+      if ((P.stars[S.li] || 0) < stars) P.stars[S.li] = stars;
+      S.used.forEach(function (w) { P.learned[w.w] = 1; });
+      save();
+
+      const lv = S.level;
+      const hasNext = S.li + 1 < LEVELS.length;
+      let h = '<div class="vm-win"><div class="em">' + lv.emoji + '🏁</div>' +
+        '<h2>Maze escaped!</h2>' +
+        '<div class="stars">' + '★★★'.slice(0, stars) +
+        '<span style="opacity:0.25">' + '★★★'.slice(0, 3 - stars) +
+        '</span></div>' +
+        '<div class="sub">' + S.total + ' gates unlocked · ' +
+        (S.misses === 0 ? 'no misses — perfect run!'
+                        : S.misses + (S.misses === 1 ? ' miss' : ' misses')) +
+        '</div><div class="vm-recap">';
+      S.used.forEach(function (w) {
+        h += '<div class="r"><b>' + esc(w.w) + '</b> — ' + esc(w.mean) +
+          '</div>';
+      });
+      h += '</div><div class="vm-actions" style="margin-top:1.4rem">' +
+        '<button class="vm-btn ghost" id="vm-again">↻ Play again</button>' +
+        (hasNext ? '<button class="vm-btn" id="vm-next">Next level →</button>'
+                 : '') +
+        '<button class="vm-btn ghost" id="vm-home">All levels</button>' +
+        '</div></div>';
+
+      const li = S.li;
+      S = null;
+      el.innerHTML = h;
+      document.getElementById('vm-again')
+        .addEventListener('click', function () { start(li); });
+      if (hasNext) {
+        document.getElementById('vm-next')
+          .addEventListener('click', function () { start(li + 1); });
+      }
+      document.getElementById('vm-home').addEventListener('click', home);
+    }
+
+    /* ── boot ─────────────────────────────────────────────────────────── */
+
+    function boot(data) {
+      TIERS = data.tiers;
+      home();
+    }
+
+    return { boot: boot };
+  })();
+
+  init();
+})();
+</script>
