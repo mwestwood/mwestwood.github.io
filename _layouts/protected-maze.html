@@ -115,7 +115,7 @@ layout: default
   .vm-cwrap { display: flex; justify-content: center; }
   #vm-canvas {
     border: 1px solid var(--line); border-radius: 10px;
-    background: #1c1b21; touch-action: none; max-width: 100%;
+    background: #28262f; touch-action: none; max-width: 100%;
   }
   .vm-help { text-align: center; font-size: 0.8rem; opacity: 0.55;
              margin-top: 0.5rem; }
@@ -682,14 +682,14 @@ layout: default
       if (!cv) return;
       const ctx = cv.getContext('2d');
       const c = S.cell;
-      ctx.fillStyle = '#1c1b21';
+      ctx.fillStyle = '#28262f';
       ctx.fillRect(0, 0, cv.width, cv.height);
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       for (let y = 0; y < S.size; y++) {
         for (let x = 0; x < S.size; x++) {
           if (S.grid[y][x] === 1) {
-            ctx.fillStyle = '#3a3844';
+            ctx.fillStyle = '#494655';
             ctx.fillRect(x * c, y * c, c, c);
           } else if (S.visited[x + ',' + y]) {
             ctx.fillStyle = 'rgba(74,222,128,0.18)';
