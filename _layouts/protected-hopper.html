@@ -182,6 +182,10 @@ layout: default
     line-height: 1.5;
   }
   .vh-recap .r b { color: var(--acc); }
+  .vh-recap .extra { font-size: 0.82rem; opacity: 0.7; margin-top: 0.15rem; }
+  .wlink { display: inline-block; margin-top: 0.4rem; font-size: 0.82rem;
+           color: var(--acc); text-decoration: none; }
+  .wlink:hover { text-decoration: underline; }
   .vh-actions { display: flex; justify-content: center; gap: 0.6rem;
                 margin-top: 1.4rem; flex-wrap: wrap; }
   .vh-btn {
@@ -365,14 +369,34 @@ layout: default
       { name: 'Night Highway',  emoji: '🌃', hero: '🦊', obs: ['🚚', '🏎️'], tier: 'advanced',
         speed: 112, roads: 4, target: 10, bg: '#191c27', road: 'rgba(0,0,0,0.3)', lc: '#c4b5fd' },
       { name: 'Meteor Belt',    emoji: '🌌', hero: '🚀', obs: ['☄️', '🛸'], tier: 'advanced',
-        speed: 120, roads: 4, target: 10, bg: '#191327', road: 'rgba(255,255,255,0.05)', lc: '#c084fc' }
+        speed: 120, roads: 4, target: 10, bg: '#191327', road: 'rgba(255,255,255,0.05)', lc: '#c084fc' },
+      { name: 'Mangrove Crossing', emoji: '🌿', hero: '🦦', obs: ['🐊', '🐍'], tier: 'mixed',
+        speed: 128, roads: 3, target: 11, bg: '#1a2e28', road: 'rgba(0,0,0,0.25)', lc: '#5eead4' },
+      { name: 'Windy Bridge',   emoji: '🌬️', hero: '🦅', obs: ['🌪️', '🪁'], tier: 'mixed',
+        speed: 136, roads: 3, target: 12, bg: '#2a2f3a', road: 'rgba(255,255,255,0.05)', lc: '#60a5fa' },
+      { name: 'Thunder Pass',   emoji: '⛈️', hero: '🐺', obs: ['⚡', '🌩️'], tier: 'advanced',
+        speed: 144, roads: 4, target: 12, bg: '#252a3d', road: 'rgba(0,0,0,0.28)', lc: '#818cf8' },
+      { name: 'Crystal Tunnel', emoji: '💎', hero: '🦂', obs: ['💠', '🔮'], tier: 'advanced',
+        speed: 152, roads: 3, target: 13, bg: '#2b2438', road: 'rgba(255,255,255,0.05)', lc: '#c084fc' },
+      { name: 'Shadow Swamp',   emoji: '🌫️', hero: '🐊', obs: ['🐸', '🦟'], tier: 'advanced',
+        speed: 160, roads: 4, target: 13, bg: '#1f2a24', road: 'rgba(0,0,0,0.25)', lc: '#4ade80' },
+      { name: 'Molten Path',    emoji: '🔥', hero: '🦖', obs: ['🌋', '🪨'], tier: 'advanced',
+        speed: 168, roads: 3, target: 14, bg: '#2e1712', road: 'rgba(0,0,0,0.3)', lc: '#fb923c' },
+      { name: 'Frozen Strait',  emoji: '🧊', hero: '🐋', obs: ['🧊', '🐟'], tier: 'advanced',
+        speed: 176, roads: 4, target: 14, bg: '#152430', road: 'rgba(255,255,255,0.06)', lc: '#38bdf8' },
+      { name: 'Desert Crossing', emoji: '🏜️', hero: '🐫', obs: ['🐍', '🦂'], tier: 'advanced',
+        speed: 184, roads: 3, target: 15, bg: '#332818', road: 'rgba(0,0,0,0.25)', lc: '#fbbf24' },
+      { name: 'Comet Field',    emoji: '☄️', hero: '👽', obs: ['🌠', '💫'], tier: 'advanced',
+        speed: 192, roads: 4, target: 15, bg: '#1c1830', road: 'rgba(255,255,255,0.05)', lc: '#a78bfa' },
+      { name: 'Galactic Gate',  emoji: '🛸', hero: '🤖', obs: ['🛸', '👾'], tier: 'advanced',
+        speed: 200, roads: 4, target: 16, bg: '#14101f', road: 'rgba(255,255,255,0.05)', lc: '#e879f9' }
     ];
     const TIER_LABEL = { intermediate: '🚀 Intermediate words',
                          mixed: '🚀🏆 Mixed words', advanced: '🏆 Advanced words' };
 
     /* Overall game-speed control (home screen); multiplies each lane's
        px/sec traffic speed directly, so higher = faster. */
-    const SPEED_MULT = { slow: 0.55, normal: 0.8, fast: 1.15 };
+    const SPEED_MULT = { slow: 0.32, normal: 0.65, fast: 1.15 };
     const SPEED_OPTS = [{ k: 'slow', t: '🐢 Slow' }, { k: 'normal', t: '🚶 Normal' },
                         { k: 'fast', t: '🐇 Fast' }];
 
@@ -386,6 +410,20 @@ layout: default
       return String(s == null ? '' : s)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;')
         .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    /* recap row: meaning + example + (if the word bank supplied them)
+       synonyms/antonyms and a link straight back to the word's full card
+       on the site's Intermediate/Advanced Word List page */
+    function wordRowHtml(w) {
+      let h = '<div class="r"><b>' + esc(w.w) + '</b> — ' + esc(w.mean) +
+        (w.ex ? '<br><i style="opacity:0.75">“' + esc(w.ex) + '”</i>' : '');
+      if (w.syn) h += '<div class="extra">Similar: ' + esc(w.syn) + '</div>';
+      if (w.ant) h += '<div class="extra">Opposite: ' + esc(w.ant) + '</div>';
+      if (w.url) {
+        h += '<a class="wlink" href="' + esc(w.url) +
+          '" target="_blank" rel="noopener">📖 Full word card ↗</a>';
+      }
+      return h + '</div>';
     }
     function shuffle(a) {
       a = a.slice();
@@ -834,11 +872,7 @@ layout: default
         '<h2>Squished!</h2>' +
         '<div class="sub">' + caught + ' of ' + target +
         ' crossings made before running out of lives</div><div class="vh-recap">';
-      used.forEach(function (w) {
-        h += '<div class="r"><b>' + esc(w.w) + '</b> — ' + esc(w.mean) +
-          (w.ex ? '<br><i style="opacity:0.75">“' + esc(w.ex) + '”</i>' : '') +
-          '</div>';
-      });
+      used.forEach(function (w) { h += wordRowHtml(w); });
       h += '</div><div class="vh-actions">' +
         '<button class="vh-btn" id="vh-again">↻ Try again</button>' +
         '<button class="vh-btn ghost" id="vh-home">All levels</button>' +
@@ -869,11 +903,7 @@ layout: default
         '<div class="sub">' + used.length +
         (used.length === 1 ? ' word' : ' words') + ' mastered this run</div>' +
         '<div class="vh-recap">';
-      used.forEach(function (w) {
-        h += '<div class="r"><b>' + esc(w.w) + '</b> — ' + esc(w.mean) +
-          (w.ex ? '<br><i style="opacity:0.75">“' + esc(w.ex) + '”</i>' : '') +
-          '</div>';
-      });
+      used.forEach(function (w) { h += wordRowHtml(w); });
       h += '</div><div class="vh-actions">' +
         '<button class="vh-btn ghost" id="vh-again">↻ Play again</button>' +
         (hasNext ? '<button class="vh-btn" id="vh-next">Next level →</button>' : '') +

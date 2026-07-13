@@ -405,12 +405,24 @@ Player progress (XP/stars/words/crowns/streak) lives in localStorage under
 
 ### Arrow-key vocabulary games: Word Maze, Word Snake, Meaning Dash, Word Hopper
 
-Four separate games share one word bank, `_tools/maze_data.py`
-(gitignored, local-only — same rule as `vocab_data.py`): `INTERMEDIATE` and
-`ADVANCED` lists of `{w, mean, ex, syn}`, 60 words each (120 total). Each
-game has its own build script, encrypted page, and public engine layout —
-editing an engine never requires re-encryption; editing `maze_data.py` does,
-and touches all four (rebuild all four so they stay in sync):
+Four separate games share one word bank — but unlike the other game word
+banks on this site, it is **not** a hand-written file. `_tools/vocab_pool.py`
+decrypts the site's own Intermediate and Advanced Word List pages
+(`teaching/vocabulary/intermediate.md`, `advanced.md` — hundreds of full
+word-cards each) at build time, parses every `<div class="word-card">`
+block, and returns `{w, mean, ex, syn, ant, url}` records (917 intermediate
++ 683 advanced words as of July 2026; `url` is the exact
+`/teaching/vocabulary/<level>/#<slug>` anchor for that word's full card).
+This was a deliberate rework — an earlier hand-written 60+60 word list
+repeated constantly once players got a few levels in; pulling from the
+site's existing ~1,600-word pool solved that and gave every word a real
+link back "for free". There is no local word-bank file to maintain or
+gitignore anymore; the only input is the site's own encrypted content plus
+the passphrase already required to build these pages. Each game has its
+own build script and encrypted page, but all four call
+`vocab_pool.load_pools(passphrase, ROOT)` — editing the engine layouts
+never requires re-encryption; editing the Intermediate/Advanced word-card
+pages does, and touches all four (rebuild all four so they stay in sync):
 
 ```bash
 python3 _tools/build-vocab-maze.py  "passphrase"  # teaching/vocabulary/maze.md
@@ -445,13 +457,23 @@ Shared design rules (July 2026 — keep when editing any of the four):
   Dash, Word Hopper; Word Maze is turn-based and has none): a 🐢 Slow /
   🚶 Normal / 🐇 Fast row on the home screen, persisted per-game as
   `P.speed` (`'slow' | 'normal' | 'fast'`, default `'slow'` — the levels'
-  base numbers alone shipped too fast and were the direct complaint).
-  `SPEED_MULT = { slow: 0.55, normal: 0.8, fast: 1.15 }` multiplies the
-  level's px/sec speed directly in Dash and Hopper (`S.fallSpeed`,
-  obstacle `speed`); Snake's `level.speed` is ms-per-tick, so it **divides**
-  instead (`S.tickMs = level.speed / SPEED_MULT[P.speed]`) to keep "higher
-  number = faster" consistent across all three. Applied once at `start()`
-  — changing the setting mid-run has no effect until the level restarts.
+  base numbers alone shipped too fast and were the direct complaint, and
+  a second complaint pushed Slow and Normal down further still —
+  `SPEED_MULT = { slow: 0.32, normal: 0.65, fast: 1.15 }`, Fast untouched
+  since it was never the problem). Multiplies the level's px/sec speed
+  directly in Dash and Hopper (`S.fallSpeed`, obstacle `speed`); Snake's
+  `level.speed` is ms-per-tick, so it **divides** instead
+  (`S.tickMs = level.speed / SPEED_MULT[P.speed]`) to keep "higher number
+  = faster" consistent across all three. Applied once at `start()` —
+  changing the setting mid-run has no effect until the level restarts.
+- **Word-card link + extra info**: every engine has a `wordRowHtml(w)`
+  helper (next to `esc()`) used in every win/game-over recap row — it adds
+  `Similar:` / `Opposite:` lines when `syn`/`ant` are present and a
+  "📖 Full word card ↗" link to `w.url` (`target="_blank" rel="noopener"`)
+  when present. Word Maze also inlines the same synonyms/antonyms/link
+  treatment directly into its gate teach-card and word-chip info card
+  (`infoCard()`) since those are the two other places a word's full detail
+  is shown. Copy this helper into any new game rather than re-deriving it.
 - **iPad/touch support**: every button in all four layouts sets
   `touch-action: manipulation` + `-webkit-tap-highlight-color: transparent`
   (removes the tap flash and the double-tap-to-zoom that would otherwise
@@ -484,15 +506,16 @@ contain the exact base form once). Progress: `vocab-maze-v1`.
 **Word Snake** (`_layouts/protected-snake.html`, nav_order 6) — classic
 snake; eat the one pellet (of three) whose word matches the meaning
 prompt. Wrong catch costs a life and requeues the word; walls/tail end the
-run. 10 themed levels (Garden Hatchling → Milky Way), 8–15 catches to
+run. 20 themed levels (Garden Hatchling → Galactic Core), 8–20 catches to
 clear. Progress: `vocab-snake-v1`.
 
 **Meaning Dash** (`_layouts/protected-dash.html`, nav_order 7) — 3-lane
 runner; word tags fall toward a catch line, dash left/right to stand under
-the right one. **Fall speeds are deliberately gentle (70–175 px/s ≈ 4+
-seconds of reading time per drop)** — they were 130–255 initially and the
-words couldn't be read; don't speed them back up. 10 themed levels (Breeze
-→ Tempest). Progress: `vocab-dash-v1`.
+the right one. **Fall speeds are deliberately gentle** — they were 130–255
+px/s initially and the words couldn't be read; the base range is now
+70–325 px/s across 20 levels (Breeze → Solar Flare), and the Slow speed
+setting cuts that further (see Speed control above) — don't speed either
+back up. Progress: `vocab-dash-v1`.
 
 **Word Hopper** (`_layouts/protected-hopper.html`, nav_order 8) — the
 Frogger of the set, and the only one that needs all four arrows in real
@@ -500,8 +523,11 @@ time: hop a 7×7 board, dodge moving traffic lanes (swans, cars, sharks…),
 and land on the word pad (row 0, cols 1/3/5) matching the meaning. Traffic
 hit = life lost + reset to start; wrong pad = life lost + teach toast, and
 **the same word repeats (pads reshuffled) until answered correctly** — that
-is the mastery mechanic, there is no review queue. 10 themed levels (Lily
-Pond → Meteor Belt) with per-level obstacle sets and 2–4 traffic lanes.
+is the mastery mechanic, there is no review queue. `roads` (traffic lanes)
+must stay ≤ 4 — the board is a fixed 7×7 with the start row at `fy=6`, so
+`trafficRows()` (rows `2..1+roads`) would otherwise overlap the start
+tile. 20 themed levels (Lily
+Pond → Galactic Gate) with per-level obstacle sets and 2–4 traffic lanes.
 Progress: `vocab-hopper-v1`.
 
 ### Rebuild WH Question Quest (interactive game page)

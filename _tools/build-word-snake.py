@@ -2,10 +2,12 @@
 """
 build-word-snake.py — generate the encrypted Word Snake page.
 
-Reads _tools/maze_data.py (the same tiers Word Maze uses), packs the two
-word tiers as compact JSON, encrypts it with the site scheme (salt[16] +
-iv[12] + AES-256-GCM ciphertext+tag, PBKDF2-HMAC-SHA256 100k iterations),
-and writes:
+The word bank is pulled straight from the site's own Intermediate and
+Advanced Word List pages via _tools/vocab_pool.py (see that module's
+docstring) — {w, mean, ex, syn, ant, url} records, `url` linking back to
+the word's full card. Packed as JSON and re-encrypted with the site scheme
+(salt[16] + iv[12] + AES-256-GCM ciphertext+tag, PBKDF2-HMAC-SHA256 100k
+iterations) into:
 
     teaching/vocabulary/snake.md   (layout: protected-snake)
 
@@ -34,20 +36,21 @@ ROOT = os.path.dirname(HERE)
 OUT = os.path.join(ROOT, "teaching", "vocabulary", "snake.md")
 
 sys.path.insert(0, HERE)
-import maze_data as data  # noqa: E402
+import vocab_pool  # noqa: E402
 
-WORD_KEYS = ("w", "mean", "ex", "syn")
+WORD_KEYS = ("w", "mean", "ex", "syn", "ant", "url")
 
 
 def clean(words):
     return [{k: w[k] for k in WORD_KEYS if w.get(k)} for w in words]
 
 
-def build_payload():
+def build_payload(passphrase: str):
+    pools = vocab_pool.load_pools(passphrase, ROOT)
     return json.dumps(
-        {"v": 1, "tiers": {"intermediate": clean(data.INTERMEDIATE),
-                           "advanced": clean(data.ADVANCED)}},
-        separators=(",", ":"), ensure_ascii=False)
+        {"v": 1, "tiers": {"intermediate": clean(pools["intermediate"]),
+                           "advanced": clean(pools["advanced"])}},
+        separators=(",", ":"), ensure_ascii=False), pools
 
 
 def encrypt(passphrase: str, plaintext: str) -> str:
@@ -65,8 +68,9 @@ def main():
               file=sys.stderr)
         sys.exit(1)
 
-    payload = build_payload()
-    blob = encrypt(sys.argv[1], payload)
+    passphrase = sys.argv[1]
+    payload, pools = build_payload(passphrase)
+    blob = encrypt(passphrase, payload)
 
     front = "\n".join([
         "---",
@@ -83,8 +87,8 @@ def main():
         f.write(front)
 
     print(f"✅  Wrote {os.path.relpath(OUT, ROOT)} "
-          f"({len(data.INTERMEDIATE)} intermediate + "
-          f"{len(data.ADVANCED)} advanced words, "
+          f"({len(pools['intermediate'])} intermediate + "
+          f"{len(pools['advanced'])} advanced words, "
           f"{len(blob) // 1024} KB encrypted)")
 
 

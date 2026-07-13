@@ -183,6 +183,10 @@ layout: default
     line-height: 1.5;
   }
   .vs-recap .r b { color: var(--acc); }
+  .vs-recap .extra { font-size: 0.82rem; opacity: 0.7; margin-top: 0.15rem; }
+  .wlink { display: inline-block; margin-top: 0.4rem; font-size: 0.82rem;
+           color: var(--acc); text-decoration: none; }
+  .wlink:hover { text-decoration: underline; }
   .vs-actions { display: flex; justify-content: center; gap: 0.6rem;
                 margin-top: 1.4rem; flex-wrap: wrap; }
   .vs-btn {
@@ -366,7 +370,27 @@ layout: default
       { name: 'Lava Trail',       emoji: '🌋', hero: '🐉', tier: 'advanced',     cols: 9, rows: 9,  speed: 380, target: 14,
         bg: '#2e1712', body: '#fb923c', lc: '#fb923c' },
       { name: 'Milky Way',        emoji: '🌌', hero: '👾', tier: 'advanced',     cols: 9, rows: 10, speed: 360, target: 15,
-        bg: '#191327', body: '#c084fc', lc: '#c084fc' }
+        bg: '#191327', body: '#c084fc', lc: '#c084fc' },
+      { name: 'Mangrove Maze',    emoji: '🌿', hero: '🦦', tier: 'mixed',        cols: 9, rows: 9,  speed: 345, target: 15,
+        bg: '#1a2e28', body: '#5eead4', lc: '#5eead4' },
+      { name: 'Windy Plateau',    emoji: '🏔️', hero: '🦅', tier: 'mixed',        cols: 9, rows: 9,  speed: 330, target: 16,
+        bg: '#2a2f3a', body: '#93c5fd', lc: '#60a5fa' },
+      { name: 'Thunder Ridge',    emoji: '⛈️', hero: '🐺', tier: 'advanced',     cols: 9, rows: 10, speed: 315, target: 16,
+        bg: '#252a3d', body: '#a5b4fc', lc: '#818cf8' },
+      { name: 'Crystal Cavern',   emoji: '💎', hero: '🦂', tier: 'advanced',     cols: 9, rows: 10, speed: 300, target: 17,
+        bg: '#2b2438', body: '#e9d5ff', lc: '#c084fc' },
+      { name: 'Shadow Marsh',     emoji: '🌫️', hero: '🐊', tier: 'advanced',     cols: 10, rows: 10, speed: 290, target: 17,
+        bg: '#1f2a24', body: '#86efac', lc: '#4ade80' },
+      { name: 'Molten Rift',      emoji: '🔥', hero: '🦖', tier: 'advanced',     cols: 10, rows: 10, speed: 280, target: 18,
+        bg: '#2e1712', body: '#fdba74', lc: '#fb923c' },
+      { name: 'Frozen Abyss',     emoji: '🧊', hero: '🐋', tier: 'advanced',     cols: 10, rows: 10, speed: 270, target: 18,
+        bg: '#152430', body: '#7dd3fc', lc: '#38bdf8' },
+      { name: 'Desert Mirage',    emoji: '🏜️', hero: '🐫', tier: 'advanced',     cols: 10, rows: 11, speed: 260, target: 19,
+        bg: '#332818', body: '#fcd34d', lc: '#fbbf24' },
+      { name: 'Comet Trail',      emoji: '☄️', hero: '👽', tier: 'advanced',     cols: 10, rows: 11, speed: 250, target: 19,
+        bg: '#1c1830', body: '#d8b4fe', lc: '#a78bfa' },
+      { name: 'Galactic Core',    emoji: '🛸', hero: '🤖', tier: 'advanced',     cols: 10, rows: 11, speed: 240, target: 20,
+        bg: '#14101f', body: '#f0abfc', lc: '#e879f9' }
     ];
     const TIER_LABEL = { intermediate: '🚀 Intermediate words',
                          mixed: '🚀🏆 Mixed words', advanced: '🏆 Advanced words' };
@@ -376,7 +400,7 @@ layout: default
        tick, so a bigger multiplier means a SMALLER interval (faster) —
        dividing by the multiplier keeps "higher = faster" consistent with
        Meaning Dash and Word Hopper, which multiply a px/sec speed. */
-    const SPEED_MULT = { slow: 0.55, normal: 0.8, fast: 1.15 };
+    const SPEED_MULT = { slow: 0.32, normal: 0.65, fast: 1.15 };
     const SPEED_OPTS = [{ k: 'slow', t: '🐢 Slow' }, { k: 'normal', t: '🚶 Normal' },
                         { k: 'fast', t: '🐇 Fast' }];
 
@@ -389,6 +413,20 @@ layout: default
       return String(s == null ? '' : s)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;')
         .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    /* recap row: meaning + example + (if the word bank supplied them)
+       synonyms/antonyms and a link straight back to the word's full card
+       on the site's Intermediate/Advanced Word List page */
+    function wordRowHtml(w) {
+      let h = '<div class="r"><b>' + esc(w.w) + '</b> — ' + esc(w.mean) +
+        (w.ex ? '<br><i style="opacity:0.75">“' + esc(w.ex) + '”</i>' : '');
+      if (w.syn) h += '<div class="extra">Similar: ' + esc(w.syn) + '</div>';
+      if (w.ant) h += '<div class="extra">Opposite: ' + esc(w.ant) + '</div>';
+      if (w.url) {
+        h += '<a class="wlink" href="' + esc(w.url) +
+          '" target="_blank" rel="noopener">📖 Full word card ↗</a>';
+      }
+      return h + '</div>';
     }
     function shuffle(a) {
       a = a.slice();
@@ -850,11 +888,7 @@ layout: default
         '<h2>The snake stumbled!</h2>' +
         '<div class="sub">' + caught + ' of ' + target +
         ' words caught before running out of lives</div><div class="vs-recap">';
-      used.forEach(function (w) {
-        h += '<div class="r"><b>' + esc(w.w) + '</b> — ' + esc(w.mean) +
-          (w.ex ? '<br><i style="opacity:0.75">“' + esc(w.ex) + '”</i>' : '') +
-          '</div>';
-      });
+      used.forEach(function (w) { h += wordRowHtml(w); });
       h += '</div><div class="vs-actions">' +
         '<button class="vs-btn" id="vs-again">↻ Try again</button>' +
         '<button class="vs-btn ghost" id="vs-home">All levels</button>' +
@@ -887,11 +921,7 @@ layout: default
         '<div class="sub">' + used.length +
         (used.length === 1 ? ' word' : ' words') + ' mastered this run</div>' +
         '<div class="vs-recap">';
-      used.forEach(function (w) {
-        h += '<div class="r"><b>' + esc(w.w) + '</b> — ' + esc(w.mean) +
-          (w.ex ? '<br><i style="opacity:0.75">“' + esc(w.ex) + '”</i>' : '') +
-          '</div>';
-      });
+      used.forEach(function (w) { h += wordRowHtml(w); });
       h += '</div><div class="vs-actions">' +
         '<button class="vs-btn ghost" id="vs-again">↻ Play again</button>' +
         (hasNext ? '<button class="vs-btn" id="vs-next">Next level →</button>' : '') +

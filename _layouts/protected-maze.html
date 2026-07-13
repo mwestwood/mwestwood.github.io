@@ -243,6 +243,10 @@ layout: default
     line-height: 1.5;
   }
   .vm-recap .r b { color: var(--acc); }
+  .r .extra, .vm-teach .extra { font-size: 0.82rem; opacity: 0.7; margin-top: 0.15rem; }
+  .wlink { display: inline-block; margin-top: 0.4rem; font-size: 0.82rem;
+           color: var(--acc); text-decoration: none; }
+  .wlink:hover { text-decoration: underline; }
 
   @keyframes vmShake {
     25% { transform: translateX(-5px); } 75% { transform: translateX(5px); }
@@ -452,6 +456,20 @@ layout: default
       return String(s == null ? '' : s)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;')
         .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    /* recap row: meaning + example + (if the word bank supplied them)
+       synonyms/antonyms and a link straight back to the word's full card
+       on the site's Intermediate/Advanced Word List page */
+    function wordRowHtml(w) {
+      let h = '<div class="r"><b>' + esc(w.w) + '</b> — ' + esc(w.mean) +
+        (w.ex ? '<br><i style="opacity:0.75">“' + esc(w.ex) + '”</i>' : '');
+      if (w.syn) h += '<div class="extra">Similar: ' + esc(w.syn) + '</div>';
+      if (w.ant) h += '<div class="extra">Opposite: ' + esc(w.ant) + '</div>';
+      if (w.url) {
+        h += '<a class="wlink" href="' + esc(w.url) +
+          '" target="_blank" rel="noopener">📖 Full word card ↗</a>';
+      }
+      return h + '</div>';
     }
     function shuffle(a) {
       a = a.slice();
@@ -883,6 +901,9 @@ layout: default
         teach.innerHTML = '📖 <span class="tw">' + esc(w.w) + '</span> — ' +
           esc(w.mean) + (w.ex ? '<br><i>“' + esc(w.ex) + '”</i>' : '') +
           (w.syn ? '<br>Similar words: <b>' + esc(w.syn) + '</b>' : '') +
+          (w.ant ? '<br>Opposite words: <b>' + esc(w.ant) + '</b>' : '') +
+          (w.url ? '<br><a class="wlink" href="' + esc(w.url) +
+            '" target="_blank" rel="noopener">📖 Full word card ↗</a>' : '') +
           '<div class="vm-actions"><button class="vm-btn" id="vm-retry">' +
           'Got it — ask me again</button></div>';
         modal.appendChild(teach);
@@ -951,7 +972,12 @@ layout: default
         (w.ex ? '<div class="mean" style="opacity:0.7;margin-top:0.5rem"><i>“' +
           esc(w.ex) + '”</i></div>' : '') +
         (w.syn ? '<div class="mean" style="opacity:0.7;margin-top:0.5rem">' +
-          'Similar: ' + esc(w.syn) + '</div>' : '') + '</div>' +
+          'Similar: ' + esc(w.syn) + '</div>' : '') +
+        (w.ant ? '<div class="mean" style="opacity:0.7;margin-top:0.5rem">' +
+          'Opposite: ' + esc(w.ant) + '</div>' : '') +
+        (w.url ? '<div style="margin-top:0.6rem"><a class="wlink" href="' +
+          esc(w.url) + '" target="_blank" rel="noopener">📖 Full word card ↗' +
+          '</a></div>' : '') + '</div>' +
         '<div class="vm-actions"><button class="vm-btn ghost" id="vm-close">' +
         'Close</button></div></div>';
       ov.querySelector('.vm-say').addEventListener('click', function () {
@@ -994,11 +1020,7 @@ layout: default
         (S.misses === 0 ? 'no misses — perfect run!'
                         : S.misses + (S.misses === 1 ? ' miss' : ' misses')) +
         '</div><div class="vm-recap">';
-      S.used.forEach(function (w) {
-        h += '<div class="r"><b>' + esc(w.w) + '</b> — ' + esc(w.mean) +
-          (w.ex ? '<br><i style="opacity:0.75">“' + esc(w.ex) + '”</i>' : '') +
-          '</div>';
-      });
+      S.used.forEach(function (w) { h += wordRowHtml(w); });
       h += '</div><div class="vm-actions" style="margin-top:1.4rem">' +
         '<button class="vm-btn ghost" id="vm-again">↻ Play again</button>' +
         (hasNext ? '<button class="vm-btn" id="vm-next">Next level →</button>'
