@@ -553,8 +553,18 @@ layout: default
     function queueDir(d) {
       if (!S || S.over) return;
       const opp = { up: 'down', down: 'up', left: 'right', right: 'left' };
-      if (S.snake.length > 1 && opp[d] === S.dir) return;
-      S.nextDir = d;
+      if (S.snake.length > 1 && opp[d] === S.nextDir) {
+        /* Pressing the opposite direction is a U-turn, not a dead key:
+           flip the snake so the tail leads and it walks back the other
+           way. (Ignoring the key — the classic rule — made the snake
+           sail into the wall when the player asked it to turn back.) */
+        S.snake.reverse();
+        S.dir = d;
+        S.nextDir = d;
+        draw();
+      } else {
+        S.nextDir = d;
+      }
       if (!S.started) { S.started = true; draw(); }
     }
 
@@ -615,7 +625,11 @@ layout: default
       const nx = head[0] + d[0], ny = head[1] + d[1];
 
       if (nx < 0 || ny < 0 || nx >= S.cols || ny >= S.rows) { gameOver(); return; }
-      if (S.snake.some(function (c) { return c[0] === nx && c[1] === ny; })) {
+      /* the tail cell doesn't count — it vacates this same tick (pellets
+         never spawn on the snake, so moving there can't trigger growth) */
+      if (S.snake.some(function (c, i) {
+        return i < S.snake.length - 1 && c[0] === nx && c[1] === ny;
+      })) {
         gameOver(); return;
       }
 
