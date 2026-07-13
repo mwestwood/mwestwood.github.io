@@ -69,7 +69,10 @@ layout: default
         --card: rgba(255,255,255,0.05); --line: rgba(255,255,255,0.12);
         max-width: 780px; }
   .vm, .vm * { box-sizing: border-box; }
-  .vm button { font-family: inherit; }
+  .vm button {
+    font-family: inherit; touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
 
   .vm-top {
     display: flex; align-items: center; gap: 0.6rem;
@@ -139,6 +142,7 @@ layout: default
   #vm-canvas {
     border: 1px solid var(--line); border-radius: 10px;
     background: #28262f; touch-action: none; max-width: 100%;
+    -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
   }
   .vm-help { text-align: center; font-size: 0.8rem; opacity: 0.55;
              margin-top: 0.5rem; }

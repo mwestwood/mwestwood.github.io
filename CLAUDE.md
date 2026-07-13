@@ -441,6 +441,32 @@ Shared design rules (July 2026 — keep when editing any of the four):
   reacting.
 - Recap screens pluralize "word(s) mastered" (`"1 words"` shipped once and
   was caught in testing — keep the ternary when copying the pattern).
+- **Speed control** (the three real-time engines only — Word Snake, Meaning
+  Dash, Word Hopper; Word Maze is turn-based and has none): a 🐢 Slow /
+  🚶 Normal / 🐇 Fast row on the home screen, persisted per-game as
+  `P.speed` (`'slow' | 'normal' | 'fast'`, default `'slow'` — the levels'
+  base numbers alone shipped too fast and were the direct complaint).
+  `SPEED_MULT = { slow: 0.55, normal: 0.8, fast: 1.15 }` multiplies the
+  level's px/sec speed directly in Dash and Hopper (`S.fallSpeed`,
+  obstacle `speed`); Snake's `level.speed` is ms-per-tick, so it **divides**
+  instead (`S.tickMs = level.speed / SPEED_MULT[P.speed]`) to keep "higher
+  number = faster" consistent across all three. Applied once at `start()`
+  — changing the setting mid-run has no effect until the level restarts.
+- **iPad/touch support**: every button in all four layouts sets
+  `touch-action: manipulation` + `-webkit-tap-highlight-color: transparent`
+  (removes the tap flash and the double-tap-to-zoom that would otherwise
+  fight rapid D-pad taps); every canvas sets `-webkit-touch-callout: none`
+  + `user-select: none` (blocks iOS's long-press copy/save-image menu
+  during swipe/tap play). **Audio unlock**: iOS/iPadOS Safari only starts
+  or resumes an `AudioContext` from inside a direct user gesture — a
+  `setInterval`/`requestAnimationFrame` tick doesn't count, and Snake/Dash/
+  Hopper all play their catch/miss tones from inside such a tick, not the
+  gesture itself. Each of those three exposes an `unlockAudio()` that
+  creates/resumes the shared `AC` and is called synchronously at the top of
+  `queueDir()` / `moveLane()` / `hop()` (the real gesture handlers) so the
+  context is already running by the time a later tick wants to play a
+  tone. Word Maze doesn't need this — its tones fire directly from answer
+  button clicks, which already are gestures.
 
 **Word Maze** (`_layouts/protected-maze.html`, nav_order 5) — navigate a
 maze with arrow keys/WASD/D-pad/swipe; 🔒 word gates block the only path.

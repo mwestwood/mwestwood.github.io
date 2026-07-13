@@ -69,7 +69,21 @@ layout: default
         --card: rgba(255,255,255,0.05); --line: rgba(255,255,255,0.12);
         max-width: 780px; }
   .vh, .vh * { box-sizing: border-box; }
-  .vh button { font-family: inherit; }
+  .vh button {
+    font-family: inherit; touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .vh-speedrow { display: flex; align-items: center; gap: 0.4rem;
+                 justify-content: center; margin: 0 0 1.2rem; flex-wrap: wrap; }
+  .vh-speedrow .lbl { font-size: 0.82rem; opacity: 0.6; }
+  .vh-spd {
+    background: var(--card); border: 1px solid var(--line); color: inherit;
+    border-radius: 999px; padding: 0.3rem 0.85rem; font-size: 0.82rem;
+    cursor: pointer;
+  }
+  .vh-spd.on { background: var(--acc); border-color: var(--acc); color: #0d1a14;
+               font-weight: 700; }
 
   .vh-top {
     display: flex; align-items: center; gap: 0.6rem;
@@ -121,6 +135,7 @@ layout: default
   #vh-canvas {
     border: 1px solid var(--line); border-radius: 10px;
     background: #1b3028; touch-action: none; max-width: 100%;
+    -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
   }
   .vh-toast {
     position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
@@ -355,6 +370,12 @@ layout: default
     const TIER_LABEL = { intermediate: '🚀 Intermediate words',
                          mixed: '🚀🏆 Mixed words', advanced: '🏆 Advanced words' };
 
+    /* Overall game-speed control (home screen); multiplies each lane's
+       px/sec traffic speed directly, so higher = faster. */
+    const SPEED_MULT = { slow: 0.55, normal: 0.8, fast: 1.15 };
+    const SPEED_OPTS = [{ k: 'slow', t: '🐢 Slow' }, { k: 'normal', t: '🚶 Normal' },
+                        { k: 'fast', t: '🐇 Fast' }];
+
     let TIERS = null;
     let S = null;
     let rafId = null;
@@ -377,6 +398,16 @@ layout: default
     function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
 
     let AC = null;
+    /* iOS/iPadOS Safari only allows audio to start (or resume) from inside
+       a direct user gesture — a rAF tick doesn't count. Call this from the
+       keydown/tap handlers themselves so the AudioContext is already
+       running by the time the traffic loop later wants to play a tone. */
+    function unlockAudio() {
+      try {
+        AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+        if (AC.state === 'suspended') AC.resume();
+      } catch (_) {}
+    }
     function tone(freq, at, dur) {
       if (!P.sound) return;
       try {
@@ -404,6 +435,7 @@ layout: default
     P.stars = P.stars || {};
     P.learned = P.learned || {};
     if (P.sound === undefined) P.sound = true;
+    if (!SPEED_MULT[P.speed]) P.speed = 'slow';
     function save() {
       try { localStorage.setItem(PKEY, JSON.stringify(P)); } catch (_) {}
     }
@@ -433,6 +465,12 @@ layout: default
           '<span class="vh-pill acc">📚 ' + learnedCount +
           ' words mastered</span></div>';
       }
+      h += '<div class="vh-speedrow"><span class="lbl">Traffic speed:</span>';
+      SPEED_OPTS.forEach(function (o) {
+        h += '<button class="vh-spd' + (P.speed === o.k ? ' on' : '') +
+          '" data-spd="' + o.k + '">' + o.t + '</button>';
+      });
+      h += '</div>';
       h += '<div class="vh-levels">';
       LEVELS.forEach(function (lv, i) {
         const st = P.stars[i] || 0;
@@ -452,6 +490,11 @@ layout: default
       el.innerHTML = h;
       el.querySelectorAll('.vh-level').forEach(function (b) {
         b.addEventListener('click', function () { start(+b.dataset.l); });
+      });
+      el.querySelectorAll('.vh-spd').forEach(function (b) {
+        b.addEventListener('click', function () {
+          P.speed = b.dataset.spd; save(); home();
+        });
       });
     }
 
@@ -480,7 +523,7 @@ layout: default
          each lane a little faster than the one before */
       trafficRows(lv).forEach(function (row, r) {
         const dir = r % 2 === 0 ? 1 : -1;
-        const speed = dir * lv.speed * (1 + r * 0.18);
+        const speed = dir * lv.speed * SPEED_MULT[P.speed] * (1 + r * 0.18);
         for (let k = 0; k < 2; k++) {
           S.obstacles.push({
             row: row,
@@ -550,6 +593,7 @@ layout: default
 
     function hop(dir) {
       if (!S || S.over || S.paused) return;
+      unlockAudio();
       const d = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[dir];
       if (!d) return;
       if (!S.started) S.started = true;

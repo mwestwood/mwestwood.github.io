@@ -69,7 +69,21 @@ layout: default
         --card: rgba(255,255,255,0.05); --line: rgba(255,255,255,0.12);
         max-width: 780px; }
   .vd, .vd * { box-sizing: border-box; }
-  .vd button { font-family: inherit; }
+  .vd button {
+    font-family: inherit; touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .vd-speedrow { display: flex; align-items: center; gap: 0.4rem;
+                 justify-content: center; margin: 0 0 1.2rem; flex-wrap: wrap; }
+  .vd-speedrow .lbl { font-size: 0.82rem; opacity: 0.6; }
+  .vd-spd {
+    background: var(--card); border: 1px solid var(--line); color: inherit;
+    border-radius: 999px; padding: 0.3rem 0.85rem; font-size: 0.82rem;
+    cursor: pointer;
+  }
+  .vd-spd.on { background: var(--acc); border-color: var(--acc); color: #0d1a22;
+               font-weight: 700; }
 
   .vd-top {
     display: flex; align-items: center; gap: 0.6rem;
@@ -122,6 +136,7 @@ layout: default
   #vd-canvas {
     border: 1px solid var(--line); border-radius: 10px;
     background: #28262f; touch-action: none; max-width: 100%;
+    -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
   }
   .vd-toast {
     position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
@@ -346,6 +361,12 @@ layout: default
     const LANES = 3;
     const CANVAS_W = 420, CANVAS_H = 460, CATCH_Y = 400, RUNNER_Y = 400, SPAWN_Y = -30;
 
+    /* Overall game-speed control (home screen); multiplies the level's
+       px/sec fall speed directly, so higher = faster. */
+    const SPEED_MULT = { slow: 0.55, normal: 0.8, fast: 1.15 };
+    const SPEED_OPTS = [{ k: 'slow', t: '🐢 Slow' }, { k: 'normal', t: '🚶 Normal' },
+                        { k: 'fast', t: '🐇 Fast' }];
+
     let TIERS = null;
     let S = null;
     let rafId = null;
@@ -377,6 +398,16 @@ layout: default
     }
 
     let AC = null;
+    /* iOS/iPadOS Safari only allows audio to start (or resume) from inside
+       a direct user gesture — a rAF tick doesn't count. Call this from the
+       keydown/tap handlers themselves so the AudioContext is already
+       running by the time the fall loop later wants to play a tone. */
+    function unlockAudio() {
+      try {
+        AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+        if (AC.state === 'suspended') AC.resume();
+      } catch (_) {}
+    }
     function tone(freq, at, dur) {
       if (!P.sound) return;
       try {
@@ -404,6 +435,7 @@ layout: default
     P.stars = P.stars || {};
     P.learned = P.learned || {};
     if (P.sound === undefined) P.sound = true;
+    if (!SPEED_MULT[P.speed]) P.speed = 'slow';
     function save() {
       try { localStorage.setItem(PKEY, JSON.stringify(P)); } catch (_) {}
     }
@@ -435,6 +467,12 @@ layout: default
           '<span class="vd-pill acc">📚 ' + learnedCount +
           ' words mastered</span></div>';
       }
+      h += '<div class="vd-speedrow"><span class="lbl">Fall speed:</span>';
+      SPEED_OPTS.forEach(function (o) {
+        h += '<button class="vd-spd' + (P.speed === o.k ? ' on' : '') +
+          '" data-spd="' + o.k + '">' + o.t + '</button>';
+      });
+      h += '</div>';
       h += '<div class="vd-levels">';
       LEVELS.forEach(function (lv, i) {
         const st = P.stars[i] || 0;
@@ -454,12 +492,18 @@ layout: default
       el.querySelectorAll('.vd-level').forEach(function (b) {
         b.addEventListener('click', function () { start(+b.dataset.l); });
       });
+      el.querySelectorAll('.vd-spd').forEach(function (b) {
+        b.addEventListener('click', function () {
+          P.speed = b.dataset.spd; save(); home();
+        });
+      });
     }
 
     function start(li) {
       const lv = LEVELS[li];
       S = {
         li: li, level: lv, lane: 1,
+        fallSpeed: lv.speed * SPEED_MULT[P.speed],
         falling: null, /* { y, items:[{lane,w,ok}] } */
         caught: 0, lives: START_LIVES, misses: 0,
         pool: buildPool(lv.tier), review: [],
@@ -513,6 +557,7 @@ layout: default
 
     function moveLane(delta) {
       if (!S || S.over || S.paused) return;
+      unlockAudio();
       S.lane = Math.max(0, Math.min(LANES - 1, S.lane + delta));
       if (!S.started) S.started = true;
     }
@@ -542,7 +587,7 @@ layout: default
       const dt = Math.min(0.05, (t - S.lastT) / 1000);
       S.lastT = t;
       if (S.started && !S.paused && !S.over && S.falling) {
-        S.falling.y += S.level.speed * dt;
+        S.falling.y += S.fallSpeed * dt;
         if (S.falling.y >= CATCH_Y) resolveCatch();
       }
       draw();

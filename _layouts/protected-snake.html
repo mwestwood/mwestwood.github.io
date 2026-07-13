@@ -69,7 +69,21 @@ layout: default
         --card: rgba(255,255,255,0.05); --line: rgba(255,255,255,0.12);
         max-width: 780px; }
   .vs, .vs * { box-sizing: border-box; }
-  .vs button { font-family: inherit; }
+  .vs button {
+    font-family: inherit; touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .vs-speedrow { display: flex; align-items: center; gap: 0.4rem;
+                 justify-content: center; margin: 0 0 1.2rem; flex-wrap: wrap; }
+  .vs-speedrow .lbl { font-size: 0.82rem; opacity: 0.6; }
+  .vs-spd {
+    background: var(--card); border: 1px solid var(--line); color: inherit;
+    border-radius: 999px; padding: 0.3rem 0.85rem; font-size: 0.82rem;
+    cursor: pointer;
+  }
+  .vs-spd.on { background: var(--acc); border-color: var(--acc); color: #14231a;
+               font-weight: 700; }
 
   .vs-top {
     display: flex; align-items: center; gap: 0.6rem;
@@ -122,6 +136,7 @@ layout: default
   #vs-canvas {
     border: 1px solid var(--line); border-radius: 10px;
     background: #28262f; touch-action: none; max-width: 100%;
+    -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
   }
   .vs-toast {
     position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
@@ -357,6 +372,14 @@ layout: default
                          mixed: '🚀🏆 Mixed words', advanced: '🏆 Advanced words' };
     const START_LIVES = 3;
 
+    /* Overall game-speed control (home screen). `level.speed` is ms per
+       tick, so a bigger multiplier means a SMALLER interval (faster) —
+       dividing by the multiplier keeps "higher = faster" consistent with
+       Meaning Dash and Word Hopper, which multiply a px/sec speed. */
+    const SPEED_MULT = { slow: 0.55, normal: 0.8, fast: 1.15 };
+    const SPEED_OPTS = [{ k: 'slow', t: '🐢 Slow' }, { k: 'normal', t: '🚶 Normal' },
+                        { k: 'fast', t: '🐇 Fast' }];
+
     let TIERS = null;
     let S = null;
 
@@ -387,6 +410,16 @@ layout: default
     }
 
     let AC = null;
+    /* iOS/iPadOS Safari only allows audio to start (or resume) from inside
+       a direct user gesture — a setInterval/rAF tick doesn't count. Call
+       this from the keydown/tap handlers themselves so the AudioContext is
+       already running by the time a tick later wants to play a tone. */
+    function unlockAudio() {
+      try {
+        AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+        if (AC.state === 'suspended') AC.resume();
+      } catch (_) {}
+    }
     function tone(freq, at, dur) {
       if (!P.sound) return;
       try {
@@ -414,6 +447,7 @@ layout: default
     P.stars = P.stars || {};
     P.learned = P.learned || {};
     if (P.sound === undefined) P.sound = true;
+    if (!SPEED_MULT[P.speed]) P.speed = 'slow';
     function save() {
       try { localStorage.setItem(PKEY, JSON.stringify(P)); } catch (_) {}
     }
@@ -445,6 +479,12 @@ layout: default
           '<span class="vs-pill acc">📚 ' + learnedCount +
           ' words mastered</span></div>';
       }
+      h += '<div class="vs-speedrow"><span class="lbl">Snake speed:</span>';
+      SPEED_OPTS.forEach(function (o) {
+        h += '<button class="vs-spd' + (P.speed === o.k ? ' on' : '') +
+          '" data-spd="' + o.k + '">' + o.t + '</button>';
+      });
+      h += '</div>';
       h += '<div class="vs-levels">';
       LEVELS.forEach(function (lv, i) {
         const st = P.stars[i] || 0;
@@ -464,6 +504,11 @@ layout: default
       el.querySelectorAll('.vs-level').forEach(function (b) {
         b.addEventListener('click', function () { start(+b.dataset.l); });
       });
+      el.querySelectorAll('.vs-spd').forEach(function (b) {
+        b.addEventListener('click', function () {
+          P.speed = b.dataset.spd; save(); home();
+        });
+      });
     }
 
     function start(li) {
@@ -471,6 +516,7 @@ layout: default
       const cell = Math.floor(Math.min(560, (el.clientWidth || 560)) / lv.cols);
       S = {
         li: li, level: lv, cols: lv.cols, rows: lv.rows, cell: cell,
+        tickMs: Math.round(lv.speed / SPEED_MULT[P.speed]),
         snake: [[Math.floor(lv.cols / 2), Math.floor(lv.rows / 2)]],
         dir: 'right', nextDir: 'right',
         pellets: [], target: null,
@@ -544,7 +590,7 @@ layout: default
     let timer = null;
     function startTimer() {
       stopTimer();
-      timer = setInterval(tick, S.level.speed);
+      timer = setInterval(tick, S.tickMs);
     }
     function stopTimer() {
       if (timer) { clearInterval(timer); timer = null; }
@@ -552,6 +598,7 @@ layout: default
 
     function queueDir(d) {
       if (!S || S.over) return;
+      unlockAudio();
       const opp = { up: 'down', down: 'up', left: 'right', right: 'left' };
       if (S.snake.length > 1 && opp[d] === S.nextDir) {
         /* Pressing the opposite direction is a U-turn, not a dead key:
