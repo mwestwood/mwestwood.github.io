@@ -1,0 +1,763 @@
+---
+layout: default
+---
+
+<style>
+  /* ── Password gate (same look as protected.html) ─────────────────────── */
+  #protected-gate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 40vh;
+    padding: 2rem 1rem;
+  }
+  .gate-card {
+    background: var(--sidebar-color, #f5f6fa);
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 8px;
+    padding: 2.5rem 2rem;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .gate-lock { font-size: 2.5rem; margin-bottom: 0.75rem; line-height: 1; }
+  .gate-title {
+    font-size: 1.25rem; font-weight: 600;
+    color: var(--body-text-color, #27262b); margin: 0 0 0.5rem 0;
+  }
+  .gate-subtitle {
+    font-size: 0.875rem; color: var(--body-text-color, #5c5962);
+    opacity: 0.75; margin: 0 0 1.5rem 0;
+  }
+  .gate-input-row { display: flex; gap: 0.5rem; width: 100%; }
+  #gate-password {
+    flex: 1; padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color, #d0d0d0); border-radius: 4px;
+    font-size: 1rem; background: var(--body-background-color, #fff);
+    color: var(--body-text-color, #27262b); outline: none;
+    transition: border-color 0.15s;
+  }
+  #gate-password:focus { border-color: var(--links-color, #7253ed); }
+  #gate-submit {
+    padding: 0.5rem 1.1rem; background: var(--links-color, #7253ed);
+    color: #fff; border: none; border-radius: 4px; font-size: 0.95rem;
+    font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+  #gate-submit:hover { opacity: 0.88; }
+  #gate-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+  #gate-error {
+    margin-top: 0.85rem; font-size: 0.875rem; color: #c0392b;
+    min-height: 1.25rem; display: none;
+  }
+  #gate-status {
+    margin-top: 0.85rem; font-size: 0.875rem;
+    color: var(--body-text-color, #5c5962); opacity: 0.7;
+    min-height: 1.25rem; display: none;
+  }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+
+  /* ── Meaning Dash ────────────────────────────────────────────────────── */
+  #dash-root { display: none; }
+
+  .vd { --acc: #38bdf8; --good: #4ade80; --bad: #f87171;
+        --card: rgba(255,255,255,0.05); --line: rgba(255,255,255,0.12);
+        max-width: 780px; }
+  .vd, .vd * { box-sizing: border-box; }
+  .vd button { font-family: inherit; }
+
+  .vd-top {
+    display: flex; align-items: center; gap: 0.6rem;
+    margin-bottom: 1rem; flex-wrap: wrap;
+  }
+  .vd-back {
+    background: var(--card); border: 1px solid var(--line);
+    color: inherit; border-radius: 999px; padding: 0.3rem 0.85rem;
+    font-size: 0.85rem; cursor: pointer;
+  }
+  .vd-back:hover { border-color: var(--acc); }
+  .vd-crumb { font-weight: 700; font-size: 1.05rem; }
+  .vd-spacer { flex: 1; }
+  .vd-pill {
+    font-size: 0.8rem; padding: 0.25rem 0.7rem; border-radius: 999px;
+    background: var(--card); border: 1px solid var(--line); white-space: nowrap;
+  }
+  .vd-pill.acc { border-color: var(--acc); color: var(--acc); font-weight: 600; }
+  .vd-pill.hearts { color: #f87171; border-color: rgba(248,113,113,0.4); }
+  .vd-pill.btn { cursor: pointer; }
+
+  .vd-hero { text-align: center; margin: 0.5rem 0 1.6rem; }
+  .vd-hero h1 { margin: 0 0 0.3rem; font-size: 2rem; }
+  .vd-hero p { margin: 0; opacity: 0.7; font-size: 0.95rem; }
+
+  .vd-levels { display: grid; gap: 0.9rem; }
+  .vd-level {
+    display: flex; align-items: center; gap: 1rem; width: 100%;
+    text-align: left; background: var(--card); border: 1px solid var(--line);
+    border-radius: 14px; padding: 1rem 1.2rem; color: inherit;
+    cursor: pointer; transition: transform 0.12s, border-color 0.12s;
+  }
+  .vd-level:hover:not(:disabled) { transform: translateY(-2px);
+                                   border-color: var(--lc, var(--acc)); }
+  .vd-level:disabled { cursor: not-allowed; opacity: 0.45; }
+  .vd-level .em { font-size: 2rem; }
+  .vd-level .body { flex: 1; min-width: 0; }
+  .vd-level .name { font-weight: 700; font-size: 1.1rem; }
+  .vd-level .meta { font-size: 0.8rem; opacity: 0.6; margin-top: 0.2rem; }
+  .vd-level .side { text-align: right; font-size: 0.95rem; white-space: nowrap; }
+  .vd-level .stars { color: #facc15; font-weight: 700; letter-spacing: 0.1em; }
+
+  /* play screen */
+  .vd-prompt { text-align: center; margin: 0 0 0.7rem; min-height: 2.6em; }
+  .vd-prompt .lbl { font-size: 0.75rem; letter-spacing: 0.08em;
+                    text-transform: uppercase; opacity: 0.55; }
+  .vd-prompt .mean { font-size: 1.1rem; font-weight: 600; line-height: 1.4;
+                      max-width: 560px; margin: 0.15rem auto 0; }
+  .vd-cwrap { display: flex; justify-content: center; position: relative; }
+  #vd-canvas {
+    border: 1px solid var(--line); border-radius: 10px;
+    background: #28262f; touch-action: none; max-width: 100%;
+  }
+  .vd-toast {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    background: #26252c; border: 1px solid var(--line); border-radius: 12px;
+    padding: 0.8rem 1.1rem; max-width: 90%; text-align: center;
+    font-size: 0.92rem; line-height: 1.5; box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+    pointer-events: none;
+  }
+  .vd-toast.good { border-color: var(--good); }
+  .vd-toast.bad { border-color: var(--bad); }
+  .vd-toast b { font-size: 1.05rem; }
+  .vd-help { text-align: center; font-size: 0.8rem; opacity: 0.55;
+             margin-top: 0.5rem; }
+
+  .vd-lanes { display: flex; justify-content: center; gap: 0.5rem;
+              margin-top: 0.9rem; }
+  .vd-lanebtn {
+    background: var(--card); border: 1px solid var(--line); color: inherit;
+    border-radius: 10px; padding: 0.6rem 1.6rem; font-size: 1.2rem;
+    cursor: pointer; -webkit-user-select: none; user-select: none;
+  }
+  .vd-lanebtn:active { background: rgba(255,255,255,0.14); }
+
+  /* end screens */
+  .vd-win { text-align: center; padding: 1rem 0; }
+  .vd-win .em { font-size: 3.2rem; }
+  .vd-win h2 { margin: 0.4rem 0 0.2rem; }
+  .vd-win .stars { font-size: 2rem; color: #facc15; letter-spacing: 0.15em; }
+  .vd-win .sub { opacity: 0.7; font-size: 0.92rem; margin-top: 0.2rem; }
+  .vd-recap {
+    text-align: left; max-width: 520px; margin: 1.2rem auto 0;
+    display: grid; gap: 0.5rem;
+  }
+  .vd-recap .r {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 10px; padding: 0.6rem 0.9rem; font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .vd-recap .r b { color: var(--acc); }
+  .vd-actions { display: flex; justify-content: center; gap: 0.6rem;
+                margin-top: 1.4rem; flex-wrap: wrap; }
+  .vd-btn {
+    background: var(--acc); border: none; color: #0d1a22; font-weight: 700;
+    border-radius: 999px; padding: 0.5rem 1.3rem; font-size: 0.95rem;
+    cursor: pointer;
+  }
+  .vd-btn:hover { opacity: 0.88; }
+  .vd-btn.ghost { background: var(--card); color: inherit;
+                  border: 1px solid var(--line); }
+</style>
+
+<!-- Password gate -->
+<div id="protected-gate">
+  <div class="gate-card">
+    <div class="gate-lock" aria-hidden="true">🔒</div>
+    <p class="gate-title">{{ page.title | default: "Protected Page" }}</p>
+    <p class="gate-subtitle">This page is password-protected. Enter the passphrase to unlock.</p>
+    <div class="gate-input-row">
+      <label for="gate-password" class="sr-only">Passphrase</label>
+      <input id="gate-password" type="password" placeholder="Passphrase" autocomplete="off" autofocus />
+      <button id="gate-submit">Unlock</button>
+    </div>
+    <div id="gate-error" role="alert" aria-live="polite">Incorrect passphrase — please try again.</div>
+    <div id="gate-status" role="status" aria-live="polite">Decrypting…</div>
+  </div>
+</div>
+
+<div id="dash-root"><div class="vd" id="vd"></div></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* Encrypted blob injected by Jekyll from front matter field `encrypted` */
+  const ENCRYPTED_B64 = {{ page.encrypted | jsonify }};
+
+  const STORAGE_KEY = 'mwestwood-passphrase';
+
+  /* ── Gate (same crypto as protected.html) ───────────────────────────── */
+
+  function b64ToBytes(b64) {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+
+  async function deriveKey(passphrase, salt) {
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw', enc.encode(passphrase), { name: 'PBKDF2' }, false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: salt, iterations: 100000, hash: 'SHA-256' },
+      keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+  }
+
+  async function decrypt(passphrase) {
+    const blob = b64ToBytes(ENCRYPTED_B64);
+    const salt = blob.slice(0, 16);
+    const iv = blob.slice(16, 28);
+    const ct = blob.slice(28);
+    const key = await deriveKey(passphrase, salt);
+    const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, ct);
+    return new TextDecoder().decode(plaintext);
+  }
+
+  const gate = document.getElementById('protected-gate');
+  const rootWrap = document.getElementById('dash-root');
+  const input = document.getElementById('gate-password');
+  const btn = document.getElementById('gate-submit');
+  const errEl = document.getElementById('gate-error');
+  const statusEl = document.getElementById('gate-status');
+
+  function showError(msg) {
+    errEl.textContent = msg || 'Incorrect passphrase — please try again.';
+    errEl.style.display = 'block';
+    statusEl.style.display = 'none';
+    btn.disabled = false;
+    input.select();
+  }
+
+  function showStatus(msg) {
+    statusEl.textContent = msg;
+    statusEl.style.display = 'block';
+    errEl.style.display = 'none';
+  }
+
+  function reveal(text) {
+    let data;
+    try { data = JSON.parse(text); }
+    catch (e) { showError('Data error: could not parse word bank.'); return; }
+    gate.style.display = 'none';
+    rootWrap.style.display = 'block';
+    Dash.boot(data);
+  }
+
+  async function tryUnlock(passphrase, cache) {
+    try {
+      showStatus('Decrypting…');
+      btn.disabled = true;
+      const text = await decrypt(passphrase);
+      if (cache) {
+        try { localStorage.setItem(STORAGE_KEY, passphrase); } catch (_) {}
+      }
+      reveal(text);
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'OperationError') {
+        showError('Incorrect passphrase — please try again.');
+      } else if (e instanceof TypeError && e.message.includes('subtle')) {
+        showError('Error: Web Crypto API unavailable. This page requires HTTPS.');
+      } else {
+        showError('Error (' + e.name + '): ' + e.message);
+      }
+    }
+  }
+
+  async function init() {
+    if (!ENCRYPTED_B64) { showError('No encrypted data on this page.'); return; }
+    try {
+      const cached = localStorage.getItem(STORAGE_KEY);
+      if (cached) {
+        showStatus('Unlocking…');
+        btn.disabled = true;
+        input.disabled = true;
+        try {
+          const text = await decrypt(cached);
+          reveal(text);
+          return;
+        } catch (_) {
+          localStorage.removeItem(STORAGE_KEY);
+          btn.disabled = false;
+          input.disabled = false;
+          statusEl.style.display = 'none';
+        }
+      }
+    } catch (_) {}
+  }
+
+  btn.addEventListener('click', function () {
+    const pw = input.value;
+    if (!pw) { input.focus(); return; }
+    tryUnlock(pw, true);
+  });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') btn.click();
+  });
+
+  /* ══════════════════════════ Meaning Dash ══════════════════════════════ */
+
+  const Dash = (function () {
+
+    const el = document.getElementById('vd');
+
+    const LEVELS = [
+      { name: 'Breeze',  emoji: '🍃', tier: 'intermediate', speed: 130, target: 8,  lc: '#4ade80' },
+      { name: 'Gust',    emoji: '💨', tier: 'intermediate', speed: 160, target: 10, lc: '#34d399' },
+      { name: 'Squall',  emoji: '🌦️', tier: 'mixed',        speed: 190, target: 11, lc: '#38bdf8' },
+      { name: 'Gale',    emoji: '🌬️', tier: 'advanced',     speed: 220, target: 12, lc: '#fbbf24' },
+      { name: 'Tempest', emoji: '🌪️', tier: 'advanced',     speed: 255, target: 14, lc: '#a78bfa' }
+    ];
+    const TIER_LABEL = { intermediate: '🚀 Intermediate words',
+                         mixed: '🚀🏆 Mixed words', advanced: '🏆 Advanced words' };
+    const START_LIVES = 3;
+    const LANES = 3;
+    const CANVAS_W = 420, CANVAS_H = 460, CATCH_Y = 400, RUNNER_Y = 400, SPAWN_Y = -30;
+
+    let TIERS = null;
+    let S = null;
+    let rafId = null;
+
+    /* ── helpers ──────────────────────────────────────────────────────── */
+
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function shuffle(a) {
+      a = a.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = a[i]; a[i] = a[j]; a[j] = t;
+      }
+      return a;
+    }
+    function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+    function speak(text) {
+      try {
+        if (!window.speechSynthesis) return;
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.rate = 0.85;
+        speechSynthesis.speak(u);
+      } catch (_) {}
+    }
+
+    let AC = null;
+    function tone(freq, at, dur) {
+      if (!P.sound) return;
+      try {
+        AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+        const o = AC.createOscillator(), g = AC.createGain();
+        o.frequency.value = freq; o.type = 'sine';
+        g.gain.setValueAtTime(0.0001, AC.currentTime + at);
+        g.gain.linearRampToValueAtTime(0.12, AC.currentTime + at + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime + at + dur);
+        o.connect(g); g.connect(AC.destination);
+        o.start(AC.currentTime + at); o.stop(AC.currentTime + at + dur + 0.05);
+      } catch (_) {}
+    }
+    function sGood() { tone(660, 0, 0.12); tone(880, 0.12, 0.2); }
+    function sBad() { tone(220, 0, 0.1); tone(160, 0.1, 0.22); }
+    function sWin() { tone(523, 0, 0.14); tone(659, 0.14, 0.14); tone(784, 0.28, 0.3); }
+    function sOver() { tone(300, 0, 0.15); tone(220, 0.15, 0.15); tone(140, 0.3, 0.35); }
+
+    /* ── progress (localStorage) ──────────────────────────────────────── */
+
+    const PKEY = 'vocab-dash-v1';
+    let P = null;
+    try { P = JSON.parse(localStorage.getItem(PKEY) || 'null'); } catch (_) {}
+    if (!P || typeof P !== 'object') P = {};
+    P.stars = P.stars || {};
+    P.learned = P.learned || {};
+    if (P.sound === undefined) P.sound = true;
+    function save() {
+      try { localStorage.setItem(PKEY, JSON.stringify(P)); } catch (_) {}
+    }
+    function unlocked(i) { return i === 0 || (P.stars[i - 1] || 0) > 0; }
+
+    function tierWords(tier) {
+      if (tier === 'mixed') return TIERS.intermediate.concat(TIERS.advanced);
+      return TIERS[tier];
+    }
+    function buildPool(tier) {
+      const words = shuffle(tierWords(tier));
+      const fresh = [], seen = [];
+      words.forEach(function (w) { (P.learned[w.w] ? seen : fresh).push(w); });
+      return fresh.concat(seen);
+    }
+
+    /* ── screens ──────────────────────────────────────────────────────── */
+
+    function home() {
+      stopLoop();
+      S = null;
+      const learnedCount = Object.keys(P.learned).length;
+      let h = '<div class="vd-hero"><h1>💨 Meaning Dash</h1>' +
+        '<p>Words fall from the sky in three lanes — dash left or right ' +
+        'to stand under the one that matches the meaning.</p></div>';
+      if (learnedCount) {
+        h += '<div style="text-align:center;margin-bottom:1.2rem">' +
+          '<span class="vd-pill acc">📚 ' + learnedCount +
+          ' words mastered</span></div>';
+      }
+      h += '<div class="vd-levels">';
+      LEVELS.forEach(function (lv, i) {
+        const st = P.stars[i] || 0;
+        const open = unlocked(i);
+        h += '<button class="vd-level" data-l="' + i + '" style="--lc:' +
+          lv.lc + '"' + (open ? '' : ' disabled') + '>' +
+          '<span class="em">' + (open ? lv.emoji : '🔒') + '</span>' +
+          '<span class="body"><span class="name">Level ' + (i + 1) + ' — ' +
+          esc(lv.name) + '</span>' +
+          '<span class="meta" style="display:block">' + lv.target +
+          ' correct catches to win · ' + TIER_LABEL[lv.tier] + '</span></span>' +
+          '<span class="side"><span class="stars">' +
+          '★★★'.slice(0, st) + '<span style="opacity:0.25">' +
+          '★★★'.slice(0, 3 - st) + '</span></span></span></button>';
+      });
+      h += '</div>';
+      el.innerHTML = h;
+      el.querySelectorAll('.vd-level').forEach(function (b) {
+        b.addEventListener('click', function () { start(+b.dataset.l); });
+      });
+    }
+
+    function start(li) {
+      const lv = LEVELS[li];
+      S = {
+        li: li, level: lv, lane: 1,
+        falling: null, /* { y, items:[{lane,w,ok}] } */
+        caught: 0, lives: START_LIVES, misses: 0,
+        pool: buildPool(lv.tier), review: [],
+        used: [], toast: null, paused: false, over: false, started: false,
+        lastT: null
+      };
+
+      el.innerHTML =
+        '<div class="vd-top">' +
+        '<button class="vd-back" id="vd-quit">← All levels</button>' +
+        '<span class="vd-crumb">' + lv.emoji + ' Level ' + (li + 1) + ' — ' +
+        esc(lv.name) + '</span><span class="vd-spacer"></span>' +
+        '<span class="vd-pill acc" id="vd-score">🏃 0/' + lv.target + '</span>' +
+        '<span class="vd-pill hearts" id="vd-lives">' +
+        '❤️'.repeat(START_LIVES) + '</span>' +
+        '<span class="vd-pill btn" id="vd-sound">' +
+        (P.sound ? '🔊' : '🔇') + '</span></div>' +
+        '<div class="vd-prompt"><div class="lbl">Catch the word that means…</div>' +
+        '<div class="mean" id="vd-mean">—</div></div>' +
+        '<div class="vd-cwrap"><canvas id="vd-canvas"></canvas></div>' +
+        '<div class="vd-help">Left / right arrows or A / D to dash lanes</div>' +
+        '<div class="vd-lanes">' +
+        '<button class="vd-lanebtn" data-l="-1" aria-label="Move left">◀</button>' +
+        '<button class="vd-lanebtn" data-l="1" aria-label="Move right">▶</button>' +
+        '</div>';
+
+      document.getElementById('vd-quit').addEventListener('click', home);
+      document.getElementById('vd-sound').addEventListener('click', function () {
+        P.sound = !P.sound; save();
+        this.textContent = P.sound ? '🔊' : '🔇';
+      });
+      el.querySelectorAll('.vd-lanebtn').forEach(function (b) {
+        b.addEventListener('click', function () { moveLane(+b.dataset.l); });
+      });
+
+      const cv = document.getElementById('vd-canvas');
+      cv.width = CANVAS_W; cv.height = CANVAS_H;
+      cv.addEventListener('click', function (e) {
+        const r = cv.getBoundingClientRect();
+        const x = (e.clientX - r.left) * (CANVAS_W / r.width);
+        moveLane(x < CANVAS_W / 2 ? -1 : 1);
+      });
+
+      nextRound();
+      draw();
+      startLoop();
+    }
+
+    function laneX(lane) { return (lane + 0.5) * (CANVAS_W / LANES); }
+
+    function moveLane(delta) {
+      if (!S || S.over || S.paused) return;
+      S.lane = Math.max(0, Math.min(LANES - 1, S.lane + delta));
+      if (!S.started) S.started = true;
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if (!S || S.over) return;
+      const map = { ArrowLeft: -1, a: -1, A: -1, ArrowRight: 1, d: 1, D: 1 };
+      if (map[e.key] === undefined) return;
+      e.preventDefault();
+      moveLane(map[e.key]);
+    });
+
+    let loopActive = false;
+    function startLoop() {
+      loopActive = true;
+      S.lastT = null;
+      rafId = requestAnimationFrame(frame);
+    }
+    function stopLoop() {
+      loopActive = false;
+      if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    }
+
+    function frame(t) {
+      if (!loopActive || !S) return;
+      if (S.lastT == null) S.lastT = t;
+      const dt = Math.min(0.05, (t - S.lastT) / 1000);
+      S.lastT = t;
+      if (S.started && !S.paused && !S.over && S.falling) {
+        S.falling.y += S.level.speed * dt;
+        if (S.falling.y >= CATCH_Y) resolveCatch();
+      }
+      draw();
+      rafId = requestAnimationFrame(frame);
+    }
+
+    /* ── round setup ─────────────────────────────────────────────────── */
+
+    function nextWord() {
+      if (S.review.length) return S.review.shift();
+      return S.pool.shift() || pick(tierWords(S.level.tier));
+    }
+
+    function nextRound() {
+      const word = nextWord();
+      const others = shuffle(tierWords(S.level.tier)
+        .filter(function (w) { return w.w !== word.w; })).slice(0, LANES - 1);
+      const lanes = shuffle([0, 1, 2]);
+      const set = shuffle([word].concat(others));
+      const items = set.map(function (w, i) {
+        return { lane: lanes[i], w: w, ok: w.w === word.w };
+      });
+      S.falling = { y: SPAWN_Y, items: items, target: word };
+      const meanEl = document.getElementById('vd-mean');
+      if (meanEl) meanEl.textContent = word.mean;
+    }
+
+    function resolveCatch() {
+      const f = S.falling;
+      S.falling = null;
+      const caught = f.items.find(function (it) { return it.lane === S.lane; });
+      const w = f.target;
+      if (caught && caught.ok) {
+        sGood();
+        S.caught++;
+        if (S.used.indexOf(w) === -1) S.used.push(w);
+        P.learned[w.w] = 1; save();
+        document.getElementById('vd-score').textContent =
+          '🏃 ' + S.caught + '/' + S.level.target;
+        showToast('good', '✅ <b>' + esc(w.w) + '</b> — ' + esc(w.mean));
+        if (S.caught >= S.level.target) { setTimeout(win, 650); return; }
+      } else {
+        sBad();
+        S.misses++;
+        S.lives--;
+        S.review.push(w);
+        document.getElementById('vd-lives').textContent =
+          '❤️'.repeat(Math.max(0, S.lives)) + '🖤'.repeat(START_LIVES - S.lives);
+        const missedWord = caught ? caught.w : null;
+        showToast('bad', missedWord
+          ? '❌ That\'s <b>' + esc(missedWord.w) + '</b> — ' + esc(missedWord.mean) +
+            '<br>Look for: <b>' + esc(w.w) + '</b>'
+          : '❌ You missed it — <b>' + esc(w.w) + '</b> means ' + esc(w.mean));
+        if (S.lives <= 0) { setTimeout(gameOver, 900); return; }
+      }
+      S.paused = true;
+      setTimeout(function () {
+        if (!S || S.over) return;
+        S.toast = null;
+        S.paused = false;
+        nextRound();
+      }, 900);
+    }
+
+    function showToast(kind, html) { S.toast = { kind: kind, html: html }; }
+
+    /* ── drawing ──────────────────────────────────────────────────────── */
+
+    function draw() {
+      if (!S) return;
+      const cv = document.getElementById('vd-canvas');
+      if (!cv) return;
+      const ctx = cv.getContext('2d');
+      ctx.fillStyle = '#28262f';
+      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+      /* lane dividers */
+      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+      ctx.lineWidth = 1;
+      for (let i = 1; i < LANES; i++) {
+        const x = i * (CANVAS_W / LANES);
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, CANVAS_H); ctx.stroke();
+      }
+      /* catch line */
+      ctx.strokeStyle = 'rgba(56,189,248,0.35)';
+      ctx.setLineDash([6, 5]);
+      ctx.beginPath(); ctx.moveTo(0, CATCH_Y); ctx.lineTo(CANVAS_W, CATCH_Y); ctx.stroke();
+      ctx.setLineDash([]);
+
+      /* falling tags */
+      if (S.falling) {
+        S.falling.items.forEach(function (it) {
+          const cx = laneX(it.lane), cy = S.falling.y;
+          ctx.fillStyle = 'rgba(255,255,255,0.08)';
+          ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+          ctx.lineWidth = 1;
+          roundRect(ctx, cx - 58, cy - 18, 116, 36, 8);
+          ctx.fill(); ctx.stroke();
+          fitText(ctx, it.w.w, cx, cy, 106);
+        });
+      }
+
+      /* runner */
+      ctx.font = '30px "Apple Color Emoji","Segoe UI Emoji",sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('🏃', laneX(S.lane), RUNNER_Y + 34);
+
+      if (!S.started) {
+        ctx.fillStyle = 'rgba(20,19,24,0.55)';
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+        ctx.fillStyle = '#f3f1f5';
+        ctx.font = '700 16px sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('Press left or right', CANVAS_W / 2, CANVAS_H / 2 - 12);
+        ctx.fillText('to start', CANVAS_W / 2, CANVAS_H / 2 + 14);
+      } else if (S.paused && !S.toast) {
+        ctx.fillStyle = 'rgba(20,19,24,0.55)';
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+      }
+
+      renderToast();
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function fitText(ctx, text, cx, cy, maxW) {
+      let size = 13;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      while (size > 7) {
+        ctx.font = '600 ' + size + 'px system-ui, sans-serif';
+        if (ctx.measureText(text).width <= maxW) break;
+        size--;
+      }
+      ctx.fillStyle = '#f3f1f5';
+      ctx.fillText(text, cx, cy);
+    }
+
+    function renderToast() {
+      let box = document.getElementById('vd-toast');
+      if (S.toast) {
+        if (!box) {
+          box = document.createElement('div');
+          box.id = 'vd-toast';
+          box.className = 'vd-toast';
+          document.querySelector('.vd-cwrap').appendChild(box);
+        }
+        box.className = 'vd-toast ' + S.toast.kind;
+        box.innerHTML = S.toast.html;
+      } else if (box) {
+        box.remove();
+      }
+    }
+
+    /* ── end states ───────────────────────────────────────────────────── */
+
+    function gameOver() {
+      if (!S || S.over) return;
+      S.over = true;
+      stopLoop();
+      sOver();
+      const lv = S.level, li = S.li, used = S.used, caught = S.caught, target = lv.target;
+      S = null;
+
+      let h = '<div class="vd-win"><div class="em">💥💨</div>' +
+        '<h2>Out of breath!</h2>' +
+        '<div class="sub">' + caught + ' of ' + target +
+        ' words caught before running out of lives</div><div class="vd-recap">';
+      used.forEach(function (w) {
+        h += '<div class="r"><b>' + esc(w.w) + '</b> — ' + esc(w.mean) + '</div>';
+      });
+      h += '</div><div class="vd-actions">' +
+        '<button class="vd-btn" id="vd-again">↻ Try again</button>' +
+        '<button class="vd-btn ghost" id="vd-home">All levels</button>' +
+        '</div></div>';
+      el.innerHTML = h;
+      document.getElementById('vd-again').addEventListener('click', function () { start(li); });
+      document.getElementById('vd-home').addEventListener('click', home);
+    }
+
+    function win() {
+      if (!S || S.over) return;
+      S.over = true;
+      stopLoop();
+      sWin();
+      const stars = S.lives === START_LIVES ? 3 : S.lives >= 1 ? 2 : 1;
+      if ((P.stars[S.li] || 0) < stars) P.stars[S.li] = stars;
+      save();
+
+      const lv = S.level, li = S.li, used = S.used;
+      const hasNext = li + 1 < LEVELS.length;
+      S = null;
+
+      let h = '<div class="vd-win"><div class="em">' + lv.emoji + '🎉</div>' +
+        '<h2>Level cleared!</h2>' +
+        '<div class="stars">' + '★★★'.slice(0, stars) +
+        '<span style="opacity:0.25">' + '★★★'.slice(0, 3 - stars) +
+        '</span></div>' +
+        '<div class="sub">' + used.length +
+        (used.length === 1 ? ' word' : ' words') + ' mastered this run</div>' +
+        '<div class="vd-recap">';
+      used.forEach(function (w) {
+        h += '<div class="r"><b>' + esc(w.w) + '</b> — ' + esc(w.mean) + '</div>';
+      });
+      h += '</div><div class="vd-actions">' +
+        '<button class="vd-btn ghost" id="vd-again">↻ Play again</button>' +
+        (hasNext ? '<button class="vd-btn" id="vd-next">Next level →</button>' : '') +
+        '<button class="vd-btn ghost" id="vd-home">All levels</button>' +
+        '</div></div>';
+      el.innerHTML = h;
+      document.getElementById('vd-again').addEventListener('click', function () { start(li); });
+      if (hasNext) {
+        document.getElementById('vd-next').addEventListener('click', function () { start(li + 1); });
+      }
+      document.getElementById('vd-home').addEventListener('click', home);
+    }
+
+    /* ── boot ─────────────────────────────────────────────────────────── */
+
+    function boot(data) {
+      TIERS = data.tiers;
+      home();
+    }
+
+    return { boot: boot };
+  })();
+
+  init();
+})();
+</script>

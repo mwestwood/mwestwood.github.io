@@ -403,35 +403,68 @@ The arcade has a **reinforcement engine** (spaced repetition, added July
 Player progress (XP/stars/words/crowns/streak) lives in localStorage under
 `vocab-arcade-v1`; all new fields are backward-compatible with old saves.
 
-### Rebuild Word Maze (interactive game page)
+### Arrow-key vocabulary games: Word Maze, Word Snake, Meaning Dash
+
+Three separate games share one word bank, `_tools/maze_data.py`
+(gitignored, local-only — same rule as `vocab_data.py`): `INTERMEDIATE` and
+`ADVANCED` lists of `{w, mean, ex, syn}`, 60 words each (120 total). Each
+game has its own build script, encrypted page, and public engine layout —
+editing an engine never requires re-encryption; editing `maze_data.py` does,
+and touches all three (rebuild all three so they stay in sync):
 
 ```bash
-python3 _tools/build-vocab-maze.py "passphrase"
+python3 _tools/build-vocab-maze.py "passphrase"   # teaching/vocabulary/maze.md
+python3 _tools/build-word-snake.py "passphrase"   # teaching/vocabulary/snake.md
+python3 _tools/build-word-dash.py  "passphrase"   # teaching/vocabulary/dash.md
 ```
 
-Generates `teaching/vocabulary/maze.md` (`layout: protected-maze`) from
-`_tools/maze_data.py` (gitignored, local-only — same rule as
-`vocab_data.py`) — two word tiers (intermediate/advanced) packed as JSON
-and encrypted into front matter. The game engine (maze generation,
-arrow-key/WASD/D-pad/swipe movement, word gates, 10 levels) is public code
-in `_layouts/protected-maze.html`; editing the game never requires
-re-encryption, only word changes do. Design rules to keep when editing:
+All three skip `encrypt-batch.py` (it forces `layout: protected` and skips
+empty-body files anyway).
+
+**Word Maze** (`_layouts/protected-maze.html`, nav_order 5) — navigate a
+maze with arrow keys/WASD/D-pad/swipe; 🔒 word gates block the only path
+through. 20 levels, 9×9 → 29×29, intermediate words on 1–3, mixed 4–6,
+advanced 7–20 (11 gates on the hardest). Design rules:
 
 - **Mazes are perfect** (recursive backtracker — exactly one path between
-  any two cells), so the 🔒 word gates placed on the start→exit path can
-  never be walked around.
+  any two cells), so gates on the start→exit path can never be walked
+  around.
 - **Gates demand mastery**: a wrong answer shows a teaching card (meaning,
-  example, synonyms) and re-asks until correct; words missed at a gate are
-  re-queued at a later gate, and any still unmastered are re-tested in a
-  "final check" at the 🏁 flag before the level can be won.
-- Levels 1–3 use intermediate words, 4–5 mixed, 6–10 advanced; maze size
-  grows 9×9 → 23×23. A level unlocks when the previous one has ≥1 star
-  (3 stars = no misses).
+  example, synonyms) and re-asks until correct; missed words are re-queued
+  at a later gate, and any still unmastered are re-tested in a "final
+  check" at the 🏁 flag before the level can be won.
+- A level unlocks when the previous one has ≥1 star (3 stars = no misses).
 - Question types: word→meaning, meaning→word, fill-in-the-blank (uses the
-  word's `ex` sentence — it must contain the exact base form once).
+  word's `ex` sentence — must contain the exact base form once).
+- Player progress (stars/learned words) lives in localStorage under
+  `vocab-maze-v1`.
 
-`encrypt-batch.py` skips this page (empty body). Player progress
-(stars/learned words) lives in localStorage under `vocab-maze-v1`.
+**Word Snake** (`_layouts/protected-snake.html`, nav_order 6) — classic
+snake on a small rectangular grid; a meaning prompt is shown, and the snake
+must eat the one pellet (of three) whose word matches it. Correct catch
+grows the snake and scores; wrong catch costs a life and requeues that
+word for a later round; hitting a wall or its own tail ends the run
+immediately. 5 levels (Sprout → Ancient Grove), tiers intermediate → mixed
+→ advanced, 8–14 correct catches to clear. **The tick loop is gated behind
+the first keypress** (`S.started`) — without this, the snake starts sliding
+in its default direction the instant the level loads and can crash into a
+wall before the player has reacted; a "press an arrow key to start" overlay
+covers the canvas until then. Stars are based on lives remaining at the
+win. Progress lives in localStorage under `vocab-snake-v1`.
+
+**Meaning Dash** (`_layouts/protected-dash.html`, nav_order 7) — a 3-lane
+runner; three word tags fall together toward a catch line while a meaning
+prompt is shown, and the player dashes left/right so the runner is
+standing in the correct tag's lane when they land. Same start-gate pattern
+as Word Snake (`S.started`, frozen fall + "press left or right to start"
+overlay) — the fall begins the instant the level loads otherwise, and a
+slow reader can lose a life on the very first round with no chance to
+react. 5 levels (Breeze → Tempest), same tier/target progression as Word
+Snake. Progress lives in localStorage under `vocab-dash-v1`.
+
+All three win/game-over recap screens pluralize "word(s) mastered" —
+watch for this when copying the pattern to a new game (`"1 words"` is a
+real bug that shipped once and was caught in testing, not a hypothetical).
 
 ### Rebuild WH Question Quest (interactive game page)
 
