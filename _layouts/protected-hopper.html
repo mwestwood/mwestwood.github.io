@@ -62,114 +62,120 @@ layout: default
     overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
   }
 
-  /* ── Meaning Dash ────────────────────────────────────────────────────── */
-  #dash-root { display: none; }
+  /* ── Word Hopper ─────────────────────────────────────────────────────── */
+  #hopper-root { display: none; }
 
-  .vd { --acc: #38bdf8; --good: #4ade80; --bad: #f87171;
+  .vh { --acc: #34d399; --good: #4ade80; --bad: #f87171;
         --card: rgba(255,255,255,0.05); --line: rgba(255,255,255,0.12);
         max-width: 780px; }
-  .vd, .vd * { box-sizing: border-box; }
-  .vd button { font-family: inherit; }
+  .vh, .vh * { box-sizing: border-box; }
+  .vh button { font-family: inherit; }
 
-  .vd-top {
+  .vh-top {
     display: flex; align-items: center; gap: 0.6rem;
     margin-bottom: 1rem; flex-wrap: wrap;
   }
-  .vd-back {
+  .vh-back {
     background: var(--card); border: 1px solid var(--line);
     color: inherit; border-radius: 999px; padding: 0.3rem 0.85rem;
     font-size: 0.85rem; cursor: pointer;
   }
-  .vd-back:hover { border-color: var(--acc); }
-  .vd-crumb { font-weight: 700; font-size: 1.05rem; }
-  .vd-spacer { flex: 1; }
-  .vd-pill {
+  .vh-back:hover { border-color: var(--acc); }
+  .vh-crumb { font-weight: 700; font-size: 1.05rem; }
+  .vh-spacer { flex: 1; }
+  .vh-pill {
     font-size: 0.8rem; padding: 0.25rem 0.7rem; border-radius: 999px;
     background: var(--card); border: 1px solid var(--line); white-space: nowrap;
   }
-  .vd-pill.acc { border-color: var(--acc); color: var(--acc); font-weight: 600; }
-  .vd-pill.hearts { color: #f87171; border-color: rgba(248,113,113,0.4); }
-  .vd-pill.btn { cursor: pointer; }
+  .vh-pill.acc { border-color: var(--acc); color: var(--acc); font-weight: 600; }
+  .vh-pill.hearts { color: #f87171; border-color: rgba(248,113,113,0.4); }
+  .vh-pill.btn { cursor: pointer; }
 
-  .vd-hero { text-align: center; margin: 0.5rem 0 1.6rem; }
-  .vd-hero h1 { margin: 0 0 0.3rem; font-size: 2rem; }
-  .vd-hero p { margin: 0; opacity: 0.7; font-size: 0.95rem; }
+  .vh-hero { text-align: center; margin: 0.5rem 0 1.6rem; }
+  .vh-hero h1 { margin: 0 0 0.3rem; font-size: 2rem; }
+  .vh-hero p { margin: 0; opacity: 0.7; font-size: 0.95rem; }
 
-  .vd-levels { display: grid; gap: 0.9rem; }
-  .vd-level {
+  .vh-levels { display: grid; gap: 0.9rem; }
+  .vh-level {
     display: flex; align-items: center; gap: 1rem; width: 100%;
     text-align: left; background: var(--card); border: 1px solid var(--line);
     border-radius: 14px; padding: 1rem 1.2rem; color: inherit;
     cursor: pointer; transition: transform 0.12s, border-color 0.12s;
   }
-  .vd-level:hover:not(:disabled) { transform: translateY(-2px);
-                                   border-color: var(--lc, var(--acc)); }
-  .vd-level:disabled { cursor: not-allowed; opacity: 0.45; }
-  .vd-level .em { font-size: 2rem; }
-  .vd-level .body { flex: 1; min-width: 0; }
-  .vd-level .name { font-weight: 700; font-size: 1.1rem; }
-  .vd-level .meta { font-size: 0.8rem; opacity: 0.6; margin-top: 0.2rem; }
-  .vd-level .side { text-align: right; font-size: 0.95rem; white-space: nowrap; }
-  .vd-level .stars { color: #facc15; font-weight: 700; letter-spacing: 0.1em; }
+  .vh-level:hover { transform: translateY(-2px);
+                    border-color: var(--lc, var(--acc)); }
+  .vh-level .em { font-size: 2rem; }
+  .vh-level .body { flex: 1; min-width: 0; }
+  .vh-level .name { font-weight: 700; font-size: 1.1rem; }
+  .vh-level .meta { font-size: 0.8rem; opacity: 0.6; margin-top: 0.2rem; }
+  .vh-level .side { text-align: right; font-size: 0.95rem; white-space: nowrap; }
+  .vh-level .stars { color: #facc15; font-weight: 700; letter-spacing: 0.1em; }
 
   /* play screen */
-  .vd-prompt { text-align: center; margin: 0 0 0.7rem; min-height: 2.6em; }
-  .vd-prompt .lbl { font-size: 0.75rem; letter-spacing: 0.08em;
+  .vh-prompt { text-align: center; margin: 0 0 0.7rem; min-height: 2.6em; }
+  .vh-prompt .lbl { font-size: 0.75rem; letter-spacing: 0.08em;
                     text-transform: uppercase; opacity: 0.55; }
-  .vd-prompt .mean { font-size: 1.1rem; font-weight: 600; line-height: 1.4;
+  .vh-prompt .mean { font-size: 1.1rem; font-weight: 600; line-height: 1.4;
                       max-width: 560px; margin: 0.15rem auto 0; }
-  .vd-cwrap { display: flex; justify-content: center; position: relative; }
-  #vd-canvas {
+  .vh-cwrap { display: flex; justify-content: center; position: relative; }
+  #vh-canvas {
     border: 1px solid var(--line); border-radius: 10px;
-    background: #28262f; touch-action: none; max-width: 100%;
+    background: #1b3028; touch-action: none; max-width: 100%;
   }
-  .vd-toast {
+  .vh-toast {
     position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
     background: #26252c; border: 1px solid var(--line); border-radius: 12px;
     padding: 0.8rem 1.1rem; max-width: 90%; text-align: center;
     font-size: 0.92rem; line-height: 1.5; box-shadow: 0 6px 24px rgba(0,0,0,0.4);
     pointer-events: none;
   }
-  .vd-toast.good { border-color: var(--good); }
-  .vd-toast.bad { border-color: var(--bad); }
-  .vd-toast b { font-size: 1.05rem; }
-  .vd-help { text-align: center; font-size: 0.8rem; opacity: 0.55;
+  .vh-toast.good { border-color: var(--good); }
+  .vh-toast.bad { border-color: var(--bad); }
+  .vh-toast b { font-size: 1.05rem; }
+  .vh-help { text-align: center; font-size: 0.8rem; opacity: 0.55;
              margin-top: 0.5rem; }
 
-  .vd-lanes { display: flex; justify-content: center; gap: 0.5rem;
-              margin-top: 0.9rem; }
-  .vd-lanebtn {
-    background: var(--card); border: 1px solid var(--line); color: inherit;
-    border-radius: 10px; padding: 0.6rem 1.6rem; font-size: 1.2rem;
-    cursor: pointer; -webkit-user-select: none; user-select: none;
+  .vh-dpad {
+    display: grid; grid-template-columns: repeat(3, 56px);
+    grid-template-rows: repeat(2, 48px); gap: 0.4rem;
+    justify-content: center; margin-top: 0.9rem;
   }
-  .vd-lanebtn:active { background: rgba(255,255,255,0.14); }
+  .vh-dpad button {
+    background: var(--card); border: 1px solid var(--line); color: inherit;
+    border-radius: 10px; font-size: 1.1rem; cursor: pointer;
+    -webkit-user-select: none; user-select: none;
+  }
+  .vh-dpad button:active { background: rgba(255,255,255,0.14); }
+  .vh-dpad .up { grid-column: 2; grid-row: 1; }
+  .vh-dpad .left { grid-column: 1; grid-row: 2; }
+  .vh-dpad .down { grid-column: 2; grid-row: 2; }
+  .vh-dpad .right { grid-column: 3; grid-row: 2; }
 
   /* end screens */
-  .vd-win { text-align: center; padding: 1rem 0; }
-  .vd-win .em { font-size: 3.2rem; }
-  .vd-win h2 { margin: 0.4rem 0 0.2rem; }
-  .vd-win .stars { font-size: 2rem; color: #facc15; letter-spacing: 0.15em; }
-  .vd-win .sub { opacity: 0.7; font-size: 0.92rem; margin-top: 0.2rem; }
-  .vd-recap {
+  .vh-win { text-align: center; padding: 1rem 0; }
+  .vh-win .em { font-size: 3.2rem; }
+  .vh-win h2 { margin: 0.4rem 0 0.2rem; }
+  .vh-win .stars { font-size: 2rem; color: #facc15; letter-spacing: 0.15em; }
+  .vh-win .sub { opacity: 0.7; font-size: 0.92rem; margin-top: 0.2rem; }
+  .vh-recap {
     text-align: left; max-width: 520px; margin: 1.2rem auto 0;
     display: grid; gap: 0.5rem;
   }
-  .vd-recap .r {
+  .vh-recap .r {
     background: var(--card); border: 1px solid var(--line);
     border-radius: 10px; padding: 0.6rem 0.9rem; font-size: 0.9rem;
     line-height: 1.5;
   }
-  .vd-recap .r b { color: var(--acc); }
-  .vd-actions { display: flex; justify-content: center; gap: 0.6rem;
+  .vh-recap .r b { color: var(--acc); }
+  .vh-actions { display: flex; justify-content: center; gap: 0.6rem;
                 margin-top: 1.4rem; flex-wrap: wrap; }
-  .vd-btn {
-    background: var(--acc); border: none; color: #0d1a22; font-weight: 700;
+  .vh-btn {
+    background: var(--acc); border: none; color: #0d1a14; font-weight: 700;
     border-radius: 999px; padding: 0.5rem 1.3rem; font-size: 0.95rem;
     cursor: pointer;
   }
-  .vd-btn:hover { opacity: 0.88; }
-  .vd-btn.ghost { background: var(--card); color: inherit;
+  .vh-btn:hover { opacity: 0.88; }
+  .vh-btn.ghost { background: var(--card); color: inherit;
                   border: 1px solid var(--line); }
 </style>
 
@@ -189,7 +195,7 @@ layout: default
   </div>
 </div>
 
-<div id="dash-root"><div class="vd" id="vd"></div></div>
+<div id="hopper-root"><div class="vh" id="vh"></div></div>
 
 <script>
 (function () {
@@ -229,7 +235,7 @@ layout: default
   }
 
   const gate = document.getElementById('protected-gate');
-  const rootWrap = document.getElementById('dash-root');
+  const rootWrap = document.getElementById('hopper-root');
   const input = document.getElementById('gate-password');
   const btn = document.getElementById('gate-submit');
   const errEl = document.getElementById('gate-error');
@@ -255,7 +261,7 @@ layout: default
     catch (e) { showError('Data error: could not parse word bank.'); return; }
     gate.style.display = 'none';
     rootWrap.style.display = 'block';
-    Dash.boot(data);
+    Hopper.boot(data);
   }
 
   async function tryUnlock(passphrase, cache) {
@@ -309,42 +315,45 @@ layout: default
     if (e.key === 'Enter') btn.click();
   });
 
-  /* ══════════════════════════ Meaning Dash ══════════════════════════════ */
+  /* ══════════════════════════ Word Hopper ═══════════════════════════════ */
 
-  const Dash = (function () {
+  const Hopper = (function () {
 
-    const el = document.getElementById('vd');
+    const el = document.getElementById('vh');
 
-    /* Speeds are deliberately gentle (px/sec) — the words need to be read,
-       not just dodged. Each level sets the catcher character and scene
-       colors so they match (dolphin by the sea, skier in the snow…). */
+    const COLS = 7, ROWS = 7, CELL = 60;
+    const CANVAS_W = COLS * CELL, CANVAS_H = ROWS * CELL;
+    const PAD_COLS = [1, 3, 5];   /* word pads sit in row 0 at these columns */
+    const START = [3, 6];
+    const START_LIVES = 3;
+
+    /* Each level sets the hopping character, the traffic that must be
+       dodged, and the scene colors — so the creature fits the setting
+       (frog on the pond, dolphin in the reef, penguin on the ice). */
     const LEVELS = [
-      { name: 'Breeze',     emoji: '🍃', hero: '🏃', tier: 'intermediate', speed: 70,  target: 8,
-        bg: '#242b21', lc: '#4ade80' },
-      { name: 'Meadow',     emoji: '🌼', hero: '🐇', tier: 'intermediate', speed: 80,  target: 9,
-        bg: '#2b2b1a', lc: '#facc15' },
-      { name: 'Orchard',    emoji: '🍎', hero: '🐿️', tier: 'intermediate', speed: 90,  target: 10,
-        bg: '#28221a', lc: '#fb923c' },
-      { name: 'Seaside',    emoji: '🌊', hero: '🐬', tier: 'mixed',        speed: 100, target: 10,
-        bg: '#16283a', lc: '#38bdf8' },
-      { name: 'Riverwind',  emoji: '🏞️', hero: '🦆', tier: 'mixed',        speed: 110, target: 11,
-        bg: '#1a2b33', lc: '#22d3ee' },
-      { name: 'Snowdrift',  emoji: '❄️', hero: '⛷️', tier: 'advanced',     speed: 120, target: 12,
-        bg: '#1e2a36', lc: '#93c5fd' },
-      { name: 'Canyon',     emoji: '🏜️', hero: '🐎', tier: 'advanced',     speed: 130, target: 12,
-        bg: '#332818', lc: '#fbbf24' },
-      { name: 'Thundercloud', emoji: '⛈️', hero: '🦅', tier: 'advanced',   speed: 145, target: 13,
-        bg: '#242c40', lc: '#a78bfa' },
-      { name: 'Rocket Run', emoji: '🌌', hero: '🚀', tier: 'advanced',     speed: 160, target: 14,
-        bg: '#191327', lc: '#c084fc' },
-      { name: 'Tempest',    emoji: '🌪️', hero: '🦸', tier: 'advanced',     speed: 175, target: 15,
-        bg: '#2b1628', lc: '#f472b6' }
+      { name: 'Lily Pond',      emoji: '🪷', hero: '🐸', obs: ['🦢', '🦆'], tier: 'intermediate',
+        speed: 45,  roads: 2, target: 6,  bg: '#1b3028', road: 'rgba(0,0,0,0.22)', lc: '#34d399' },
+      { name: 'Country Lane',   emoji: '🌾', hero: '🐔', obs: ['🚜', '🐄'], tier: 'intermediate',
+        speed: 55,  roads: 2, target: 6,  bg: '#2b2b1a', road: 'rgba(0,0,0,0.22)', lc: '#facc15' },
+      { name: 'Busy Street',    emoji: '🚦', hero: '🐱', obs: ['🚗', '🚌'], tier: 'intermediate',
+        speed: 65,  roads: 2, target: 7,  bg: '#26242c', road: 'rgba(0,0,0,0.25)', lc: '#93c5fd' },
+      { name: 'Harbor Hop',     emoji: '🐚', hero: '🐢', obs: ['⛵', '🚤'], tier: 'mixed',
+        speed: 72,  roads: 3, target: 7,  bg: '#16283a', road: 'rgba(255,255,255,0.05)', lc: '#38bdf8' },
+      { name: 'Coral Crossing', emoji: '🌊', hero: '🐬', obs: ['🦈', '🐙'], tier: 'mixed',
+        speed: 80,  roads: 3, target: 8,  bg: '#132433', road: 'rgba(255,255,255,0.05)', lc: '#2dd4bf' },
+      { name: 'Icy River',      emoji: '❄️', hero: '🐧', obs: ['🧊', '🦭'], tier: 'advanced',
+        speed: 88,  roads: 3, target: 8,  bg: '#1e2a36', road: 'rgba(255,255,255,0.06)', lc: '#67e8f9' },
+      { name: 'Jungle Trail',   emoji: '🌴', hero: '🐒', obs: ['🐊', '🦏'], tier: 'advanced',
+        speed: 96,  roads: 3, target: 9,  bg: '#1d2417', road: 'rgba(0,0,0,0.25)', lc: '#a3e635' },
+      { name: 'Lava Field',     emoji: '🌋', hero: '🦎', obs: ['🔥', '☄️'], tier: 'advanced',
+        speed: 104, roads: 3, target: 9,  bg: '#2e1712', road: 'rgba(0,0,0,0.28)', lc: '#fb923c' },
+      { name: 'Night Highway',  emoji: '🌃', hero: '🦊', obs: ['🚚', '🏎️'], tier: 'advanced',
+        speed: 112, roads: 4, target: 10, bg: '#191c27', road: 'rgba(0,0,0,0.3)', lc: '#c4b5fd' },
+      { name: 'Meteor Belt',    emoji: '🌌', hero: '🚀', obs: ['☄️', '🛸'], tier: 'advanced',
+        speed: 120, roads: 4, target: 10, bg: '#191327', road: 'rgba(255,255,255,0.05)', lc: '#c084fc' }
     ];
     const TIER_LABEL = { intermediate: '🚀 Intermediate words',
                          mixed: '🚀🏆 Mixed words', advanced: '🏆 Advanced words' };
-    const START_LIVES = 3;
-    const LANES = 3;
-    const CANVAS_W = 420, CANVAS_H = 460, CATCH_Y = 400, RUNNER_Y = 400, SPAWN_Y = -30;
 
     let TIERS = null;
     let S = null;
@@ -366,15 +375,6 @@ layout: default
       return a;
     }
     function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
-    function speak(text) {
-      try {
-        if (!window.speechSynthesis) return;
-        speechSynthesis.cancel();
-        const u = new SpeechSynthesisUtterance(text);
-        u.rate = 0.85;
-        speechSynthesis.speak(u);
-      } catch (_) {}
-    }
 
     let AC = null;
     function tone(freq, at, dur) {
@@ -397,7 +397,7 @@ layout: default
 
     /* ── progress (localStorage) ──────────────────────────────────────── */
 
-    const PKEY = 'vocab-dash-v1';
+    const PKEY = 'vocab-hopper-v1';
     let P = null;
     try { P = JSON.parse(localStorage.getItem(PKEY) || 'null'); } catch (_) {}
     if (!P || typeof P !== 'object') P = {};
@@ -407,8 +407,6 @@ layout: default
     function save() {
       try { localStorage.setItem(PKEY, JSON.stringify(P)); } catch (_) {}
     }
-    /* All levels are open from the start. */
-    function unlocked() { return true; }
 
     function tierWords(tier) {
       if (tier === 'mixed') return TIERS.intermediate.concat(TIERS.advanced);
@@ -427,103 +425,155 @@ layout: default
       stopLoop();
       S = null;
       const learnedCount = Object.keys(P.learned).length;
-      let h = '<div class="vd-hero"><h1>💨 Meaning Dash</h1>' +
-        '<p>Words fall from the sky in three lanes — dash left or right ' +
-        'to stand under the one that matches the meaning.</p></div>';
+      let h = '<div class="vh-hero"><h1>🐸 Word Hopper</h1>' +
+        '<p>Hop with all four arrows — dodge the traffic, then land on the ' +
+        'word that matches the meaning. Every level is open.</p></div>';
       if (learnedCount) {
         h += '<div style="text-align:center;margin-bottom:1.2rem">' +
-          '<span class="vd-pill acc">📚 ' + learnedCount +
+          '<span class="vh-pill acc">📚 ' + learnedCount +
           ' words mastered</span></div>';
       }
-      h += '<div class="vd-levels">';
+      h += '<div class="vh-levels">';
       LEVELS.forEach(function (lv, i) {
         const st = P.stars[i] || 0;
-        h += '<button class="vd-level" data-l="' + i + '" style="--lc:' +
+        h += '<button class="vh-level" data-l="' + i + '" style="--lc:' +
           lv.lc + '">' +
           '<span class="em">' + lv.emoji + lv.hero + '</span>' +
           '<span class="body"><span class="name">Level ' + (i + 1) + ' — ' +
           esc(lv.name) + '</span>' +
           '<span class="meta" style="display:block">' + lv.target +
-          ' correct catches to win · ' + TIER_LABEL[lv.tier] + '</span></span>' +
+          ' safe crossings to win · ' + lv.roads + ' lanes of ' +
+          lv.obs.join('') + ' · ' + TIER_LABEL[lv.tier] + '</span></span>' +
           '<span class="side"><span class="stars">' +
           '★★★'.slice(0, st) + '<span style="opacity:0.25">' +
           '★★★'.slice(0, 3 - st) + '</span></span></span></button>';
       });
       h += '</div>';
       el.innerHTML = h;
-      el.querySelectorAll('.vd-level').forEach(function (b) {
+      el.querySelectorAll('.vh-level').forEach(function (b) {
         b.addEventListener('click', function () { start(+b.dataset.l); });
       });
+    }
+
+    function trafficRows(lv) {
+      /* traffic occupies rows 2..(1+roads); row 1 is the calm bank under
+         the pads, the rows below the traffic are safe grass */
+      const rows = [];
+      for (let r = 0; r < lv.roads; r++) rows.push(2 + r);
+      return rows;
     }
 
     function start(li) {
       const lv = LEVELS[li];
       S = {
-        li: li, level: lv, lane: 1,
-        falling: null, /* { y, items:[{lane,w,ok}] } */
+        li: li, level: lv,
+        fx: START[0], fy: START[1],
+        pads: [], target: null,
+        obstacles: [],           /* { row, x, speed, emoji } */
         caught: 0, lives: START_LIVES, misses: 0,
-        pool: buildPool(lv.tier), review: [],
+        pool: buildPool(lv.tier),
         used: [], toast: null, paused: false, over: false, started: false,
         lastT: null
       };
 
+      /* two obstacles per traffic lane, alternating direction per lane,
+         each lane a little faster than the one before */
+      trafficRows(lv).forEach(function (row, r) {
+        const dir = r % 2 === 0 ? 1 : -1;
+        const speed = dir * lv.speed * (1 + r * 0.18);
+        for (let k = 0; k < 2; k++) {
+          S.obstacles.push({
+            row: row,
+            x: k * (CANVAS_W / 2) + r * 40,
+            speed: speed,
+            emoji: lv.obs[k % lv.obs.length]
+          });
+        }
+      });
+
       el.innerHTML =
-        '<div class="vd-top">' +
-        '<button class="vd-back" id="vd-quit">← All levels</button>' +
-        '<span class="vd-crumb">' + lv.emoji + ' Level ' + (li + 1) + ' — ' +
-        esc(lv.name) + '</span><span class="vd-spacer"></span>' +
-        '<span class="vd-pill acc" id="vd-score">🏃 0/' + lv.target + '</span>' +
-        '<span class="vd-pill hearts" id="vd-lives">' +
+        '<div class="vh-top">' +
+        '<button class="vh-back" id="vh-quit">← All levels</button>' +
+        '<span class="vh-crumb">' + lv.emoji + ' Level ' + (li + 1) + ' — ' +
+        esc(lv.name) + '</span><span class="vh-spacer"></span>' +
+        '<span class="vh-pill acc" id="vh-score">' + lv.hero + ' 0/' +
+        lv.target + '</span>' +
+        '<span class="vh-pill hearts" id="vh-lives">' +
         '❤️'.repeat(START_LIVES) + '</span>' +
-        '<span class="vd-pill btn" id="vd-sound">' +
+        '<span class="vh-pill btn" id="vh-sound">' +
         (P.sound ? '🔊' : '🔇') + '</span></div>' +
-        '<div class="vd-prompt"><div class="lbl">Catch the word that means…</div>' +
-        '<div class="mean" id="vd-mean">—</div></div>' +
-        '<div class="vd-cwrap"><canvas id="vd-canvas"></canvas></div>' +
-        '<div class="vd-help">Left / right arrows or A / D to dash lanes</div>' +
-        '<div class="vd-lanes">' +
-        '<button class="vd-lanebtn" data-l="-1" aria-label="Move left">◀</button>' +
-        '<button class="vd-lanebtn" data-l="1" aria-label="Move right">▶</button>' +
+        '<div class="vh-prompt"><div class="lbl">Hop to the word that means…</div>' +
+        '<div class="mean" id="vh-mean">—</div></div>' +
+        '<div class="vh-cwrap"><canvas id="vh-canvas"></canvas></div>' +
+        '<div class="vh-help">All four arrows / WASD to hop · dodge the ' +
+        'traffic · land on the right word</div>' +
+        '<div class="vh-dpad">' +
+        '<button class="up" data-d="up" aria-label="Up">▲</button>' +
+        '<button class="left" data-d="left" aria-label="Left">◀</button>' +
+        '<button class="down" data-d="down" aria-label="Down">▼</button>' +
+        '<button class="right" data-d="right" aria-label="Right">▶</button>' +
         '</div>';
 
-      document.getElementById('vd-quit').addEventListener('click', home);
-      document.getElementById('vd-sound').addEventListener('click', function () {
+      document.getElementById('vh-quit').addEventListener('click', home);
+      document.getElementById('vh-sound').addEventListener('click', function () {
         P.sound = !P.sound; save();
         this.textContent = P.sound ? '🔊' : '🔇';
       });
-      el.querySelectorAll('.vd-lanebtn').forEach(function (b) {
-        b.addEventListener('click', function () { moveLane(+b.dataset.l); });
+      el.querySelectorAll('.vh-dpad button').forEach(function (b) {
+        b.addEventListener('click', function () { hop(b.dataset.d); });
       });
 
-      const cv = document.getElementById('vd-canvas');
+      const cv = document.getElementById('vh-canvas');
       cv.style.background = lv.bg;
       cv.width = CANVAS_W; cv.height = CANVAS_H;
-      cv.addEventListener('click', function (e) {
-        const r = cv.getBoundingClientRect();
-        const x = (e.clientX - r.left) * (CANVAS_W / r.width);
-        moveLane(x < CANVAS_W / 2 ? -1 : 1);
-      });
 
-      nextRound();
+      let t0 = null;
+      cv.addEventListener('touchstart', function (e) {
+        t0 = [e.touches[0].clientX, e.touches[0].clientY];
+      }, { passive: true });
+      cv.addEventListener('touchend', function (e) {
+        if (!t0) return;
+        const dx = e.changedTouches[0].clientX - t0[0];
+        const dy = e.changedTouches[0].clientY - t0[1];
+        t0 = null;
+        if (Math.max(Math.abs(dx), Math.abs(dy)) < 20) return;
+        if (Math.abs(dx) > Math.abs(dy)) hop(dx > 0 ? 'right' : 'left');
+        else hop(dy > 0 ? 'down' : 'up');
+      }, { passive: true });
+
+      nextRound(false);
       draw();
       startLoop();
     }
 
-    function laneX(lane) { return (lane + 0.5) * (CANVAS_W / LANES); }
+    /* ── movement ─────────────────────────────────────────────────────── */
 
-    function moveLane(delta) {
+    function hop(dir) {
       if (!S || S.over || S.paused) return;
-      S.lane = Math.max(0, Math.min(LANES - 1, S.lane + delta));
+      const d = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[dir];
+      if (!d) return;
       if (!S.started) S.started = true;
+      const nx = S.fx + d[0], ny = S.fy + d[1];
+      if (nx < 0 || ny < 0 || nx >= COLS || ny >= ROWS) return;
+      /* row 0 can only be entered where a pad sits — the rest is hedge */
+      if (ny === 0 && PAD_COLS.indexOf(nx) === -1) return;
+      S.fx = nx; S.fy = ny;
+      if (ny === 0) landOnPad(nx);
+      draw();
     }
 
     document.addEventListener('keydown', function (e) {
       if (!S || S.over) return;
-      const map = { ArrowLeft: -1, a: -1, A: -1, ArrowRight: 1, d: 1, D: 1 };
-      if (map[e.key] === undefined) return;
+      const map = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left',
+                    ArrowRight: 'right', w: 'up', s: 'down', a: 'left',
+                    d: 'right', W: 'up', S: 'down', A: 'left', D: 'right' };
+      const dir = map[e.key];
+      if (!dir) return;
       e.preventDefault();
-      moveLane(map[e.key]);
+      hop(dir);
     });
+
+    /* ── game loop (traffic) ──────────────────────────────────────────── */
 
     let loopActive = false;
     function startLoop() {
@@ -541,77 +591,97 @@ layout: default
       if (S.lastT == null) S.lastT = t;
       const dt = Math.min(0.05, (t - S.lastT) / 1000);
       S.lastT = t;
-      if (S.started && !S.paused && !S.over && S.falling) {
-        S.falling.y += S.level.speed * dt;
-        if (S.falling.y >= CATCH_Y) resolveCatch();
+      if (S.started && !S.paused && !S.over) {
+        S.obstacles.forEach(function (o) {
+          o.x += o.speed * dt;
+          if (o.x > CANVAS_W + CELL) o.x = -CELL;
+          if (o.x < -CELL) o.x = CANVAS_W + CELL;
+        });
+        checkCollision();
       }
       draw();
       rafId = requestAnimationFrame(frame);
     }
 
-    /* ── round setup ─────────────────────────────────────────────────── */
-
-    function nextWord() {
-      if (S.review.length) return S.review.shift();
-      return S.pool.shift() || pick(tierWords(S.level.tier));
+    function checkCollision() {
+      const fLeft = S.fx * CELL + 10, fRight = (S.fx + 1) * CELL - 10;
+      for (let i = 0; i < S.obstacles.length; i++) {
+        const o = S.obstacles[i];
+        if (o.row !== S.fy) continue;
+        if (o.x < fRight && o.x + CELL > fLeft) { hitByTraffic(o); return; }
+      }
     }
 
-    function nextRound() {
-      const word = nextWord();
+    function hitByTraffic(o) {
+      sBad();
+      S.lives--;
+      document.getElementById('vh-lives').textContent =
+        '❤️'.repeat(Math.max(0, S.lives)) + '🖤'.repeat(START_LIVES - S.lives);
+      S.fx = START[0]; S.fy = START[1];
+      showToast('bad', '💥 ' + o.emoji + ' got you! Back to the start.');
+      if (S.lives <= 0) { S.paused = true; setTimeout(gameOver, 1200); return; }
+      pauseThen(1200, false);
+    }
+
+    /* ── word pads ────────────────────────────────────────────────────── */
+
+    function nextRound(keepTarget) {
+      if (!keepTarget || !S.target) {
+        S.target = S.pool.shift() || pick(tierWords(S.level.tier));
+      }
+      const word = S.target;
       const others = shuffle(tierWords(S.level.tier)
-        .filter(function (w) { return w.w !== word.w; })).slice(0, LANES - 1);
-      const lanes = shuffle([0, 1, 2]);
+        .filter(function (w) { return w.w !== word.w; })).slice(0, PAD_COLS.length - 1);
       const set = shuffle([word].concat(others));
-      const items = set.map(function (w, i) {
-        return { lane: lanes[i], w: w, ok: w.w === word.w };
+      S.pads = PAD_COLS.map(function (col, i) {
+        return { col: col, w: set[i], ok: set[i].w === word.w };
       });
-      S.falling = { y: SPAWN_Y, items: items, target: word };
-      const meanEl = document.getElementById('vd-mean');
+      const meanEl = document.getElementById('vh-mean');
       if (meanEl) meanEl.textContent = word.mean;
     }
 
-    function resolveCatch() {
-      const f = S.falling;
-      S.falling = null;
-      const caught = f.items.find(function (it) { return it.lane === S.lane; });
-      const w = f.target;
-      /* the fall pauses while the toast is up — give the example sentence
-         enough time to actually be read */
-      let pauseMs;
-      if (caught && caught.ok) {
+    function landOnPad(col) {
+      const pad = S.pads.find(function (p) { return p.col === col; });
+      if (!pad) return;
+      const w = S.target;
+      S.fx = START[0]; S.fy = START[1];
+      if (pad.ok) {
         sGood();
         S.caught++;
         if (S.used.indexOf(w) === -1) S.used.push(w);
         P.learned[w.w] = 1; save();
-        document.getElementById('vd-score').textContent =
-          '🏃 ' + S.caught + '/' + S.level.target;
+        document.getElementById('vh-score').textContent =
+          S.level.hero + ' ' + S.caught + '/' + S.level.target;
         showToast('good', '✅ <b>' + esc(w.w) + '</b> — ' + esc(w.mean) +
           (w.ex ? '<br><i>“' + esc(w.ex) + '”</i>' : ''));
-        if (S.caught >= S.level.target) { setTimeout(win, 1400); return; }
-        pauseMs = 1800;
+        if (S.caught >= S.level.target) {
+          S.paused = true; setTimeout(win, 1400); return;
+        }
+        pauseThen(1800, false);
       } else {
         sBad();
         S.misses++;
         S.lives--;
-        S.review.push(w);
-        document.getElementById('vd-lives').textContent =
+        document.getElementById('vh-lives').textContent =
           '❤️'.repeat(Math.max(0, S.lives)) + '🖤'.repeat(START_LIVES - S.lives);
-        const missedWord = caught ? caught.w : null;
-        showToast('bad', (missedWord
-          ? '❌ That\'s <b>' + esc(missedWord.w) + '</b> — ' + esc(missedWord.mean) +
-            '<br>Look for: <b>' + esc(w.w) + '</b>'
-          : '❌ You missed it — <b>' + esc(w.w) + '</b> means ' + esc(w.mean)) +
+        showToast('bad', '❌ That\'s <b>' + esc(pad.w.w) + '</b> — ' +
+          esc(pad.w.mean) + '<br>Look for: <b>' + esc(w.w) + '</b>' +
           (w.ex ? '<br><i>“' + esc(w.ex) + '”</i>' : ''));
-        if (S.lives <= 0) { setTimeout(gameOver, 2200); return; }
-        pauseMs = 2600;
+        if (S.lives <= 0) { S.paused = true; setTimeout(gameOver, 2200); return; }
+        /* same word again, pads reshuffled — it must be answered right */
+        pauseThen(2600, true);
       }
+    }
+
+    function pauseThen(ms, keepTarget) {
       S.paused = true;
       setTimeout(function () {
         if (!S || S.over) return;
         S.toast = null;
         S.paused = false;
-        nextRound();
-      }, pauseMs);
+        nextRound(keepTarget ? true : false);
+        draw();
+      }, ms);
     }
 
     function showToast(kind, html) { S.toast = { kind: kind, html: html }; }
@@ -620,42 +690,40 @@ layout: default
 
     function draw() {
       if (!S) return;
-      const cv = document.getElementById('vd-canvas');
+      const cv = document.getElementById('vh-canvas');
       if (!cv) return;
       const ctx = cv.getContext('2d');
       ctx.fillStyle = S.level.bg;
       ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-      /* lane dividers */
-      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-      ctx.lineWidth = 1;
-      for (let i = 1; i < LANES; i++) {
-        const x = i * (CANVAS_W / LANES);
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, CANVAS_H); ctx.stroke();
-      }
-      /* catch line */
-      ctx.strokeStyle = 'rgba(56,189,248,0.35)';
-      ctx.setLineDash([6, 5]);
-      ctx.beginPath(); ctx.moveTo(0, CATCH_Y); ctx.lineTo(CANVAS_W, CATCH_Y); ctx.stroke();
-      ctx.setLineDash([]);
+      /* traffic lanes */
+      trafficRows(S.level).forEach(function (row) {
+        ctx.fillStyle = S.level.road;
+        ctx.fillRect(0, row * CELL, CANVAS_W, CELL);
+      });
 
-      /* falling tags */
-      if (S.falling) {
-        S.falling.items.forEach(function (it) {
-          const cx = laneX(it.lane), cy = S.falling.y;
-          ctx.fillStyle = 'rgba(255,255,255,0.08)';
-          ctx.strokeStyle = 'rgba(255,255,255,0.22)';
-          ctx.lineWidth = 1;
-          roundRect(ctx, cx - 58, cy - 18, 116, 36, 8);
-          ctx.fill(); ctx.stroke();
-          fitText(ctx, it.w.w, cx, cy, 106);
-        });
-      }
+      /* hedge row with word pads */
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      ctx.fillRect(0, 0, CANVAS_W, CELL);
+      S.pads.forEach(function (p) {
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+        ctx.lineWidth = 1;
+        roundRect(ctx, p.col * CELL + 3, 6, CELL - 6, CELL - 12, 9);
+        ctx.fill(); ctx.stroke();
+        fitText(ctx, p.w.w, p.col * CELL + CELL / 2, CELL / 2, CELL - 10);
+      });
 
-      /* runner */
-      ctx.font = '30px "Apple Color Emoji","Segoe UI Emoji",sans-serif';
+      /* obstacles */
+      ctx.font = '34px "Apple Color Emoji","Segoe UI Emoji",sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(S.level.hero, laneX(S.lane), RUNNER_Y + 34);
+      S.obstacles.forEach(function (o) {
+        ctx.fillText(o.emoji, o.x + CELL / 2, o.row * CELL + CELL / 2 + 2);
+      });
+
+      /* the hopper */
+      ctx.font = '34px "Apple Color Emoji","Segoe UI Emoji",sans-serif';
+      ctx.fillText(S.level.hero, S.fx * CELL + CELL / 2, S.fy * CELL + CELL / 2 + 2);
 
       if (!S.started) {
         ctx.fillStyle = 'rgba(20,19,24,0.55)';
@@ -663,11 +731,8 @@ layout: default
         ctx.fillStyle = '#f3f1f5';
         ctx.font = '700 16px sans-serif';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('Press left or right', CANVAS_W / 2, CANVAS_H / 2 - 12);
-        ctx.fillText('to start', CANVAS_W / 2, CANVAS_H / 2 + 14);
-      } else if (S.paused && !S.toast) {
-        ctx.fillStyle = 'rgba(20,19,24,0.55)';
-        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+        ctx.fillText('Press an arrow key', CANVAS_W / 2, CANVAS_H / 2 - 12);
+        ctx.fillText('to hop', CANVAS_W / 2, CANVAS_H / 2 + 14);
       }
 
       renderToast();
@@ -684,9 +749,9 @@ layout: default
     }
 
     function fitText(ctx, text, cx, cy, maxW) {
-      let size = 13;
+      let size = 12;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      while (size > 7) {
+      while (size > 6) {
         ctx.font = '600 ' + size + 'px system-ui, sans-serif';
         if (ctx.measureText(text).width <= maxW) break;
         size--;
@@ -696,15 +761,15 @@ layout: default
     }
 
     function renderToast() {
-      let box = document.getElementById('vd-toast');
+      let box = document.getElementById('vh-toast');
       if (S.toast) {
         if (!box) {
           box = document.createElement('div');
-          box.id = 'vd-toast';
-          box.className = 'vd-toast';
-          document.querySelector('.vd-cwrap').appendChild(box);
+          box.id = 'vh-toast';
+          box.className = 'vh-toast';
+          document.querySelector('.vh-cwrap').appendChild(box);
         }
-        box.className = 'vd-toast ' + S.toast.kind;
+        box.className = 'vh-toast ' + S.toast.kind;
         box.innerHTML = S.toast.html;
       } else if (box) {
         box.remove();
@@ -721,22 +786,22 @@ layout: default
       const lv = S.level, li = S.li, used = S.used, caught = S.caught, target = lv.target;
       S = null;
 
-      let h = '<div class="vd-win"><div class="em">💥💨</div>' +
-        '<h2>Out of breath!</h2>' +
+      let h = '<div class="vh-win"><div class="em">💥' + lv.hero + '</div>' +
+        '<h2>Squished!</h2>' +
         '<div class="sub">' + caught + ' of ' + target +
-        ' words caught before running out of lives</div><div class="vd-recap">';
+        ' crossings made before running out of lives</div><div class="vh-recap">';
       used.forEach(function (w) {
         h += '<div class="r"><b>' + esc(w.w) + '</b> — ' + esc(w.mean) +
           (w.ex ? '<br><i style="opacity:0.75">“' + esc(w.ex) + '”</i>' : '') +
           '</div>';
       });
-      h += '</div><div class="vd-actions">' +
-        '<button class="vd-btn" id="vd-again">↻ Try again</button>' +
-        '<button class="vd-btn ghost" id="vd-home">All levels</button>' +
+      h += '</div><div class="vh-actions">' +
+        '<button class="vh-btn" id="vh-again">↻ Try again</button>' +
+        '<button class="vh-btn ghost" id="vh-home">All levels</button>' +
         '</div></div>';
       el.innerHTML = h;
-      document.getElementById('vd-again').addEventListener('click', function () { start(li); });
-      document.getElementById('vd-home').addEventListener('click', home);
+      document.getElementById('vh-again').addEventListener('click', function () { start(li); });
+      document.getElementById('vh-home').addEventListener('click', home);
     }
 
     function win() {
@@ -752,30 +817,30 @@ layout: default
       const hasNext = li + 1 < LEVELS.length;
       S = null;
 
-      let h = '<div class="vd-win"><div class="em">' + lv.emoji + '🎉</div>' +
-        '<h2>Level cleared!</h2>' +
+      let h = '<div class="vh-win"><div class="em">' + lv.emoji + '🎉</div>' +
+        '<h2>Crossing complete!</h2>' +
         '<div class="stars">' + '★★★'.slice(0, stars) +
         '<span style="opacity:0.25">' + '★★★'.slice(0, 3 - stars) +
         '</span></div>' +
         '<div class="sub">' + used.length +
         (used.length === 1 ? ' word' : ' words') + ' mastered this run</div>' +
-        '<div class="vd-recap">';
+        '<div class="vh-recap">';
       used.forEach(function (w) {
         h += '<div class="r"><b>' + esc(w.w) + '</b> — ' + esc(w.mean) +
           (w.ex ? '<br><i style="opacity:0.75">“' + esc(w.ex) + '”</i>' : '') +
           '</div>';
       });
-      h += '</div><div class="vd-actions">' +
-        '<button class="vd-btn ghost" id="vd-again">↻ Play again</button>' +
-        (hasNext ? '<button class="vd-btn" id="vd-next">Next level →</button>' : '') +
-        '<button class="vd-btn ghost" id="vd-home">All levels</button>' +
+      h += '</div><div class="vh-actions">' +
+        '<button class="vh-btn ghost" id="vh-again">↻ Play again</button>' +
+        (hasNext ? '<button class="vh-btn" id="vh-next">Next level →</button>' : '') +
+        '<button class="vh-btn ghost" id="vh-home">All levels</button>' +
         '</div></div>';
       el.innerHTML = h;
-      document.getElementById('vd-again').addEventListener('click', function () { start(li); });
+      document.getElementById('vh-again').addEventListener('click', function () { start(li); });
       if (hasNext) {
-        document.getElementById('vd-next').addEventListener('click', function () { start(li + 1); });
+        document.getElementById('vh-next').addEventListener('click', function () { start(li + 1); });
       }
-      document.getElementById('vd-home').addEventListener('click', home);
+      document.getElementById('vh-home').addEventListener('click', home);
     }
 
     /* ── boot ─────────────────────────────────────────────────────────── */

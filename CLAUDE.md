@@ -403,68 +403,80 @@ The arcade has a **reinforcement engine** (spaced repetition, added July
 Player progress (XP/stars/words/crowns/streak) lives in localStorage under
 `vocab-arcade-v1`; all new fields are backward-compatible with old saves.
 
-### Arrow-key vocabulary games: Word Maze, Word Snake, Meaning Dash
+### Arrow-key vocabulary games: Word Maze, Word Snake, Meaning Dash, Word Hopper
 
-Three separate games share one word bank, `_tools/maze_data.py`
+Four separate games share one word bank, `_tools/maze_data.py`
 (gitignored, local-only — same rule as `vocab_data.py`): `INTERMEDIATE` and
 `ADVANCED` lists of `{w, mean, ex, syn}`, 60 words each (120 total). Each
 game has its own build script, encrypted page, and public engine layout —
 editing an engine never requires re-encryption; editing `maze_data.py` does,
-and touches all three (rebuild all three so they stay in sync):
+and touches all four (rebuild all four so they stay in sync):
 
 ```bash
-python3 _tools/build-vocab-maze.py "passphrase"   # teaching/vocabulary/maze.md
-python3 _tools/build-word-snake.py "passphrase"   # teaching/vocabulary/snake.md
-python3 _tools/build-word-dash.py  "passphrase"   # teaching/vocabulary/dash.md
+python3 _tools/build-vocab-maze.py  "passphrase"  # teaching/vocabulary/maze.md
+python3 _tools/build-word-snake.py  "passphrase"  # teaching/vocabulary/snake.md
+python3 _tools/build-word-dash.py   "passphrase"  # teaching/vocabulary/dash.md
+python3 _tools/build-word-hopper.py "passphrase"  # teaching/vocabulary/hopper.md
 ```
 
-All three skip `encrypt-batch.py` (it forces `layout: protected` and skips
+All four skip `encrypt-batch.py` (it forces `layout: protected` and skips
 empty-body files anyway).
 
-**Word Maze** (`_layouts/protected-maze.html`, nav_order 5) — navigate a
-maze with arrow keys/WASD/D-pad/swipe; 🔒 word gates block the only path
-through. 20 levels, 9×9 → 29×29, intermediate words on 1–3, mixed 4–6,
-advanced 7–20 (11 gates on the hardest). Design rules:
+Shared design rules (July 2026 — keep when editing any of the four):
 
-- **Mazes are perfect** (recursive backtracker — exactly one path between
-  any two cells), so gates on the start→exit path can never be walked
-  around.
-- **Gates demand mastery**: a wrong answer shows a teaching card (meaning,
-  example, synonyms) and re-asks until correct; missed words are re-queued
-  at a later gate, and any still unmastered are re-tested in a "final
-  check" at the 🏁 flag before the level can be won.
-- A level unlocks when the previous one has ≥1 star (3 stars = no misses).
-- Question types: word→meaning, meaning→word, fill-in-the-blank (uses the
-  word's `ex` sentence — must contain the exact base form once).
-- Player progress (stars/learned words) lives in localStorage under
-  `vocab-maze-v1`.
+- **Every level is unlocked from the start** — `unlocked()` returns true in
+  all four engines; stars still record per-level bests, they just don't
+  gate anything.
+- **Context theming**: each level/world sets a hero character and canvas
+  palette that match the setting (dolphin in the ocean, penguin on the
+  ice, dragon in the lava, ghost in the haunted keep). The character and
+  colors live in the LEVELS/WORLDS arrays in each layout.
+- **Example sentences everywhere**: the word's `ex` sentence appears in the
+  success toast, in the wrong-answer teach toast, and in every win /
+  game-over recap row. Toast pauses are long on purpose (≈1.8s on correct,
+  ≈2.6s on wrong) — the sentence must be readable; don't shorten them.
+- **Start gate**: real-time engines (snake tick, dash fall, hopper traffic)
+  freeze behind `S.started` until the first arrow press, with a "press an
+  arrow key" overlay — otherwise a slow reader loses a life before
+  reacting.
+- Recap screens pluralize "word(s) mastered" (`"1 words"` shipped once and
+  was caught in testing — keep the ternary when copying the pattern).
+
+**Word Maze** (`_layouts/protected-maze.html`, nav_order 5) — navigate a
+maze with arrow keys/WASD/D-pad/swipe; 🔒 word gates block the only path.
+**100 levels = 10 themed WORLDS × 10 stages** (Garden Path → Crystal
+Dream), generated in the layout from the `WORLDS` array; sizes ramp 9×9 →
+29×29 over the first six worlds then cycle 23–31, gates 2 → 11. Worlds 1–3
+intermediate, 4–5 mixed, 6–10 advanced. The level select renders one
+compact grid section per world. Mazes are perfect (recursive backtracker),
+so gates on the start→exit path can never be walked around. Gates demand
+mastery: wrong answers show a teaching card and re-ask; missed words
+re-queue at later gates and re-test in a "final check" at the 🏁 flag.
+Question types: word→meaning, meaning→word, fill-in-the-blank (`ex` must
+contain the exact base form once). Progress: `vocab-maze-v1`.
 
 **Word Snake** (`_layouts/protected-snake.html`, nav_order 6) — classic
-snake on a small rectangular grid; a meaning prompt is shown, and the snake
-must eat the one pellet (of three) whose word matches it. Correct catch
-grows the snake and scores; wrong catch costs a life and requeues that
-word for a later round; hitting a wall or its own tail ends the run
-immediately. 5 levels (Sprout → Ancient Grove), tiers intermediate → mixed
-→ advanced, 8–14 correct catches to clear. **The tick loop is gated behind
-the first keypress** (`S.started`) — without this, the snake starts sliding
-in its default direction the instant the level loads and can crash into a
-wall before the player has reacted; a "press an arrow key to start" overlay
-covers the canvas until then. Stars are based on lives remaining at the
-win. Progress lives in localStorage under `vocab-snake-v1`.
+snake; eat the one pellet (of three) whose word matches the meaning
+prompt. Wrong catch costs a life and requeues the word; walls/tail end the
+run. 10 themed levels (Garden Hatchling → Milky Way), 8–15 catches to
+clear. Progress: `vocab-snake-v1`.
 
-**Meaning Dash** (`_layouts/protected-dash.html`, nav_order 7) — a 3-lane
-runner; three word tags fall together toward a catch line while a meaning
-prompt is shown, and the player dashes left/right so the runner is
-standing in the correct tag's lane when they land. Same start-gate pattern
-as Word Snake (`S.started`, frozen fall + "press left or right to start"
-overlay) — the fall begins the instant the level loads otherwise, and a
-slow reader can lose a life on the very first round with no chance to
-react. 5 levels (Breeze → Tempest), same tier/target progression as Word
-Snake. Progress lives in localStorage under `vocab-dash-v1`.
+**Meaning Dash** (`_layouts/protected-dash.html`, nav_order 7) — 3-lane
+runner; word tags fall toward a catch line, dash left/right to stand under
+the right one. **Fall speeds are deliberately gentle (70–175 px/s ≈ 4+
+seconds of reading time per drop)** — they were 130–255 initially and the
+words couldn't be read; don't speed them back up. 10 themed levels (Breeze
+→ Tempest). Progress: `vocab-dash-v1`.
 
-All three win/game-over recap screens pluralize "word(s) mastered" —
-watch for this when copying the pattern to a new game (`"1 words"` is a
-real bug that shipped once and was caught in testing, not a hypothetical).
+**Word Hopper** (`_layouts/protected-hopper.html`, nav_order 8) — the
+Frogger of the set, and the only one that needs all four arrows in real
+time: hop a 7×7 board, dodge moving traffic lanes (swans, cars, sharks…),
+and land on the word pad (row 0, cols 1/3/5) matching the meaning. Traffic
+hit = life lost + reset to start; wrong pad = life lost + teach toast, and
+**the same word repeats (pads reshuffled) until answered correctly** — that
+is the mastery mechanic, there is no review queue. 10 themed levels (Lily
+Pond → Meteor Belt) with per-level obstacle sets and 2–4 traffic lanes.
+Progress: `vocab-hopper-v1`.
 
 ### Rebuild WH Question Quest (interactive game page)
 

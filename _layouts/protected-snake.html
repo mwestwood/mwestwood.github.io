@@ -328,12 +328,30 @@ layout: default
 
     const el = document.getElementById('vs');
 
+    /* Each level sets the creature leading the line and the scene colors,
+       so the character fits the setting (duck on the river, dolphin on the
+       reef, dragon on the lava trail). */
     const LEVELS = [
-      { name: 'Sprout',       emoji: '🌱', tier: 'intermediate', cols: 6, rows: 7, speed: 620, target: 8,  lc: '#4ade80' },
-      { name: 'Sapling',      emoji: '🌿', tier: 'intermediate', cols: 7, rows: 7, speed: 540, target: 10, lc: '#34d399' },
-      { name: 'Bramble',      emoji: '🌳', tier: 'mixed',        cols: 7, rows: 8, speed: 480, target: 11, lc: '#38bdf8' },
-      { name: 'Thicket',      emoji: '🌲', tier: 'advanced',     cols: 8, rows: 8, speed: 420, target: 12, lc: '#fbbf24' },
-      { name: 'Ancient Grove',emoji: '🌴', tier: 'advanced',     cols: 8, rows: 9, speed: 360, target: 14, lc: '#a78bfa' }
+      { name: 'Garden Hatchling', emoji: '🌱', hero: '🐍', tier: 'intermediate', cols: 6, rows: 7,  speed: 650, target: 8,
+        bg: '#242b21', body: '#4ade80', lc: '#4ade80' },
+      { name: 'Lily Pond',        emoji: '🪷', hero: '🐸', tier: 'intermediate', cols: 7, rows: 7,  speed: 600, target: 9,
+        bg: '#1b3028', body: '#34d399', lc: '#34d399' },
+      { name: 'Meadow Run',       emoji: '🌼', hero: '🐛', tier: 'intermediate', cols: 7, rows: 8,  speed: 560, target: 10,
+        bg: '#2b2b1a', body: '#facc15', lc: '#facc15' },
+      { name: 'River Bend',       emoji: '🏞️', hero: '🦆', tier: 'intermediate', cols: 7, rows: 8,  speed: 520, target: 10,
+        bg: '#1a2b33', body: '#22d3ee', lc: '#22d3ee' },
+      { name: 'Coral Reef',       emoji: '🌊', hero: '🐬', tier: 'mixed',        cols: 8, rows: 8,  speed: 490, target: 11,
+        bg: '#16283a', body: '#38bdf8', lc: '#38bdf8' },
+      { name: 'Deep Lagoon',      emoji: '🐚', hero: '🐢', tier: 'mixed',        cols: 8, rows: 8,  speed: 460, target: 12,
+        bg: '#132433', body: '#2dd4bf', lc: '#2dd4bf' },
+      { name: 'Bat Cave',         emoji: '🦇', hero: '🦎', tier: 'advanced',     cols: 8, rows: 9,  speed: 430, target: 12,
+        bg: '#231f2b', body: '#a78bfa', lc: '#a78bfa' },
+      { name: 'Snowfield',        emoji: '❄️', hero: '🐧', tier: 'advanced',     cols: 8, rows: 9,  speed: 400, target: 13,
+        bg: '#1e2a36', body: '#93c5fd', lc: '#93c5fd' },
+      { name: 'Lava Trail',       emoji: '🌋', hero: '🐉', tier: 'advanced',     cols: 9, rows: 9,  speed: 380, target: 14,
+        bg: '#2e1712', body: '#fb923c', lc: '#fb923c' },
+      { name: 'Milky Way',        emoji: '🌌', hero: '👾', tier: 'advanced',     cols: 9, rows: 10, speed: 360, target: 15,
+        bg: '#191327', body: '#c084fc', lc: '#c084fc' }
     ];
     const TIER_LABEL = { intermediate: '🚀 Intermediate words',
                          mixed: '🚀🏆 Mixed words', advanced: '🏆 Advanced words' };
@@ -399,7 +417,8 @@ layout: default
     function save() {
       try { localStorage.setItem(PKEY, JSON.stringify(P)); } catch (_) {}
     }
-    function unlocked(i) { return i === 0 || (P.stars[i - 1] || 0) > 0; }
+    /* All levels are open from the start. */
+    function unlocked() { return true; }
 
     function tierWords(tier) {
       if (tier === 'mixed') return TIERS.intermediate.concat(TIERS.advanced);
@@ -429,10 +448,9 @@ layout: default
       h += '<div class="vs-levels">';
       LEVELS.forEach(function (lv, i) {
         const st = P.stars[i] || 0;
-        const open = unlocked(i);
         h += '<button class="vs-level" data-l="' + i + '" style="--lc:' +
-          lv.lc + '"' + (open ? '' : ' disabled') + '>' +
-          '<span class="em">' + (open ? lv.emoji : '🔒') + '</span>' +
+          lv.lc + '">' +
+          '<span class="em">' + lv.emoji + lv.hero + '</span>' +
           '<span class="body"><span class="name">Level ' + (i + 1) + ' — ' +
           esc(lv.name) + '</span>' +
           '<span class="meta" style="display:block">' + lv.target +
@@ -494,6 +512,7 @@ layout: default
       });
 
       const cv = document.getElementById('vs-canvas');
+      cv.style.background = lv.bg;
       cv.width = S.cell * S.cols;
       cv.height = S.cell * S.rows;
 
@@ -614,6 +633,9 @@ layout: default
     function handleCatch(hit) {
       const w = hit.w;
       S.pellets = [];
+      /* the game pauses while the toast is up — give the example sentence
+         enough time to actually be read */
+      let pauseMs;
       if (hit.ok) {
         sGood();
         S.caught++;
@@ -621,8 +643,10 @@ layout: default
         P.learned[w.w] = 1; save();
         document.getElementById('vs-score').textContent =
           '🍎 ' + S.caught + '/' + S.level.target;
-        showToast('good', '✅ <b>' + esc(w.w) + '</b> — ' + esc(w.mean));
-        if (S.caught >= S.level.target) { setTimeout(win, 650); return; }
+        showToast('good', '✅ <b>' + esc(w.w) + '</b> — ' + esc(w.mean) +
+          (w.ex ? '<br><i>“' + esc(w.ex) + '”</i>' : ''));
+        if (S.caught >= S.level.target) { setTimeout(win, 1400); return; }
+        pauseMs = 1800;
       } else {
         sBad();
         S.misses++;
@@ -632,8 +656,10 @@ layout: default
         document.getElementById('vs-lives').textContent =
           '❤️'.repeat(Math.max(0, S.lives)) + '🖤'.repeat(START_LIVES - S.lives);
         showToast('bad', '❌ That\'s <b>' + esc(w.w) + '</b> — ' + esc(w.mean) +
-          '<br>Look for: <b>' + esc(S.target.w) + '</b>');
-        if (S.lives <= 0) { setTimeout(gameOver, 900); return; }
+          '<br>Look for: <b>' + esc(S.target.w) + '</b>' +
+          (S.target.ex ? '<br><i>“' + esc(S.target.ex) + '”</i>' : ''));
+        if (S.lives <= 0) { setTimeout(gameOver, 2200); return; }
+        pauseMs = 2600;
       }
       S.paused = true;
       setTimeout(function () {
@@ -642,7 +668,7 @@ layout: default
         S.paused = false;
         nextRound();
         draw();
-      }, 900);
+      }, pauseMs);
     }
 
     function showToast(kind, html) {
@@ -658,21 +684,25 @@ layout: default
       if (!cv) return;
       const ctx = cv.getContext('2d');
       const c = S.cell;
-      ctx.fillStyle = '#28262f';
+      ctx.fillStyle = S.level.bg;
       ctx.fillRect(0, 0, cv.width, cv.height);
 
-      /* snake */
+      /* the trailing line, tinted to the scene */
       S.snake.forEach(function (seg, i) {
-        ctx.fillStyle = i === 0 ? '#4ade80' : 'rgba(74,222,128,0.65)';
+        if (i === 0) return;
+        ctx.globalAlpha = 0.65;
+        ctx.fillStyle = S.level.body;
         const pad = c * 0.09;
         roundRect(ctx, seg[0] * c + pad, seg[1] * c + pad, c - pad * 2, c - pad * 2, c * 0.28);
         ctx.fill();
+        ctx.globalAlpha = 1;
       });
+      /* the character leading the line (frog, dolphin, dragon…) */
       if (S.snake.length) {
         const h = S.snake[0];
-        ctx.font = Math.floor(c * 0.55) + 'px "Apple Color Emoji","Segoe UI Emoji",sans-serif';
+        ctx.font = Math.floor(c * 0.72) + 'px "Apple Color Emoji","Segoe UI Emoji",sans-serif';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(eyeEmoji(S.dir), h[0] * c + c / 2, h[1] * c + c / 2);
+        ctx.fillText(S.level.hero, h[0] * c + c / 2, h[1] * c + c / 2 + c * 0.04);
       }
 
       /* pellets */
@@ -703,10 +733,6 @@ layout: default
       }
 
       renderToast();
-    }
-
-    function eyeEmoji(dir) {
-      return { up: '🔼', down: '🔽', left: '◀️', right: '▶️' }[dir] || '🟢';
     }
 
     function roundRect(ctx, x, y, w, h, r) {
@@ -764,7 +790,9 @@ layout: default
         '<div class="sub">' + caught + ' of ' + target +
         ' words caught before running out of lives</div><div class="vs-recap">';
       used.forEach(function (w) {
-        h += '<div class="r"><b>' + esc(w.w) + '</b> — ' + esc(w.mean) + '</div>';
+        h += '<div class="r"><b>' + esc(w.w) + '</b> — ' + esc(w.mean) +
+          (w.ex ? '<br><i style="opacity:0.75">“' + esc(w.ex) + '”</i>' : '') +
+          '</div>';
       });
       h += '</div><div class="vs-actions">' +
         '<button class="vs-btn" id="vs-again">↻ Try again</button>' +
@@ -799,7 +827,9 @@ layout: default
         (used.length === 1 ? ' word' : ' words') + ' mastered this run</div>' +
         '<div class="vs-recap">';
       used.forEach(function (w) {
-        h += '<div class="r"><b>' + esc(w.w) + '</b> — ' + esc(w.mean) + '</div>';
+        h += '<div class="r"><b>' + esc(w.w) + '</b> — ' + esc(w.mean) +
+          (w.ex ? '<br><i style="opacity:0.75">“' + esc(w.ex) + '”</i>' : '') +
+          '</div>';
       });
       h += '</div><div class="vs-actions">' +
         '<button class="vs-btn ghost" id="vs-again">↻ Play again</button>' +

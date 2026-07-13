@@ -111,6 +111,29 @@ layout: default
   .vm-level .side { text-align: right; font-size: 0.95rem; white-space: nowrap; }
   .vm-level .stars { color: #facc15; font-weight: 700; letter-spacing: 0.1em; }
 
+  /* world sections (100-level select) */
+  .vm-world { margin-bottom: 1.5rem; }
+  .vm-whead {
+    display: flex; align-items: baseline; gap: 0.55rem;
+    font-weight: 700; font-size: 1.05rem; margin: 0 0 0.55rem;
+  }
+  .vm-whead .em { font-size: 1.2rem; }
+  .vm-whead .tag { font-size: 0.78rem; opacity: 0.55; font-weight: 400; }
+  .vm-wgrid {
+    display: grid; gap: 0.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(62px, 1fr));
+  }
+  .vm-lvbtn {
+    background: var(--card); border: 1px solid var(--line); color: inherit;
+    border-radius: 10px; padding: 0.45rem 0.2rem 0.35rem; text-align: center;
+    cursor: pointer; transition: border-color 0.12s, transform 0.12s;
+  }
+  .vm-lvbtn:hover { border-color: var(--lc, var(--acc)); transform: translateY(-2px); }
+  .vm-lvbtn .n { display: block; font-weight: 800; font-size: 1.05rem; }
+  .vm-lvbtn .sz { display: block; font-size: 0.62rem; opacity: 0.5; }
+  .vm-lvbtn .st { display: block; font-size: 0.7rem; color: #facc15;
+                  min-height: 1em; margin-top: 0.1rem; }
+
   /* play screen */
   .vm-cwrap { display: flex; justify-content: center; }
   #vm-canvas {
@@ -367,32 +390,54 @@ layout: default
     /* Maze sizes are odd (cells on odd coordinates, walls between). Every
        maze is "perfect" — exactly one path between any two cells — so the
        word gates placed on the start→exit path can never be walked around. */
-    const LEVELS = [
-      { name: 'Garden Path',        emoji: '🌱', size: 9,  gates: 2,  tier: 'intermediate', lc: '#4ade80' },
-      { name: 'Hedge Maze',         emoji: '🌿', size: 11, gates: 3,  tier: 'intermediate', lc: '#4ade80' },
-      { name: 'Foggy Forest',       emoji: '🌲', size: 13, gates: 3,  tier: 'intermediate', lc: '#34d399' },
-      { name: 'Crystal Caves',      emoji: '💎', size: 13, gates: 4,  tier: 'mixed',        lc: '#38bdf8' },
-      { name: 'Ancient Ruins',      emoji: '🏛️', size: 15, gates: 4,  tier: 'mixed',        lc: '#38bdf8' },
-      { name: 'Sunken Temple',      emoji: '🌊', size: 15, gates: 5,  tier: 'mixed',        lc: '#22d3ee' },
-      { name: 'Desert Labyrinth',   emoji: '🏜️', size: 17, gates: 5,  tier: 'advanced',     lc: '#fbbf24' },
-      { name: 'Frozen Keep',        emoji: '🧊', size: 17, gates: 5,  tier: 'advanced',     lc: '#7dd3fc' },
-      { name: 'Volcano Vault',      emoji: '🌋', size: 19, gates: 6,  tier: 'advanced',     lc: '#fb923c' },
-      { name: 'Shadow Castle',      emoji: '🏰', size: 19, gates: 6,  tier: 'advanced',     lc: '#a78bfa' },
-      { name: "Wizard's Tower",     emoji: '🧙', size: 21, gates: 7,  tier: 'advanced',     lc: '#a78bfa' },
-      { name: 'Sky Fortress',       emoji: '☁️', size: 21, gates: 7,  tier: 'advanced',     lc: '#93c5fd' },
-      { name: 'Haunted Manor',      emoji: '👻', size: 23, gates: 8,  tier: 'advanced',     lc: '#c4b5fd' },
-      { name: "Dragon's Lair",      emoji: '🐉', size: 23, gates: 8,  tier: 'advanced',     lc: '#f87171' },
-      { name: 'Starlit Observatory',emoji: '✨', size: 25, gates: 8,  tier: 'advanced',     lc: '#facc15' },
-      { name: 'Clockwork Citadel',  emoji: '⚙️', size: 25, gates: 9,  tier: 'advanced',     lc: '#e2b04a' },
-      { name: 'Mirror Maze',        emoji: '🪞', size: 27, gates: 9,  tier: 'advanced',     lc: '#67e8f9' },
-      { name: 'Obsidian Spire',     emoji: '⚫', size: 27, gates: 10, tier: 'advanced',     lc: '#818cf8' },
-      { name: 'Phoenix Sanctum',    emoji: '🔥', size: 29, gates: 10, tier: 'advanced',     lc: '#fb7185' },
-      { name: 'Celestial Nexus',    emoji: '🌌', size: 29, gates: 11, tier: 'advanced',     lc: '#a78bfa' }
+
+    /* 10 themed worlds × 10 stages = 100 levels. Each world sets the
+       explorer character and the canvas palette so the scene matches the
+       setting (dolphin in the ocean, penguin on the ice, and so on). */
+    const WORLDS = [
+      { title: 'Garden Path',      emoji: '🌱', hero: '🦊', tier: 'intermediate',
+        wall: '#4a5a43', floor: '#242b21', dot: 'rgba(134,239,172,0.45)', lc: '#4ade80' },
+      { title: 'Coral Cove',       emoji: '🌊', hero: '🐬', tier: 'intermediate',
+        wall: '#3c5a75', floor: '#16283a', dot: 'rgba(125,211,252,0.45)', lc: '#38bdf8' },
+      { title: 'Whispering Woods', emoji: '🌲', hero: '🦉', tier: 'intermediate',
+        wall: '#44523c', floor: '#1d241a', dot: 'rgba(163,230,53,0.4)',   lc: '#a3e635' },
+      { title: 'Dune Sea',         emoji: '🏜️', hero: '🐪', tier: 'mixed',
+        wall: '#7a6242', floor: '#332818', dot: 'rgba(252,211,77,0.45)',  lc: '#fbbf24' },
+      { title: 'Frozen Fjord',     emoji: '🧊', hero: '🐧', tier: 'mixed',
+        wall: '#4e6d85', floor: '#1b2c38', dot: 'rgba(165,243,252,0.45)', lc: '#67e8f9' },
+      { title: 'Ember Caverns',    emoji: '🌋', hero: '🐉', tier: 'advanced',
+        wall: '#7a4636', floor: '#2e1712', dot: 'rgba(251,146,60,0.5)',   lc: '#fb923c' },
+      { title: 'Haunted Keep',     emoji: '🏰', hero: '👻', tier: 'advanced',
+        wall: '#5a5570', floor: '#232030', dot: 'rgba(196,181,253,0.45)', lc: '#a78bfa' },
+      { title: 'Cloud Kingdom',    emoji: '☁️', hero: '🦅', tier: 'advanced',
+        wall: '#5d6d94', floor: '#242c40', dot: 'rgba(147,197,253,0.45)', lc: '#93c5fd' },
+      { title: 'Starlight Void',   emoji: '🌌', hero: '🚀', tier: 'advanced',
+        wall: '#4f4373', floor: '#191327', dot: 'rgba(216,180,254,0.45)', lc: '#c084fc' },
+      { title: 'Crystal Dream',    emoji: '✨', hero: '🦄', tier: 'advanced',
+        wall: '#75436b', floor: '#2b1628', dot: 'rgba(244,114,182,0.45)', lc: '#f472b6' }
     ];
+    const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+
+    const LEVELS = [];
+    WORLDS.forEach(function (world, w) {
+      for (let i = 0; i < 10; i++) {
+        const g = w * 10 + i;
+        LEVELS.push({
+          name: world.title + ' ' + ROMAN[i],
+          emoji: world.emoji, hero: world.hero, tier: world.tier,
+          wall: world.wall, floor: world.floor, dot: world.dot, lc: world.lc,
+          world: w,
+          /* 9×9 → 29×29 over the first six worlds, then the late worlds
+             cycle 23–31 so they don't all feel like the same giant maze */
+          size: g < 60 ? 9 + 2 * Math.floor(g / 6)
+                       : 23 + 2 * (g % 5),
+          gates: 2 + Math.min(9, Math.floor(g / 10))       /* 2 → 11 gates */
+        });
+      }
+    });
     const TIER_LABEL = { intermediate: '🚀 Intermediate words',
                          mixed: '🚀🏆 Mixed words',
                          advanced: '🏆 Advanced words' };
-    const PLAYER = '🦊';
 
     let TIERS = null;   /* { intermediate: [...], advanced: [...] } */
     let S = null;       /* active play state */
@@ -454,7 +499,8 @@ layout: default
     function save() {
       try { localStorage.setItem(PKEY, JSON.stringify(P)); } catch (_) {}
     }
-    function unlocked(i) { return i === 0 || (P.stars[i - 1] || 0) > 0; }
+    /* All levels are open from the start — pick any stage, any world. */
+    function unlocked() { return true; }
 
     /* ── maze generation ──────────────────────────────────────────────── */
 
@@ -577,33 +623,37 @@ layout: default
     function home() {
       S = null;
       const learnedCount = Object.keys(P.learned).length;
+      let starTotal = 0;
+      LEVELS.forEach(function (lv, i) { starTotal += P.stars[i] || 0; });
       let h = '<div class="vm-hero"><h1>🌀 Word Maze</h1>' +
-        '<p>Use the arrow keys to escape each maze — but every 🔒 gate ' +
-        'only opens for the right word.</p></div>';
-      if (learnedCount) {
-        h += '<div style="text-align:center;margin-bottom:1.2rem">' +
-          '<span class="vm-pill acc">📚 ' + learnedCount +
-          ' words mastered</span></div>';
-      }
-      h += '<div class="vm-levels">';
-      LEVELS.forEach(function (lv, i) {
-        const st = P.stars[i] || 0;
-        const open = unlocked(i);
-        h += '<button class="vm-level" data-l="' + i + '" style="--lc:' +
-          lv.lc + '"' + (open ? '' : ' disabled') + '>' +
-          '<span class="em">' + (open ? lv.emoji : '🔒') + '</span>' +
-          '<span class="body"><span class="name">Level ' + (i + 1) + ' — ' +
-          esc(lv.name) + '</span>' +
-          '<span class="meta" style="display:block">' + lv.size + '×' + lv.size +
-          ' maze · ' + lv.gates + ' word gates · ' + TIER_LABEL[lv.tier] +
-          '</span></span>' +
-          '<span class="side"><span class="stars">' +
-          '★★★'.slice(0, st) + '<span style="opacity:0.25">' +
-          '★★★'.slice(0, 3 - st) + '</span></span></span></button>';
+        '<p>100 mazes across 10 worlds — every 🔒 gate only opens for the ' +
+        'right word. Pick any level, any time.</p></div>' +
+        '<div style="text-align:center;margin-bottom:1.2rem">' +
+        (learnedCount ? '<span class="vm-pill acc">📚 ' + learnedCount +
+          ' words mastered</span> ' : '') +
+        '<span class="vm-pill">⭐ ' + starTotal + ' / 300 stars</span></div>';
+      WORLDS.forEach(function (world, w) {
+        h += '<div class="vm-world" style="--lc:' + world.lc + '">' +
+          '<div class="vm-whead"><span class="em">' + world.emoji + ' ' +
+          world.hero + '</span><span>' + esc(world.title) + '</span>' +
+          '<span class="tag">' + TIER_LABEL[world.tier] + '</span></div>' +
+          '<div class="vm-wgrid">';
+        for (let i = 0; i < 10; i++) {
+          const li = w * 10 + i;
+          const lv = LEVELS[li];
+          const st = P.stars[li] || 0;
+          h += '<button class="vm-lvbtn" data-l="' + li + '" title="' +
+            esc(lv.name) + ' — ' + lv.size + '×' + lv.size + ' maze, ' +
+            lv.gates + ' word gates">' +
+            '<span class="n">' + (li + 1) + '</span>' +
+            '<span class="sz">' + lv.size + '×' + lv.size + '</span>' +
+            '<span class="st">' + (st ? '★★★'.slice(0, st) : '·') +
+            '</span></button>';
+        }
+        h += '</div></div>';
       });
-      h += '</div>';
       el.innerHTML = h;
-      el.querySelectorAll('.vm-level').forEach(function (b) {
+      el.querySelectorAll('.vm-lvbtn').forEach(function (b) {
         b.addEventListener('click', function () { start(+b.dataset.l); });
       });
     }
@@ -658,6 +708,7 @@ layout: default
 
       /* swipe */
       const cv = document.getElementById('vm-canvas');
+      cv.style.background = lv.floor;
       let t0 = null;
       cv.addEventListener('touchstart', function (e) {
         t0 = [e.touches[0].clientX, e.touches[0].clientY];
@@ -692,17 +743,17 @@ layout: default
       if (!cv) return;
       const ctx = cv.getContext('2d');
       const c = S.cell;
-      ctx.fillStyle = '#28262f';
+      ctx.fillStyle = S.level.floor;
       ctx.fillRect(0, 0, cv.width, cv.height);
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       for (let y = 0; y < S.size; y++) {
         for (let x = 0; x < S.size; x++) {
           if (S.grid[y][x] === 1) {
-            ctx.fillStyle = '#494655';
+            ctx.fillStyle = S.level.wall;
             ctx.fillRect(x * c, y * c, c, c);
           } else if (S.visited[x + ',' + y]) {
-            ctx.fillStyle = 'rgba(74,222,128,0.18)';
+            ctx.fillStyle = S.level.dot;
             ctx.beginPath();
             ctx.arc(x * c + c / 2, y * c + c / 2, Math.max(1.5, c * 0.08), 0, 7);
             ctx.fill();
@@ -719,7 +770,7 @@ layout: default
         ctx.fillText('🔒', +p[0] * c + c / 2, +p[1] * c + c * 0.55);
       }
       ctx.fillText('🏁', (S.size - 2) * c + c / 2, (S.size - 2) * c + c * 0.55);
-      ctx.fillText(PLAYER, S.px * c + c / 2, S.py * c + c * 0.55);
+      ctx.fillText(S.level.hero, S.px * c + c / 2, S.py * c + c * 0.55);
     }
 
     function move(dir) {
@@ -941,6 +992,7 @@ layout: default
         '</div><div class="vm-recap">';
       S.used.forEach(function (w) {
         h += '<div class="r"><b>' + esc(w.w) + '</b> — ' + esc(w.mean) +
+          (w.ex ? '<br><i style="opacity:0.75">“' + esc(w.ex) + '”</i>' : '') +
           '</div>';
       });
       h += '</div><div class="vm-actions" style="margin-top:1.4rem">' +
