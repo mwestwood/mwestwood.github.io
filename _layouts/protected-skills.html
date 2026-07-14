@@ -1,0 +1,1609 @@
+---
+layout: default
+---
+
+<style>
+  /* ── Password gate (same look as protected.html) ─────────────────────── */
+  #protected-gate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 40vh;
+    padding: 2rem 1rem;
+  }
+  .gate-card {
+    background: var(--sidebar-color, #f5f6fa);
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 8px;
+    padding: 2.5rem 2rem;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .gate-lock { font-size: 2.5rem; margin-bottom: 0.75rem; line-height: 1; }
+  .gate-title {
+    font-size: 1.25rem; font-weight: 600;
+    color: var(--body-text-color, #27262b); margin: 0 0 0.5rem 0;
+  }
+  .gate-subtitle {
+    font-size: 0.875rem; color: var(--body-text-color, #5c5962);
+    opacity: 0.75; margin: 0 0 1.5rem 0;
+  }
+  .gate-input-row { display: flex; gap: 0.5rem; width: 100%; }
+  #gate-password {
+    flex: 1; padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color, #d0d0d0); border-radius: 4px;
+    font-size: 1rem; background: var(--body-background-color, #fff);
+    color: var(--body-text-color, #27262b); outline: none;
+    transition: border-color 0.15s;
+  }
+  #gate-password:focus { border-color: var(--links-color, #7253ed); }
+  #gate-submit {
+    padding: 0.5rem 1.1rem; background: var(--links-color, #7253ed);
+    color: #fff; border: none; border-radius: 4px; font-size: 0.95rem;
+    font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+  #gate-submit:hover { opacity: 0.88; }
+  #gate-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+  #gate-error {
+    margin-top: 0.85rem; font-size: 0.875rem; color: #c0392b;
+    min-height: 1.25rem; display: none;
+  }
+  #gate-status {
+    margin-top: 0.85rem; font-size: 0.875rem;
+    color: var(--body-text-color, #5c5962); opacity: 0.7;
+    min-height: 1.25rem; display: none;
+  }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+
+  /* ── Super Skills Quest ──────────────────────────────────────────────── */
+  #quest-root { display: none; }
+
+  .sq { --good: #4ade80; --bad: #f87171;
+        --card: rgba(255,255,255,0.05); --line: rgba(255,255,255,0.14);
+        max-width: 760px; }
+  .sq, .sq * { box-sizing: border-box; }
+  .sq button { font-family: inherit; touch-action: manipulation;
+               -webkit-tap-highlight-color: transparent; }
+
+  .sq-top {
+    display: flex; align-items: center; gap: 0.6rem;
+    margin-bottom: 1rem; flex-wrap: wrap;
+  }
+  .sq-back {
+    background: var(--card); border: 1px solid var(--line);
+    color: inherit; border-radius: 999px; padding: 0.45rem 1.1rem;
+    font-size: 1rem; cursor: pointer;
+  }
+  .sq-back:hover { border-color: #facc15; }
+  .sq-spacer { flex: 1; }
+  .sq-pill {
+    font-size: 0.95rem; padding: 0.35rem 0.85rem; border-radius: 999px;
+    background: var(--card); border: 1px solid var(--line);
+    white-space: nowrap; color: inherit; cursor: default;
+  }
+  .sq-pill.pts { border-color: #facc15; color: #facc15; font-weight: 700;
+                 font-size: 1.05rem; }
+  .sq-pill.pop { animation: sqPop 0.4s; }
+  button.sq-pill { cursor: pointer; }
+  button.sq-pill.off { opacity: 0.45; }
+
+  .sq-hero { text-align: center; margin: 0.4rem 0 1.4rem; }
+  .sq-hero h1 { margin: 0 0 0.3rem; font-size: 1.9rem; }
+  .sq-hero p { margin: 0; opacity: 0.7; font-size: 1rem; }
+
+  .sq-sect { font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase;
+             opacity: 0.55; margin: 1.4rem 0 0.6rem; }
+
+  .sq-worlds { display: grid; gap: 0.7rem;
+               grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+  .sq-world {
+    display: flex; align-items: center; gap: 0.8rem; text-align: left;
+    background: var(--card); border: 1px solid var(--line);
+    border-left: 6px solid var(--wc, var(--line));
+    border-radius: 14px; padding: 0.95rem 1rem; color: inherit;
+    cursor: pointer; transition: transform 0.12s, border-color 0.12s;
+  }
+  .sq-world:hover { transform: translateY(-2px); border-color: var(--wc); }
+  .sq-world .em { font-size: 2.1rem; }
+  .sq-world .name { font-weight: 800; font-size: 1.15rem; color: var(--wc); }
+  .sq-world .tag { font-size: 0.82rem; opacity: 0.7; margin-top: 0.1rem; }
+  .sq-world .st { font-size: 0.9rem; color: #facc15; margin-top: 0.25rem;
+                  min-height: 1em; letter-spacing: 0.1em; }
+
+  .sq-cards { display: grid; gap: 0.7rem;
+              grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+  .sq-card {
+    text-align: left; background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 0.95rem 1rem; color: inherit; cursor: pointer;
+    transition: transform 0.12s, border-color 0.12s;
+  }
+  .sq-card:hover { transform: translateY(-2px); border-color: #facc15; }
+  .sq-card .em { font-size: 1.9rem; }
+  .sq-card .name { font-weight: 700; margin-top: 0.3rem; font-size: 1.02rem; }
+  .sq-card .desc { font-size: 0.85rem; opacity: 0.65; margin-top: 0.2rem;
+                   line-height: 1.45; }
+  .sq-card .st { font-size: 0.9rem; color: #facc15; margin-top: 0.35rem;
+                 min-height: 1em; letter-spacing: 0.1em; }
+
+  .sq-guide { text-align: center; margin: 2rem 0 0.5rem; font-size: 0.85rem;
+              opacity: 0.6; }
+  .sq-guide a { color: inherit; }
+
+  /* play screen */
+  .sq-prog { display: flex; gap: 0.35rem; justify-content: center;
+             margin: 0.2rem 0 1rem; }
+  .sq-dot { width: 0.85rem; height: 0.85rem; border-radius: 50%;
+            background: rgba(255,255,255,0.12); }
+  .sq-dot.done { background: var(--good); }
+  .sq-dot.now { background: #facc15; transform: scale(1.25); }
+
+  .sq-scene { text-align: center; font-size: 3.4rem; line-height: 1.25;
+              margin: 0.8rem 0 0.4rem; letter-spacing: 0.3rem; }
+  .sq-q { text-align: center; font-size: 1.4rem; font-weight: 700;
+          line-height: 1.5; max-width: 640px; margin: 0 auto 0.4rem; }
+  .sq-say {
+    display: block; margin: 0.4rem auto 1rem; background: var(--card);
+    border: 1px solid var(--line); color: inherit; border-radius: 999px;
+    padding: 0.4rem 1.2rem; font-size: 1rem; cursor: pointer;
+  }
+  .sq-say:hover { border-color: #facc15; }
+
+  .sq-titlecard {
+    text-align: center; font-size: 1.25rem; font-weight: 700;
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 0.8rem 1rem; max-width: 460px; margin: 0 auto 1rem;
+  }
+  .sq-titlecard .em { font-size: 1.9rem; margin-right: 0.5rem; }
+
+  .sq-opts { display: grid; gap: 0.7rem; max-width: 560px; margin: 0 auto; }
+  .sq-opt {
+    width: 100%; display: flex; align-items: center; gap: 0.9rem;
+    text-align: left; background: var(--card);
+    border: 2px solid var(--line); border-radius: 14px;
+    padding: 0.85rem 1.1rem; color: inherit; font-size: 1.12rem;
+    font-weight: 600; line-height: 1.4; cursor: pointer;
+    transition: border-color 0.12s;
+  }
+  .sq-opt .em { font-size: 2rem; flex: none; }
+  .sq-opt:hover:not(:disabled) { border-color: #facc15; }
+  .sq-opt:disabled { cursor: default; }
+  .sq-opt.good { border-color: var(--good);
+                 background: rgba(74, 222, 128, 0.14); animation: sqPop 0.4s; }
+  .sq-opt.dim { opacity: 0.35; }
+  .sq-opt.miss { border-color: var(--bad); animation: sqNudge 0.35s; }
+
+  /* numeric options: big squares */
+  .sq-opts.nums { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+                  max-width: 560px; }
+  .sq-opt.num { justify-content: center; font-size: 1.45rem; font-weight: 800;
+                padding: 1rem 0.4rem; }
+
+  /* Step Sorter */
+  .sq-done { max-width: 560px; margin: 0 auto 1rem; display: grid; gap: 0.45rem;
+             min-height: 2rem; }
+  .sq-donerow {
+    display: flex; align-items: center; gap: 0.7rem;
+    background: rgba(74, 222, 128, 0.10); border: 1px solid var(--good);
+    border-radius: 12px; padding: 0.55rem 0.9rem; font-size: 1.08rem;
+    font-weight: 600; animation: sqPop 0.35s;
+  }
+  .sq-donerow .n {
+    flex: none; width: 1.8rem; height: 1.8rem; border-radius: 50%;
+    background: var(--good); color: #14321f; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .sq-pool { display: grid; gap: 0.6rem; max-width: 560px; margin: 0 auto; }
+  .sq-step {
+    width: 100%; text-align: left; background: var(--card);
+    border: 2px solid var(--line); border-radius: 12px;
+    padding: 0.7rem 1rem; color: inherit; font-size: 1.08rem;
+    font-weight: 600; cursor: pointer; transition: border-color 0.12s;
+  }
+  .sq-step:hover:not(:disabled) { border-color: #facc15; }
+  .sq-step.miss { border-color: var(--bad); animation: sqNudge 0.35s; }
+  .sq-step.hint { border-color: #facc15; animation: sqGlow 1s infinite; }
+
+  /* Pack the Backpack */
+  .sq-count { text-align: center; font-size: 1.3rem; font-weight: 800;
+              color: #facc15; margin: 0.2rem 0 0.9rem; }
+  .sq-packgrid { display: grid; gap: 0.6rem; max-width: 620px; margin: 0 auto;
+                 grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .sq-item {
+    background: var(--card); border: 2px solid var(--line); border-radius: 14px;
+    padding: 0.8rem 0.5rem; color: inherit; cursor: pointer; text-align: center;
+    font-size: 0.98rem; font-weight: 600; line-height: 1.35;
+    transition: border-color 0.12s;
+  }
+  .sq-item .em { display: block; font-size: 2.2rem; margin-bottom: 0.25rem; }
+  .sq-item:hover:not(:disabled) { border-color: #facc15; }
+  .sq-item:disabled { cursor: default; }
+  .sq-item.good { border-color: var(--good);
+                  background: rgba(74, 222, 128, 0.14); animation: sqPop 0.4s; }
+  .sq-item.dim { opacity: 0.35; }
+  .sq-item.miss { border-color: var(--bad); animation: sqNudge 0.35s; }
+
+  /* Time Lab */
+  .sq-timebig {
+    display: block; margin: 1.2rem auto; width: 11rem; height: 11rem;
+    border-radius: 50%; border: 4px solid var(--line);
+    background: var(--card); color: inherit; font-size: 1.5rem;
+    font-weight: 800; cursor: pointer; transition: border-color 0.15s;
+  }
+  .sq-timebig:hover { border-color: #facc15; }
+  .sq-timebig.run { border-color: #60a5fa; animation: sqBreathe 1.6s infinite; }
+  .sq-readout { text-align: center; font-size: 1.35rem; font-weight: 800;
+                line-height: 2; }
+  .sq-readout .big { font-size: 1.9rem; color: #facc15; }
+
+  /* Memory Steps */
+  .sq-memseq { text-align: center; font-size: 3rem; letter-spacing: 0.8rem;
+               margin: 1rem 0 0.4rem; }
+  .sq-memnames { text-align: center; font-size: 1.05rem; opacity: 0.8;
+                 margin-bottom: 1rem; }
+  .sq-memgrid { display: grid; gap: 0.6rem; max-width: 480px; margin: 0 auto;
+                grid-template-columns: repeat(4, 1fr); }
+  .sq-tile {
+    position: relative; background: var(--card); border: 2px solid var(--line);
+    border-radius: 14px; padding: 0.8rem 0.2rem; font-size: 2.2rem;
+    cursor: pointer; transition: border-color 0.12s; color: inherit;
+  }
+  .sq-tile:hover:not(:disabled) { border-color: #facc15; }
+  .sq-tile.good { border-color: var(--good);
+                  background: rgba(74, 222, 128, 0.14); }
+  .sq-tile.miss { border-color: var(--bad); animation: sqNudge 0.35s; }
+  .sq-tile .n {
+    position: absolute; top: -0.5rem; right: -0.5rem;
+    width: 1.6rem; height: 1.6rem; border-radius: 50%;
+    background: var(--good); color: #14321f; font-size: 0.95rem;
+    font-weight: 800; display: flex; align-items: center;
+    justify-content: center; animation: sqPop 0.3s;
+  }
+
+  .sq-feedback { text-align: center; margin-top: 1.1rem; min-height: 2.2rem;
+                 font-size: 1.15rem; font-weight: 700; }
+  .sq-feedback .praise { color: var(--good); font-size: 1.3rem; }
+  .sq-feedback .again { color: #facc15; }
+  .sq-teach { text-align: center; opacity: 0.85; font-size: 1rem;
+              font-weight: 400; margin-top: 0.4rem; line-height: 1.5;
+              max-width: 560px; margin-left: auto; margin-right: auto; }
+  .sq-next {
+    display: block; margin: 1.2rem auto 0; background: var(--good);
+    border: none; color: #14321f; border-radius: 999px;
+    padding: 0.7rem 2.6rem; font-size: 1.2rem; font-weight: 800;
+    cursor: pointer; animation: sqPop 0.4s;
+  }
+  .sq-next:hover { opacity: 0.9; }
+
+  /* results */
+  .sq-results { text-align: center; padding: 1.2rem 0 2rem; }
+  .sq-results .em { font-size: 3.6rem; }
+  .sq-results h2 { margin: 0.4rem 0 0.8rem; }
+  .sq-starrow { font-size: 2.8rem; letter-spacing: 0.4rem; margin: 0.4rem 0 1rem; }
+  .sq-starrow span { opacity: 0.22; display: inline-block; }
+  .sq-starrow span.on { opacity: 1; color: #facc15; animation: sqPop 0.5s both; }
+  .sq-starrow span.on:nth-child(2) { animation-delay: 0.18s; }
+  .sq-starrow span.on:nth-child(3) { animation-delay: 0.36s; }
+  .sq-mathline { font-size: 1.5rem; font-weight: 800; margin: 0.8rem 0;
+                 color: #facc15; }
+  .sq-resbtns { display: flex; gap: 0.7rem; justify-content: center;
+                flex-wrap: wrap; margin-top: 1.2rem; }
+  .sq-bigbtn {
+    background: var(--card); border: 1px solid var(--line); color: inherit;
+    border-radius: 999px; padding: 0.7rem 1.8rem; font-size: 1.1rem;
+    font-weight: 700; cursor: pointer;
+  }
+  .sq-bigbtn:hover { border-color: #facc15; }
+  .sq-bigbtn.go { background: #facc15; border-color: #facc15; color: #1a1a1e; }
+
+  .sq-burst { position: fixed; inset: 0; pointer-events: none; z-index: 999;
+              overflow: hidden; }
+  .sq-burst span { position: absolute; top: -6vh; font-size: 1.5rem;
+                   animation: sqFall linear forwards; }
+
+  @keyframes sqFall { to { transform: translateY(115vh) rotate(680deg); } }
+  @keyframes sqPop {
+    0% { transform: scale(0.3); } 70% { transform: scale(1.22); }
+    100% { transform: scale(1); }
+  }
+  @keyframes sqNudge {
+    25% { transform: translateX(-4px); } 75% { transform: translateX(4px); }
+  }
+  @keyframes sqGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.0); }
+    50% { box-shadow: 0 0 0 6px rgba(250, 204, 21, 0.25); }
+  }
+  @keyframes sqBreathe {
+    0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); }
+  }
+
+  @media (max-width: 500px) {
+    .sq-scene { font-size: 2.7rem; }
+    .sq-q { font-size: 1.22rem; }
+    .sq-opt { font-size: 1.02rem; }
+    .sq-memgrid { grid-template-columns: repeat(4, 1fr); }
+  }
+</style>
+
+<!-- Password gate -->
+<div id="protected-gate">
+  <div class="gate-card">
+    <div class="gate-lock" aria-hidden="true">🔒</div>
+    <p class="gate-title">{{ page.title | default: "Protected Page" }}</p>
+    <p class="gate-subtitle">This page is password-protected. Enter the passphrase to unlock.</p>
+    <div class="gate-input-row">
+      <label for="gate-password" class="sr-only">Passphrase</label>
+      <input id="gate-password" type="password" placeholder="Passphrase" autocomplete="off" autofocus />
+      <button id="gate-submit">Unlock</button>
+    </div>
+    <div id="gate-error" role="alert" aria-live="polite">Incorrect passphrase — please try again.</div>
+    <div id="gate-status" role="status" aria-live="polite">Decrypting…</div>
+  </div>
+</div>
+
+<div id="quest-root"><div class="sq" id="sq"></div></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* Encrypted blob injected by Jekyll from front matter field `encrypted` */
+  const ENCRYPTED_B64 = {{ page.encrypted | jsonify }};
+
+  const STORAGE_KEY = 'mwestwood-passphrase';
+
+  /* ── Gate (same crypto as protected.html) ───────────────────────────── */
+
+  function b64ToBytes(b64) {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+
+  async function deriveKey(passphrase, salt) {
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw', enc.encode(passphrase), { name: 'PBKDF2' }, false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: salt, iterations: 100000, hash: 'SHA-256' },
+      keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+  }
+
+  async function decrypt(passphrase) {
+    const blob = b64ToBytes(ENCRYPTED_B64);
+    const salt = blob.slice(0, 16);
+    const iv = blob.slice(16, 28);
+    const ct = blob.slice(28);
+    const key = await deriveKey(passphrase, salt);
+    const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, ct);
+    return new TextDecoder().decode(plaintext);
+  }
+
+  const gate = document.getElementById('protected-gate');
+  const rootWrap = document.getElementById('quest-root');
+  const input = document.getElementById('gate-password');
+  const btn = document.getElementById('gate-submit');
+  const errEl = document.getElementById('gate-error');
+  const statusEl = document.getElementById('gate-status');
+
+  function showError(msg) {
+    errEl.textContent = msg || 'Incorrect passphrase — please try again.';
+    errEl.style.display = 'block';
+    statusEl.style.display = 'none';
+    btn.disabled = false;
+    input.select();
+  }
+
+  function showStatus(msg) {
+    statusEl.textContent = msg;
+    statusEl.style.display = 'block';
+    errEl.style.display = 'none';
+  }
+
+  function reveal(text) {
+    let data;
+    try { data = JSON.parse(text); }
+    catch (e) { showError('Data error: could not parse the game data.'); return; }
+    gate.style.display = 'none';
+    rootWrap.style.display = 'block';
+    Quest.boot(data);
+  }
+
+  async function tryUnlock(passphrase, cache) {
+    try {
+      showStatus('Decrypting…');
+      btn.disabled = true;
+      const text = await decrypt(passphrase);
+      if (cache) {
+        try { localStorage.setItem(STORAGE_KEY, passphrase); } catch (_) {}
+      }
+      reveal(text);
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'OperationError') {
+        showError('Incorrect passphrase — please try again.');
+      } else if (e instanceof TypeError && e.message.includes('subtle')) {
+        showError('Error: Web Crypto API unavailable. This page requires HTTPS.');
+      } else {
+        showError('Error (' + e.name + '): ' + e.message);
+      }
+    }
+  }
+
+  async function init() {
+    if (!ENCRYPTED_B64) { showError('No encrypted data on this page.'); return; }
+    try {
+      const cached = localStorage.getItem(STORAGE_KEY);
+      if (cached) {
+        showStatus('Unlocking…');
+        btn.disabled = true;
+        input.disabled = true;
+        try {
+          const text = await decrypt(cached);
+          reveal(text);
+          return;
+        } catch (_) {
+          localStorage.removeItem(STORAGE_KEY);
+          btn.disabled = false;
+          input.disabled = false;
+          statusEl.style.display = 'none';
+        }
+      }
+    } catch (_) {}
+  }
+
+  btn.addEventListener('click', function () {
+    const pw = input.value;
+    if (!pw) { input.focus(); return; }
+    tryUnlock(pw, true);
+  });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') btn.click();
+  });
+
+  /* ═══════════════════════ Super Skills Quest ═══════════════════════════
+     Executive-function practice games. Design notes (autism-friendly):
+     - Same layout every question; one big NEXT button controls pacing —
+       nothing auto-advances.
+     - No countdown pressure anywhere. The Time Lab uses time as the
+       CONTENT of the game (start/stop is his choice), never as pressure.
+     - Wrong answer #1: gentle dim, try again. Wrong answer #2: the
+       correct answer lights up with the teaching line and still scores —
+       there is no failure state.
+     - Sounds are short quiet sine tones (toggleable); questions can be
+       read aloud (toggleable).
+     - Numbers are the reward: explicit-arithmetic point count-ups,
+       second-precision readouts in the Time Lab, numbered step badges.
+     - Skills map to /autism/executive-skills/ (the grown-up guide):
+       sequencing, task initiation, time sense, organization, working
+       memory, flexibility, study-skills knowledge.
+  ═══════════════════════════════════════════════════════════════════════ */
+
+  const Quest = (function () {
+
+    const el = document.getElementById('sq');
+
+    const PRAISE = ['Great job! 🎉', 'Yes! ⭐', 'You got it! 🌟', 'Super! 💪',
+                    'Amazing! 🎯', "That's right! ✨", 'Wow! 🚀'];
+
+    /* memory-steps tile pool */
+    const MPOOL = [
+      { e: '🍎', name: 'apple' }, { e: '🚗', name: 'car' },
+      { e: '⭐', name: 'star' }, { e: '🐶', name: 'dog' },
+      { e: '☂️', name: 'umbrella' }, { e: '🎈', name: 'balloon' },
+      { e: '🔑', name: 'key' }, { e: '🐟', name: 'fish' },
+      { e: '🌙', name: 'moon' }, { e: '⚽', name: 'ball' },
+      { e: '🧁', name: 'cupcake' }, { e: '🦋', name: 'butterfly' }
+    ];
+
+    /* clock-math activities */
+    const ACTS = ['Packing your bag', 'Getting dressed', 'Eating breakfast',
+                  'Brushing your teeth', 'Walking the dog', 'Tidying your room'];
+
+    let DATA = null;
+
+    /* ── helpers ──────────────────────────────────────────────────────── */
+
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function shuffle(a) {
+      a = a.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = a[i]; a[i] = a[j]; a[j] = t;
+      }
+      return a;
+    }
+    function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+    function r(n) { return Math.floor(Math.random() * n); }
+    function stars3(n) {
+      let h = '';
+      for (let i = 1; i <= 3; i++) h += i <= n ? '★' : '☆';
+      return h;
+    }
+
+    /* ── progress + settings (localStorage) ───────────────────────────── */
+
+    const PKEY = 'skill-quest-v1';
+    let P = null;
+    try { P = JSON.parse(localStorage.getItem(PKEY) || 'null'); } catch (_) {}
+    if (!P || typeof P !== 'object') P = {};
+    P.pts = P.pts || 0;
+    P.stars = P.stars || {};             /* activity id -> 0..3 best */
+    if (P.voice === undefined) P.voice = true;
+    if (P.sound === undefined) P.sound = true;
+    function save() {
+      try { localStorage.setItem(PKEY, JSON.stringify(P)); } catch (_) {}
+    }
+
+    /* ── speech + gentle sounds ───────────────────────────────────────── */
+
+    function speak(text) {
+      if (!P.voice) return;
+      try {
+        if (!window.speechSynthesis) return;
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(
+          String(text).replace(/[🎉⭐🌟💪🎯✨🚀🙈…→]/g, ''));
+        u.rate = 0.85;
+        u.pitch = 1.05;
+        speechSynthesis.speak(u);
+      } catch (_) {}
+    }
+
+    let audioCtx = null;
+    function tone(freq, start, dur, vol) {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sine';
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0, audioCtx.currentTime + start);
+      g.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + start + 0.02);
+      g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + start + dur);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(audioCtx.currentTime + start);
+      o.stop(audioCtx.currentTime + start + dur + 0.05);
+    }
+    function sfx(kind) {
+      if (!P.sound) return;
+      try {
+        if (!audioCtx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) return;
+          audioCtx = new AC();
+        }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (kind === 'good') { tone(523, 0, 0.14, 0.07); tone(784, 0.12, 0.2, 0.07); }
+        else if (kind === 'soft') { tone(233, 0, 0.18, 0.045); }
+        else if (kind === 'star') { tone(659, 0, 0.12, 0.06); tone(784, 0.1, 0.12, 0.06); tone(1047, 0.2, 0.25, 0.06); }
+        else if (kind === 'tick') { tone(880, 0, 0.05, 0.03); }
+      } catch (_) {}
+    }
+
+    function burst() {
+      const wrap = document.createElement('div');
+      wrap.className = 'sq-burst';
+      const EMO = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟', '⭐', '✨', '🎉'];
+      for (let i = 0; i < 26; i++) {
+        const s = document.createElement('span');
+        s.textContent = pick(EMO);
+        s.style.left = (Math.random() * 100) + 'vw';
+        s.style.animationDuration = (2 + Math.random() * 2.2) + 's';
+        s.style.animationDelay = (Math.random() * 0.5) + 's';
+        wrap.appendChild(s);
+      }
+      document.body.appendChild(wrap);
+      setTimeout(function () { wrap.remove(); }, 5200);
+    }
+
+    /* ── shared chrome ────────────────────────────────────────────────── */
+
+    function topBar(backLabel, backFn) {
+      const bar = document.createElement('div');
+      bar.className = 'sq-top';
+      if (backFn) {
+        const b = document.createElement('button');
+        b.className = 'sq-back';
+        b.textContent = '← ' + backLabel;
+        b.addEventListener('click', function () {
+          try { speechSynthesis.cancel(); } catch (_) {}
+          backFn();
+        });
+        bar.appendChild(b);
+      }
+      const sp = document.createElement('div');
+      sp.className = 'sq-spacer';
+      bar.appendChild(sp);
+
+      const voiceBtn = document.createElement('button');
+      voiceBtn.className = 'sq-pill' + (P.voice ? '' : ' off');
+      voiceBtn.textContent = '🗣️ Read aloud';
+      voiceBtn.setAttribute('aria-pressed', String(P.voice));
+      voiceBtn.addEventListener('click', function () {
+        P.voice = !P.voice; save();
+        voiceBtn.className = 'sq-pill' + (P.voice ? '' : ' off');
+        voiceBtn.setAttribute('aria-pressed', String(P.voice));
+        if (!P.voice) { try { speechSynthesis.cancel(); } catch (_) {} }
+      });
+      bar.appendChild(voiceBtn);
+
+      const soundBtn = document.createElement('button');
+      soundBtn.className = 'sq-pill' + (P.sound ? '' : ' off');
+      soundBtn.textContent = '🔔 Sounds';
+      soundBtn.setAttribute('aria-pressed', String(P.sound));
+      soundBtn.addEventListener('click', function () {
+        P.sound = !P.sound; save();
+        soundBtn.className = 'sq-pill' + (P.sound ? '' : ' off');
+        soundBtn.setAttribute('aria-pressed', String(P.sound));
+      });
+      bar.appendChild(soundBtn);
+
+      const pts = document.createElement('span');
+      pts.className = 'sq-pill pts';
+      pts.id = 'sq-pts';
+      pts.textContent = P.pts + ' ⭐';
+      bar.appendChild(pts);
+      return bar;
+    }
+
+    /* ── home ─────────────────────────────────────────────────────────── */
+
+    const WORLDS = [
+      { id: 'seq', em: '🪜', name: 'Step Sorter', color: '#4ade80',
+        tag: 'Put the steps in the right order',
+        stars: ['seq1', 'seq2', 'seq3'], fn: function () { seqMenu(); } },
+      { id: 'first', em: '🚀', name: 'First Step Finder', color: '#fb923c',
+        tag: 'Find the tiny step that starts a big job',
+        stars: ['first'], fn: function () { startFirst(); } },
+      { id: 'time', em: '⏱️', name: 'Time Lab', color: '#60a5fa',
+        tag: 'Feel seconds, know minutes, do clock math',
+        stars: ['t5', 't10', 't15', 't30', 'dur', 'ck1', 'ck2', 'ck3'],
+        fn: function () { timeMenu(); } },
+      { id: 'sort', em: '🗂️', name: 'Sort & Pack', color: '#c084fc',
+        tag: 'Everything has a home',
+        stars: ['home', 'pack'], fn: function () { sortMenu(); } },
+      { id: 'mem', em: '🧠', name: 'Memory Steps', color: '#f472b6',
+        tag: 'Hold steps in your head',
+        stars: ['mem2', 'mem3', 'mem4'], fn: function () { memMenu(); } },
+      { id: 'flex', em: '🔄', name: 'Plan B Power', color: '#2dd4bf',
+        tag: 'When plans change, you stay strong',
+        stars: ['planb'], fn: function () { startPlanB(); } },
+      { id: 'coach', em: '📚', name: 'Brain Coach', color: '#facc15',
+        tag: 'Smart moves for homework and studying',
+        stars: ['smart'], fn: function () { startCoach(); } }
+    ];
+
+    function home() {
+      el.innerHTML = '';
+      el.appendChild(topBar(null, null));
+
+      const hero = document.createElement('div');
+      hero.className = 'sq-hero';
+      hero.innerHTML = '<h1>🦸 Super Skills Quest</h1>' +
+        '<p>Little steps, big powers — pick a skill world!</p>';
+      el.appendChild(hero);
+
+      const s1 = document.createElement('div');
+      s1.className = 'sq-sect';
+      s1.textContent = 'Skill worlds';
+      el.appendChild(s1);
+
+      const worlds = document.createElement('div');
+      worlds.className = 'sq-worlds';
+      WORLDS.forEach(function (w) {
+        const b = document.createElement('button');
+        b.className = 'sq-world';
+        b.style.setProperty('--wc', w.color);
+        let earned = 0;
+        w.stars.forEach(function (id) { earned += P.stars[id] || 0; });
+        const total = w.stars.length * 3;
+        b.innerHTML = '<span class="em">' + w.em + '</span>' +
+          '<span><span class="name">' + esc(w.name) + '</span>' +
+          '<div class="tag">' + esc(w.tag) + '</div>' +
+          '<div class="st">' + (earned ? '★ ' + earned + ' / ' + total
+                                       : '☆ ☆ ☆') + '</div></span>';
+        b.addEventListener('click', w.fn);
+        worlds.appendChild(b);
+      });
+      el.appendChild(worlds);
+
+      const g = document.createElement('div');
+      g.className = 'sq-guide';
+      g.innerHTML = 'For grown-ups: ' +
+        '<a href="/autism/executive-skills/">the strategy guide behind these games</a>';
+      el.appendChild(g);
+      window.scrollTo(0, 0);
+    }
+
+    /* ── sub-menus ────────────────────────────────────────────────────── */
+
+    function menuScreen(title, sub, cards, backFn) {
+      el.innerHTML = '';
+      el.appendChild(topBar('Home', backFn || home));
+      const hero = document.createElement('div');
+      hero.className = 'sq-hero';
+      hero.innerHTML = '<h1>' + title + '</h1><p>' + esc(sub) + '</p>';
+      el.appendChild(hero);
+      const grid = document.createElement('div');
+      grid.className = 'sq-cards';
+      cards.forEach(function (c) {
+        const b = document.createElement('button');
+        b.className = 'sq-card';
+        b.innerHTML = '<div class="em">' + c.em + '</div>' +
+          '<div class="name">' + esc(c.name) + '</div>' +
+          '<div class="desc">' + esc(c.desc) + '</div>' +
+          (c.id ? '<div class="st">' + stars3(P.stars[c.id] || 0) + '</div>' : '');
+        b.addEventListener('click', c.fn);
+        grid.appendChild(b);
+      });
+      el.appendChild(grid);
+      window.scrollTo(0, 0);
+    }
+
+    function seqMenu() {
+      menuScreen('🪜 Step Sorter', 'Routines are just steps in order. Pick a size!', [
+        { em: '🌱', name: 'Short · 3-4 steps', id: 'seq1',
+          desc: 'Warm up with little routines.',
+          fn: function () { startSeq(1); } },
+        { em: '🌿', name: 'Medium · 5-6 steps', id: 'seq2',
+          desc: 'School mornings, homework time, bath time…',
+          fn: function () { startSeq(2); } },
+        { em: '🌳', name: 'Long · 7-8 steps', id: 'seq3',
+          desc: 'Big routines: baking, parties, movie night!',
+          fn: function () { startSeq(3); } }
+      ]);
+    }
+
+    function timeMenu() {
+      menuScreen('⏱️ Time Lab', 'Train your inner clock — three experiments!', [
+        { em: '5️⃣', name: 'Feel 5 seconds', id: 't5',
+          desc: 'Stop the clock at exactly 5 — no peeking!',
+          fn: function () { startTime(5); } },
+        { em: '🔟', name: 'Feel 10 seconds', id: 't10',
+          desc: 'Stop the clock at exactly 10.',
+          fn: function () { startTime(10); } },
+        { em: '🕒', name: 'Feel 15 seconds', id: 't15',
+          desc: 'Stop the clock at exactly 15.',
+          fn: function () { startTime(15); } },
+        { em: '🕧', name: 'Feel 30 seconds', id: 't30',
+          desc: 'The big one — half a minute by feel.',
+          fn: function () { startTime(30); } },
+        { em: '🕰️', name: 'How Long Does It Take?', id: 'dur',
+          desc: 'Teeth = 2 minutes? A movie = 2 hours? You decide.',
+          fn: function () { startDur(); } },
+        { em: '🚪', name: 'Leave On Time · 1 job', id: 'ck1',
+          desc: 'Leave at 8:00, packing takes 10 minutes — start when?',
+          fn: function () { startClock(1); } },
+        { em: '🚪', name: 'Leave On Time · 2 jobs', id: 'ck2',
+          desc: 'Two jobs before you go — add, then count back.',
+          fn: function () { startClock(2); } },
+        { em: '🛡️', name: 'Leave On Time · buffer', id: 'ck3',
+          desc: 'Two jobs PLUS 5 just-in-case minutes.',
+          fn: function () { startClock(3); } }
+      ]);
+    }
+
+    function sortMenu() {
+      menuScreen('🗂️ Sort & Pack', 'Everything has one home. Tidy brains find things fast!', [
+        { em: '🪝', name: 'Everything Has a Home', id: 'home',
+          desc: 'Where do the keys live? And the ice cream?',
+          fn: function () { startHome(); } },
+        { em: '🎒', name: 'Pack the Backpack', id: 'pack',
+          desc: 'Read tomorrow’s plan — pack what you need, skip the rest.',
+          fn: function () { startPack(); } }
+      ]);
+    }
+
+    function memMenu() {
+      menuScreen('🧠 Memory Steps', 'Hold the steps in your head, then tap them in order.', [
+        { em: '2️⃣', name: '2 steps', id: 'mem2',
+          desc: 'Two things to remember.',
+          fn: function () { startMem(2); } },
+        { em: '3️⃣', name: '3 steps', id: 'mem3',
+          desc: 'Three in a row — like a real instruction.',
+          fn: function () { startMem(3); } },
+        { em: '4️⃣', name: '4 steps', id: 'mem4',
+          desc: 'Four! That’s super-brain territory.',
+          fn: function () { startMem(4); } }
+      ]);
+    }
+
+    /* ── round starters ───────────────────────────────────────────────── */
+
+    function mcqStep(q) { return { type: 'mcq', q: q }; }
+
+    function startSeq(lvl) {
+      const pool = DATA.seq.filter(function (s) { return s.lvl === lvl; });
+      playRound({
+        id: 'seq' + lvl, title: '🪜 Step Sorter',
+        steps: shuffle(pool).slice(0, 4).map(function (s) {
+          return { type: 'seq', s: s };
+        }),
+        backTo: seqMenu, replay: function () { startSeq(lvl); }
+      });
+    }
+
+    function startFirst() {
+      playRound({
+        id: 'first', title: '🚀 First Step Finder',
+        steps: shuffle(DATA.first).slice(0, 8).map(function (q) {
+          return mcqStep({ scene: q.e, title: q.task,
+                           text: 'Which tiny FIRST step gets you started?',
+                           opts: q.opts, teach: q.teach });
+        }),
+        backTo: home, replay: startFirst
+      });
+    }
+
+    function startDur() {
+      playRound({
+        id: 'dur', title: '🕰️ How Long Does It Take?',
+        steps: shuffle(DATA.dur).slice(0, 8).map(function (q) {
+          return mcqStep({ scene: q.e, text: q.q, opts: q.opts,
+                           teach: q.teach, nums: true });
+        }),
+        backTo: timeMenu, replay: startDur
+      });
+    }
+
+    function startHome() {
+      playRound({
+        id: 'home', title: '🪝 Everything Has a Home',
+        steps: shuffle(DATA.home).slice(0, 8).map(function (q) {
+          return mcqStep({ scene: q.e, title: q.item,
+                           text: 'Where does it live?', opts: q.opts,
+                           teach: q.teach });
+        }),
+        backTo: sortMenu, replay: startHome
+      });
+    }
+
+    function startPlanB() {
+      playRound({
+        id: 'planb', title: '🔄 Plan B Power',
+        steps: shuffle(DATA.planb).slice(0, 8).map(function (q) {
+          return mcqStep({ scene: q.e, text: q.q, opts: q.opts,
+                           teach: q.teach });
+        }),
+        backTo: home, replay: startPlanB
+      });
+    }
+
+    function startCoach() {
+      playRound({
+        id: 'smart', title: '📚 Brain Coach',
+        steps: shuffle(DATA.smart).slice(0, 8).map(function (q) {
+          return mcqStep({ scene: q.e, text: q.q, opts: q.opts,
+                           teach: q.teach });
+        }),
+        backTo: home, replay: startCoach
+      });
+    }
+
+    function startPack() {
+      playRound({
+        id: 'pack', title: '🎒 Pack the Backpack',
+        steps: shuffle(DATA.pack).slice(0, 4).map(function (p) {
+          return { type: 'pack', p: p };
+        }),
+        backTo: sortMenu, replay: startPack
+      });
+    }
+
+    function startTime(target) {
+      const steps = [];
+      for (let i = 0; i < 5; i++) steps.push({ type: 'time', target: target });
+      playRound({
+        id: 't' + target, title: '⏱️ Feel ' + target + ' Seconds',
+        steps: steps, backTo: timeMenu,
+        replay: function () { startTime(target); }
+      });
+    }
+
+    function startMem(k) {
+      const steps = [];
+      for (let i = 0; i < 5; i++) {
+        const grid = shuffle(MPOOL).slice(0, 8);
+        steps.push({ type: 'mem', seq: shuffle(grid).slice(0, k), grid: grid });
+      }
+      playRound({
+        id: 'mem' + k, title: '🧠 Memory Steps · ' + k,
+        steps: steps, backTo: memMenu,
+        replay: function () { startMem(k); }
+      });
+    }
+
+    /* backward clock planning — generated fresh every round */
+    function fmtTime(t) {
+      t = ((t % 720) + 720) % 720;
+      let h = Math.floor(t / 60);
+      if (h === 0) h = 12;
+      const m = t % 60;
+      return h + ':' + (m < 10 ? '0' : '') + m;
+    }
+    function genClock(lvl) {
+      const h = pick([7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]);
+      const leave = (h % 12) * 60 + 5 * r(12);
+      let text, dur, teach;
+      if (lvl === 1) {
+        dur = 5 * (1 + r(8));
+        const act = pick(ACTS);
+        text = 'You must leave at ' + fmtTime(leave) + '. ' + act +
+          ' takes ' + dur + ' minutes. When should you start?';
+        teach = fmtTime(leave) + ' minus ' + dur + ' minutes is ' +
+          fmtTime(leave - dur) + '.';
+      } else {
+        const two = shuffle(ACTS).slice(0, 2);
+        const a = 5 * (1 + r(5)), b = 5 * (1 + r(5));
+        const extra = lvl === 3 ? 5 : 0;
+        dur = a + b + extra;
+        text = 'You must leave at ' + fmtTime(leave) + '. ' + two[0] +
+          ' takes ' + a + ' minutes and ' + two[1].toLowerCase() +
+          ' takes ' + b + ' minutes.' +
+          (extra ? ' Add ' + extra + ' just-in-case minutes.' : '') +
+          ' When should you start?';
+        teach = a + ' + ' + b + (extra ? ' + ' + extra : '') + ' = ' + dur +
+          ' minutes. ' + fmtTime(leave) + ' minus ' + dur + ' minutes is ' +
+          fmtTime(leave - dur) + '.';
+      }
+      const ans = fmtTime(leave - dur);
+      const seen = {};
+      seen[ans] = true;
+      const opts = [ans];
+      shuffle([leave - dur + 5, leave - dur - 5, leave - dur + 10,
+               leave - dur - 10, leave + dur]).forEach(function (t) {
+        const f = fmtTime(t);
+        if (opts.length < 4 && !seen[f]) { seen[f] = true; opts.push(f); }
+      });
+      return { scene: '🚪⏰', text: text, teach: teach, nums: true,
+               opts: shuffle(opts).map(function (o) {
+                 return ['', o, o === ans];
+               }) };
+    }
+    function startClock(lvl) {
+      const steps = [];
+      for (let i = 0; i < 6; i++) steps.push(mcqStep(genClock(lvl)));
+      playRound({
+        id: 'ck' + lvl, title: '🚪 Leave On Time',
+        steps: steps, backTo: timeMenu,
+        replay: function () { startClock(lvl); }
+      });
+    }
+
+    /* ── round engine ─────────────────────────────────────────────────── */
+
+    let R = null; /* current round */
+
+    function playRound(spec) {
+      R = { spec: spec, idx: 0, firstTry: 0, tries: 0, earned: 0,
+            startPts: P.pts };
+      renderStep();
+    }
+
+    function addPts(n) {
+      P.pts += n;
+      R.earned += n;
+      save();
+      const pill = document.getElementById('sq-pts');
+      if (pill) {
+        pill.textContent = P.pts + ' ⭐';
+        pill.classList.remove('pop');
+        void pill.offsetWidth;
+        pill.classList.add('pop');
+      }
+    }
+
+    function progressDots() {
+      const wrap = document.createElement('div');
+      wrap.className = 'sq-prog';
+      R.spec.steps.forEach(function (_, i) {
+        const d = document.createElement('span');
+        d.className = 'sq-dot' + (i < R.idx ? ' done' : i === R.idx ? ' now' : '');
+        wrap.appendChild(d);
+      });
+      return wrap;
+    }
+
+    function renderStep() {
+      if (R.idx >= R.spec.steps.length) { results(); return; }
+      const step = R.spec.steps[R.idx];
+      R.tries = 0;
+      el.innerHTML = '';
+      el.appendChild(topBar(R.spec.backLabel || 'Back', function () {
+        (R.spec.backTo || home)();
+      }));
+      el.appendChild(progressDots());
+      if (step.type === 'mcq') renderMcq(step);
+      else if (step.type === 'seq') renderSeq(step);
+      else if (step.type === 'pack') renderPack(step);
+      else if (step.type === 'time') renderTime(step);
+      else renderMem(step);
+      window.scrollTo(0, 0);
+    }
+
+    function feedbackArea() {
+      const f = document.createElement('div');
+      f.className = 'sq-feedback';
+      f.id = 'sq-fb';
+      el.appendChild(f);
+      return f;
+    }
+
+    function nextButton(label) {
+      const b = document.createElement('button');
+      b.className = 'sq-next';
+      b.textContent = label ||
+        (R.idx + 1 >= R.spec.steps.length ? 'Finish 🏁' : 'Next ▶');
+      b.addEventListener('click', function () {
+        try { speechSynthesis.cancel(); } catch (_) {}
+        R.idx++;
+        renderStep();
+      });
+      return b;
+    }
+
+    /* correct: gentle celebrate, teach, show Next. */
+    function onCorrect(fb, teachLines, spokenAnswer) {
+      const first = R.tries === 0;
+      if (first) R.firstTry++;
+      addPts(first ? 2 : 1);
+      sfx('good');
+      const praise = pick(PRAISE);
+      fb.innerHTML = '<span class="praise">' + praise + '</span>' +
+        '<span class="sq-pill pts" style="margin-left:0.6rem">+' + (first ? 2 : 1) + ' ⭐</span>' +
+        '<div class="sq-teach">' + teachLines.map(esc).join('<br>') + '</div>';
+      speak((spokenAnswer ? spokenAnswer + '. ' : '') + praise);
+      fb.after(nextButton());
+    }
+
+    function onWrong(fb, btnEl, correctBtn, teachLines, correctSpoken) {
+      R.tries++;
+      sfx('soft');
+      btnEl.classList.add('miss');
+      setTimeout(function () { btnEl.classList.remove('miss'); btnEl.classList.add('dim'); }, 380);
+      btnEl.disabled = true;
+      if (R.tries === 1) {
+        fb.innerHTML = '<span class="again">Not that one — try again! 💛</span>';
+        speak('Not that one. Try again!');
+      } else {
+        /* second miss: reveal the answer, teach, move on */
+        correctBtn.classList.add('good');
+        Array.prototype.forEach.call(el.querySelectorAll('.sq-opt'), function (o) {
+          o.disabled = true;
+          if (o !== correctBtn) o.classList.add('dim');
+        });
+        addPts(1); /* still rewards finishing — no failure state */
+        fb.innerHTML = '<span class="again">Here it is! 👀</span>' +
+          '<div class="sq-teach">' + teachLines.map(esc).join('<br>') + '</div>';
+        speak('Here is the answer. ' + correctSpoken);
+        fb.after(nextButton());
+      }
+    }
+
+    /* ── step: multiple choice (first/dur/home/planb/smart/clock) ─────── */
+
+    function renderMcq(step) {
+      const q = step.q;
+
+      if (q.scene) {
+        const sc = document.createElement('div');
+        sc.className = 'sq-scene';
+        sc.textContent = q.scene;
+        el.appendChild(sc);
+      }
+      if (q.title) {
+        const t = document.createElement('div');
+        t.className = 'sq-titlecard';
+        t.textContent = q.title;
+        el.appendChild(t);
+      }
+
+      const qEl = document.createElement('div');
+      qEl.className = 'sq-q';
+      qEl.textContent = q.text;
+      el.appendChild(qEl);
+
+      const spoken = (q.title ? q.title + '. ' : '') + q.text;
+      const say = document.createElement('button');
+      say.className = 'sq-say';
+      say.textContent = '🔊 Read it to me';
+      say.addEventListener('click', function () { speak(spoken); });
+      el.appendChild(say);
+
+      const opts = document.createElement('div');
+      opts.className = 'sq-opts' + (q.nums ? ' nums' : '');
+      let correctBtn = null;
+      const correctOpt = q.opts.filter(function (o) { return o[2]; })[0];
+      const teach = q.teach ? [q.teach] : [];
+
+      shuffle(q.opts).forEach(function (o) {
+        const b = document.createElement('button');
+        b.className = 'sq-opt' + (q.nums ? ' num' : '');
+        b.innerHTML = (o[0] ? '<span class="em">' + o[0] + '</span>' : '') +
+          '<span>' + esc(o[1]) + '</span>';
+        if (o[2]) correctBtn = b;
+        b.addEventListener('click', function () {
+          const fb = document.getElementById('sq-fb');
+          if (o[2]) {
+            Array.prototype.forEach.call(opts.children, function (x) { x.disabled = true; });
+            b.classList.add('good');
+            onCorrect(fb, teach, o[1]);
+          } else {
+            onWrong(fb, b, correctBtn, teach, correctOpt[1]);
+          }
+        });
+        opts.appendChild(b);
+      });
+      el.appendChild(opts);
+      feedbackArea();
+      speak(spoken);
+    }
+
+    /* ── step: Step Sorter (tap the steps in order) ───────────────────── */
+
+    function renderSeq(step) {
+      const s = step.s;
+      const n = s.steps.length;
+      let pos = 0, mistakes = 0, wrongAtPos = 0;
+
+      const t = document.createElement('div');
+      t.className = 'sq-titlecard';
+      t.innerHTML = '<span class="em">' + s.e + '</span>' + esc(s.t);
+      el.appendChild(t);
+
+      const qEl = document.createElement('div');
+      qEl.className = 'sq-q';
+      qEl.textContent = 'Tap the steps in order — 1, 2, 3…';
+      el.appendChild(qEl);
+
+      const say = document.createElement('button');
+      say.className = 'sq-say';
+      say.textContent = '🔊 Read it to me';
+      say.addEventListener('click', function () {
+        speak(s.t + '. Tap the ' + n + ' steps in order.');
+      });
+      el.appendChild(say);
+
+      const done = document.createElement('div');
+      done.className = 'sq-done';
+      el.appendChild(done);
+
+      const pool = document.createElement('div');
+      pool.className = 'sq-pool';
+      const btns = [];
+
+      function finish(fb) {
+        const clean = mistakes === 0;
+        if (clean) R.firstTry++;
+        addPts(clean ? 2 : 1);
+        sfx('good');
+        const praise = pick(PRAISE);
+        fb.innerHTML = '<span class="praise">' + praise + '</span>' +
+          '<span class="sq-pill pts" style="margin-left:0.6rem">+' +
+          (clean ? 2 : 1) + ' ⭐</span>' +
+          '<div class="sq-teach">' + esc(s.teach) + '</div>';
+        speak('All ' + n + ' steps in order! ' + s.teach);
+        fb.after(nextButton());
+      }
+
+      s.steps.forEach(function (txt, idx) {
+        const b = document.createElement('button');
+        b.className = 'sq-step';
+        b.textContent = txt;
+        b.addEventListener('click', function () {
+          const fb = document.getElementById('sq-fb');
+          if (idx === pos) {
+            const row = document.createElement('div');
+            row.className = 'sq-donerow';
+            row.innerHTML = '<span class="n">' + (pos + 1) + '</span>' +
+              '<span>' + esc(txt) + '</span>';
+            done.appendChild(row);
+            b.style.display = 'none';
+            btns.forEach(function (x) { x.classList.remove('hint'); });
+            pos++;
+            wrongAtPos = 0;
+            sfx('tick');
+            fb.innerHTML = '';
+            if (pos === n) finish(fb);
+            else speak(txt);
+          } else {
+            mistakes++;
+            wrongAtPos++;
+            sfx('soft');
+            b.classList.add('miss');
+            setTimeout(function () { b.classList.remove('miss'); }, 380);
+            if (wrongAtPos >= 2) {
+              /* no failure state: glow the right next step */
+              btns[pos].classList.add('hint');
+              fb.innerHTML = '<span class="again">The glowing step is next! ✨</span>';
+              speak('The glowing step is next.');
+            } else {
+              fb.innerHTML = '<span class="again">Hmm — what happens ' +
+                (pos === 0 ? 'first' : 'next') + '? 💛</span>';
+              speak('Hmm. What happens ' + (pos === 0 ? 'first' : 'next') + '?');
+            }
+          }
+        });
+        btns.push(b);
+      });
+      /* pool shows the steps shuffled */
+      shuffle(btns.map(function (_, i) { return i; })).forEach(function (i) {
+        pool.appendChild(btns[i]);
+      });
+      el.appendChild(pool);
+      feedbackArea();
+      speak(s.t + '. Tap the ' + n + ' steps in order. What happens first?');
+    }
+
+    /* ── step: Pack the Backpack ──────────────────────────────────────── */
+
+    function renderPack(step) {
+      const p = step.p;
+      const needN = p.need.length;
+      let packed = 0, mistakes = 0;
+
+      const sc = document.createElement('div');
+      sc.className = 'sq-scene';
+      sc.textContent = p.e;
+      el.appendChild(sc);
+
+      const qEl = document.createElement('div');
+      qEl.className = 'sq-q';
+      qEl.textContent = p.t;
+      el.appendChild(qEl);
+
+      const say = document.createElement('button');
+      say.className = 'sq-say';
+      say.textContent = '🔊 Read it to me';
+      say.addEventListener('click', function () {
+        speak(p.t + '. Pack the ' + needN + ' things you need.');
+      });
+      el.appendChild(say);
+
+      const count = document.createElement('div');
+      count.className = 'sq-count';
+      count.textContent = 'Packed: 0 / ' + needN;
+      el.appendChild(count);
+
+      const grid = document.createElement('div');
+      grid.className = 'sq-packgrid';
+      const items = shuffle(
+        p.need.map(function (it) { return { e: it[0], name: it[1], ok: true }; })
+          .concat(p.skip.map(function (it) {
+            return { e: it[0], name: it[1], ok: false, why: it[2] };
+          })));
+
+      items.forEach(function (it) {
+        const b = document.createElement('button');
+        b.className = 'sq-item';
+        b.innerHTML = '<span class="em">' + it.e + '</span>' + esc(it.name);
+        b.addEventListener('click', function () {
+          const fb = document.getElementById('sq-fb');
+          if (it.ok) {
+            b.classList.add('good');
+            b.disabled = true;
+            packed++;
+            sfx('tick');
+            count.textContent = 'Packed: ' + packed + ' / ' + needN;
+            fb.innerHTML = '';
+            if (packed === needN) {
+              const clean = mistakes === 0;
+              if (clean) R.firstTry++;
+              addPts(clean ? 2 : 1);
+              sfx('good');
+              const praise = pick(PRAISE);
+              Array.prototype.forEach.call(grid.children, function (x) {
+                x.disabled = true;
+                if (!x.classList.contains('good')) x.classList.add('dim');
+              });
+              fb.innerHTML = '<span class="praise">' + praise + '</span>' +
+                '<span class="sq-pill pts" style="margin-left:0.6rem">+' +
+                (clean ? 2 : 1) + ' ⭐</span>' +
+                '<div class="sq-teach">Backpack ready — all ' + needN +
+                ' things packed!</div>';
+              speak('Backpack ready! All ' + needN + ' things packed. ' + praise);
+              fb.after(nextButton());
+            } else {
+              speak(it.name + '. Packed ' + packed + ' of ' + needN + '.');
+            }
+          } else {
+            mistakes++;
+            sfx('soft');
+            b.classList.add('miss');
+            setTimeout(function () { b.classList.remove('miss'); b.classList.add('dim'); }, 380);
+            b.disabled = true;
+            fb.innerHTML = '<span class="again">Leave it out! 💛</span>' +
+              '<div class="sq-teach">' + esc(it.why) + '</div>';
+            speak('Leave it out. ' + it.why);
+          }
+        });
+        grid.appendChild(b);
+      });
+      el.appendChild(grid);
+      feedbackArea();
+      speak(p.t + '. Pack the ' + needN + ' things you need — and skip the rest!');
+    }
+
+    /* ── step: Time Lab (feel the seconds) ────────────────────────────── */
+
+    function renderTime(step) {
+      const target = step.target;
+
+      const sc = document.createElement('div');
+      sc.className = 'sq-scene';
+      sc.textContent = '⏱️';
+      el.appendChild(sc);
+
+      const qEl = document.createElement('div');
+      qEl.className = 'sq-q';
+      qEl.textContent = 'Press START, count ' + target +
+        ' seconds in your head, then press STOP.';
+      el.appendChild(qEl);
+
+      const tip = document.createElement('div');
+      tip.className = 'sq-teach';
+      tip.textContent = 'Tip: counting "one-Mississippi, two-Mississippi…" ' +
+        'makes each count about 1 second.';
+      el.appendChild(tip);
+
+      /* no numbers shown while it runs — feeling the time IS the game */
+      const big = document.createElement('button');
+      big.className = 'sq-timebig';
+      big.textContent = 'START ▶';
+      let t0 = null;
+      big.addEventListener('click', function () {
+        const fb = document.getElementById('sq-fb');
+        if (t0 === null) {
+          t0 = performance.now();
+          big.textContent = 'STOP ⏹';
+          big.classList.add('run');
+          sfx('tick');
+          return;
+        }
+        const dt = (performance.now() - t0) / 1000;
+        big.disabled = true;
+        big.classList.remove('run');
+        big.textContent = 'DONE';
+        const diff = Math.abs(dt - target);
+        const clean = diff <= target * 0.15;
+        if (clean) R.firstTry++;
+        R.tries = clean ? 0 : 1; /* keep +2/+1 bookkeeping consistent */
+        addPts(clean ? 2 : 1);
+        sfx(clean ? 'good' : 'soft');
+
+        const out = document.createElement('div');
+        out.className = 'sq-readout';
+        out.innerHTML = 'Target: <span class="big">' + target.toFixed(1) +
+          ' s</span><br>You: <span class="big">' + dt.toFixed(1) +
+          ' s</span><br>Off by: <span class="big">' + diff.toFixed(1) +
+          ' s</span>';
+        big.after(out);
+
+        const praise = pick(PRAISE);
+        fb.innerHTML = clean
+          ? '<span class="praise">' + praise + ' Your inner clock is strong!</span>' +
+            '<span class="sq-pill pts" style="margin-left:0.6rem">+2 ⭐</span>'
+          : '<span class="again">Good try! 💛 So THAT is what ' + target +
+            ' seconds feels like.</span>' +
+            '<span class="sq-pill pts" style="margin-left:0.6rem">+1 ⭐</span>';
+        speak('You stopped at ' + dt.toFixed(1) + ' seconds. The target was ' +
+              target + '. Off by ' + diff.toFixed(1) + '. ' +
+              (clean ? 'Your inner clock is strong!' : 'Good try!'));
+        fb.after(nextButton());
+      });
+      el.appendChild(big);
+      feedbackArea();
+      speak('Press start. Count ' + target +
+            ' seconds in your head. Then press stop.');
+    }
+
+    /* ── step: Memory Steps ───────────────────────────────────────────── */
+
+    function renderMem(step) {
+      const seq = step.seq;
+      const k = seq.length;
+      let pos = 0, mistakes = 0;
+
+      const qEl = document.createElement('div');
+      qEl.className = 'sq-q';
+      qEl.textContent = 'Remember these ' + k + ' steps — in order!';
+      el.appendChild(qEl);
+
+      const row = document.createElement('div');
+      row.className = 'sq-memseq';
+      row.textContent = seq.map(function (x) { return x.e; }).join(' ');
+      el.appendChild(row);
+
+      const names = document.createElement('div');
+      names.className = 'sq-memnames';
+      names.textContent = seq.map(function (x) { return x.name; }).join(' → ');
+      el.appendChild(names);
+
+      const spokenSeq = seq.map(function (x) { return x.name; }).join(', then ');
+      const say = document.createElement('button');
+      say.className = 'sq-say';
+      say.textContent = '🔊 Read it to me';
+      say.addEventListener('click', function () { speak(spokenSeq); });
+      el.appendChild(say);
+
+      /* HE decides when to hide it — no auto-hide timer */
+      const hide = document.createElement('button');
+      hide.className = 'sq-next';
+      hide.textContent = 'I remember it — hide it! 🙈';
+      el.appendChild(hide);
+
+      hide.addEventListener('click', function () {
+        row.style.display = 'none';
+        names.style.display = 'none';
+        say.style.display = 'none';
+        hide.remove();
+        qEl.textContent = 'Now tap them in the same order!';
+        speak('Now tap them in the same order.');
+
+        const grid = document.createElement('div');
+        grid.className = 'sq-memgrid';
+        const tiles = [];
+
+        function resetTaps() {
+          pos = 0;
+          tiles.forEach(function (t) {
+            t.btn.classList.remove('good');
+            t.btn.disabled = false;
+            const b = t.btn.querySelector('.n');
+            if (b) b.remove();
+          });
+        }
+
+        step.grid.forEach(function (item) {
+          const b = document.createElement('button');
+          b.className = 'sq-tile';
+          b.textContent = item.e;
+          b.setAttribute('aria-label', item.name);
+          b.addEventListener('click', function () {
+            const fb = document.getElementById('sq-fb');
+            if (seq[pos] && item.e === seq[pos].e) {
+              b.classList.add('good');
+              b.disabled = true;
+              const badge = document.createElement('span');
+              badge.className = 'n';
+              badge.textContent = String(pos + 1);
+              b.appendChild(badge);
+              pos++;
+              sfx('tick');
+              if (pos === k) {
+                const clean = mistakes === 0;
+                if (clean) R.firstTry++;
+                addPts(clean ? 2 : 1);
+                sfx('good');
+                tiles.forEach(function (t) { t.btn.disabled = true; });
+                const praise = pick(PRAISE);
+                fb.innerHTML = '<span class="praise">' + praise +
+                  ' You held ' + k + ' steps in your head!</span>' +
+                  '<span class="sq-pill pts" style="margin-left:0.6rem">+' +
+                  (clean ? 2 : 1) + ' ⭐</span>';
+                speak('You held ' + k + ' steps in your head! ' + praise);
+                fb.after(nextButton());
+              } else {
+                fb.innerHTML = '';
+              }
+            } else {
+              mistakes++;
+              sfx('soft');
+              b.classList.add('miss');
+              setTimeout(function () { b.classList.remove('miss'); }, 380);
+              resetTaps();
+              if (mistakes >= 2) {
+                /* no failure state: show the sequence and let him copy it */
+                row.style.display = '';
+                names.style.display = '';
+                fb.innerHTML = '<span class="again">Peek is open — copy the ' +
+                  'order! 👀</span>';
+                speak('Here it is again. ' + spokenSeq + '. Copy the order.');
+              } else {
+                fb.innerHTML = '<span class="again">Almost — start from step 1! ' +
+                  '💛 It began with the ' + esc(seq[0].name) + '.</span>';
+                speak('Almost. Start from step one. It began with the ' +
+                      seq[0].name + '.');
+              }
+            }
+          });
+          tiles.push({ btn: b });
+          grid.appendChild(b);
+        });
+        names.after(grid);
+      });
+
+      feedbackArea();
+      speak('Remember these ' + k + ' steps in order. ' + spokenSeq +
+            '. Press the button when you are ready.');
+    }
+
+    /* ── results ──────────────────────────────────────────────────────── */
+
+    function results() {
+      const total = R.spec.steps.length;
+      const nStars = R.firstTry >= total ? 3 : R.firstTry >= Math.ceil(total * 0.6) ? 2 : 1;
+      const prevBest = P.stars[R.spec.id] || 0;
+      if (nStars > prevBest) P.stars[R.spec.id] = nStars;
+
+      save();
+
+      el.innerHTML = '';
+      el.appendChild(topBar('Home', home));
+
+      const box = document.createElement('div');
+      box.className = 'sq-results';
+      box.innerHTML = '<div class="em">🏁</div><h2>' + esc(R.spec.title) + ' — done!</h2>' +
+        '<div class="sq-starrow">' +
+        [1, 2, 3].map(function (i) {
+          return '<span' + (i <= nStars ? ' class="on"' : '') + '>★</span>';
+        }).join('') + '</div>';
+
+      /* count-up with explicit arithmetic — numbers are the reward */
+      const mathline = document.createElement('div');
+      mathline.className = 'sq-mathline';
+      mathline.id = 'sq-count';
+      box.appendChild(mathline);
+
+      const btns = document.createElement('div');
+      btns.className = 'sq-resbtns';
+      const again = document.createElement('button');
+      again.className = 'sq-bigbtn go';
+      again.textContent = '🔁 Play again';
+      again.addEventListener('click', function () {
+        if (R.spec.replay) R.spec.replay();
+        else home();
+      });
+      btns.appendChild(again);
+      const homeB = document.createElement('button');
+      homeB.className = 'sq-bigbtn';
+      homeB.textContent = '🏠 Home';
+      homeB.addEventListener('click', home);
+      btns.appendChild(homeB);
+      box.appendChild(btns);
+      el.appendChild(box);
+
+      sfx('star');
+      if (nStars === 3) burst();
+      speak('All done! You earned ' + R.earned + ' stars. ' +
+            R.startPts + ' plus ' + R.earned + ' makes ' + P.pts + '!');
+
+      /* animate: "37 + 12 = 49 ⭐" counting up */
+      const target = P.pts;
+      let shown = R.startPts;
+      const cnt = document.getElementById('sq-count');
+      function tick() {
+        cnt.textContent = R.startPts + ' + ' + R.earned + ' = ' +
+          shown + (shown === target ? ' ⭐' : '…');
+        if (shown < target) {
+          shown++;
+          sfx('tick');
+          setTimeout(tick, 160);
+        }
+      }
+      tick();
+      window.scrollTo(0, 0);
+    }
+
+    /* ── boot ─────────────────────────────────────────────────────────── */
+
+    function boot(data) {
+      DATA = data;
+      home();
+    }
+
+    return { boot: boot };
+  })();
+
+  init();
+})();
+</script>

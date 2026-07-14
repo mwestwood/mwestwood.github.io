@@ -579,6 +579,51 @@ games never requires re-encryption, only content changes in `wh_data.py` do.
 `encrypt-batch.py` skips this page (empty body). Player progress
 (points/stars) lives in localStorage under `wh-quest-v1`.
 
+### Rebuild Super Skills Quest (executive-function game page)
+
+```bash
+python3 _tools/build-skill-quest.py "passphrase"
+```
+
+Generates `autism/skill-quest.md` (`layout: protected-skills`, nav_order 4,
+permalink `/autism/skill-quest/`) from `_tools/skills_data.py` (committed —
+original content, like `wh_data.py`). Executive-function practice games
+matching the strategy guide at `/autism/executive-skills/` (the two pages
+link to each other — the guide's "Practice Through Play" section and the
+game's home-screen "for grown-ups" footer). Seven skill worlds:
+
+- **🪜 Step Sorter** (sequencing) — tap shuffled routine steps into numbered
+  order; tiers by length (3-4 / 5-6 / 7-8 steps, `SEQUENCES` in the data).
+  Two wrong taps at one position make the correct next step glow — no dead
+  ends.
+- **🚀 First Step Finder** (task initiation) — pick the tiny first step for
+  a big task (`FIRSTSTEPS`); distractors are do-it-all-at-once / avoidance.
+- **⏱️ Time Lab** (time sense) — three experiments: *Feel N Seconds*
+  (5/10/15/30 — press START/STOP by feel, no numbers shown while running;
+  within 15% counts as clean), *How Long Does It Take?* (`DURATIONS`
+  real-life duration MCQ) and *Leave On Time* (backward clock math,
+  engine-generated: 1 job / 2 jobs / 2 jobs + 5-minute buffer, with a
+  leave+dur trap option).
+- **🗂️ Sort & Pack** (organization) — *Everything Has a Home* (`HOMES`) and
+  *Pack the Backpack* (`PACKS`: tap all needed items for tomorrow's
+  schedule; each distractor carries its own "why not" line).
+- **🧠 Memory Steps** (working memory) — memorize 2/3/4 tile steps, hide
+  them YOURSELF (no auto-hide timer), tap the order on an 8-tile grid;
+  after 2 misses the sequence reopens to copy.
+- **🔄 Plan B Power** (flexibility) — plans-change scenarios (`PLANB`).
+- **📚 Brain Coach** (study skills) — smart-move quiz (`SMART`): retrieval
+  practice, hardest-first, spaced study, backpack-packed-is-done.
+
+Same autism-friendly engine rules as WH Quest (`_layouts/protected-skills.html`,
+public code — editing games never needs re-encryption): identical layout per
+question, big Next button, nothing auto-advances, no countdown pressure
+(Time Lab uses time as content, not pressure), 2 tries then reveal-and-teach
+with a point anyway (no failure state), quiet sine tones + read-aloud
+toggles, numbers as the reward (explicit-arithmetic count-ups, second
+readouts, numbered badges). Feel-the-seconds, clock math and Memory Steps
+are engine-generated (no data). `encrypt-batch.py` skips this page (empty
+body). Progress in localStorage under `skill-quest-v1`.
+
 ### Rebuild the Kangaroo Arena (Math Kangaroo practice game)
 
 ```bash
