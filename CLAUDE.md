@@ -644,7 +644,10 @@ question, big Next button, nothing auto-advances, no countdown pressure
 (Time Lab uses time as content, not pressure), 2 tries then reveal-and-teach
 with a point anyway (no failure state), quiet sine tones + read-aloud
 toggles, numbers as the reward (explicit-arithmetic count-ups, second
-readouts, numbered badges). Feel-the-seconds, clock math and Memory Steps
+readouts, numbered badges) — **including the same reading-voice picker**
+(`rankVoice()`/`loadVoices()`/`fillVoiceSel()`, `P.voiceName`, `sq-` prefix
+instead of `wq-`) described under WH Quest above; keep the two in sync if
+you tune the voice ranking. Feel-the-seconds, clock math and Memory Steps
 are engine-generated (no data). `encrypt-batch.py` skips this page (empty
 body). Progress in localStorage under `skill-quest-v1`.
 
