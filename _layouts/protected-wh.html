@@ -97,6 +97,16 @@ layout: default
   .wq-hero h1 { margin: 0 0 0.3rem; font-size: 1.9rem; }
   .wq-hero p { margin: 0; opacity: 0.7; font-size: 1rem; }
 
+  /* reading-voice picker */
+  .wq-voicerow { display: flex; align-items: center; justify-content: center;
+                 gap: 0.5rem; flex-wrap: wrap; margin: 0 0 1.4rem; }
+  .wq-voicerow .lbl { font-size: 0.9rem; opacity: 0.7; }
+  .wq-voicerow select {
+    max-width: 260px; padding: 0.35rem 0.6rem; border-radius: 8px;
+    background: var(--card); border: 1px solid var(--line); color: inherit;
+    font-family: inherit; font-size: 0.9rem;
+  }
+
   /* number friends shelf */
   .wq-friends { display: flex; gap: 0.4rem; justify-content: center;
                 flex-wrap: wrap; margin: 0 0 1.5rem; }
@@ -559,11 +569,83 @@ layout: default
     P.stars = P.stars || {};             /* activity id -> 0..3 best */
     if (P.voice === undefined) P.voice = true;
     if (P.sound === undefined) P.sound = true;
+    if (typeof P.voiceName !== 'string') P.voiceName = '';  /* '' = auto-pick best */
     function save() {
       try { localStorage.setItem(PKEY, JSON.stringify(P)); } catch (_) {}
     }
 
     /* ── speech + gentle sounds ───────────────────────────────────────── */
+
+    /* The browser's DEFAULT speech voice is usually its most robotic one,
+       but most devices ship several much nicer voices (Apple "Enhanced"
+       voices, Edge "Natural" voices, Google voices…). Rank every English
+       voice by quality, auto-pick the best, and let the reader choose a
+       different one from the home screen (persisted as P.voiceName). */
+
+    /* sound-effect novelty voices (macOS) that mangle speech — never list */
+    const JOKE_VOICES = ['Albert', 'Bad News', 'Bahh', 'Bells', 'Boing',
+      'Bubbles', 'Cellos', 'Good News', 'Jester', 'Organ', 'Superstar',
+      'Trinoids', 'Whisper', 'Wobble', 'Zarvox', 'Deranged', 'Hysterical'];
+    const NICE_NAMES = /^(Samantha|Ava|Allison|Susan|Zoe|Karen|Daniel|Moira|Tessa|Fiona|Serena|Kate)\b/;
+
+    let VOICES = [];        /* usable English voices, best first */
+    let chosenVoice = null; /* resolved SpeechSynthesisVoice or null */
+
+    function rankVoice(v) {
+      const n = v.name;
+      let r = 60;
+      if (/natural|neural/i.test(n)) r = 0;        /* Edge online voices  */
+      else if (/enhanced|premium/i.test(n)) r = 10; /* Apple high-quality */
+      else if (NICE_NAMES.test(n)) r = 20;          /* good Apple defaults */
+      else if (/^Google/i.test(n)) r = 30;          /* Chrome voices       */
+      else if (v.localService) r = 40;
+      if (/^en[-_]US/i.test(v.lang)) r -= 5;
+      else if (/^en/i.test(v.lang)) r -= 2;
+      return r;
+    }
+
+    function loadVoices() {
+      try {
+        if (!window.speechSynthesis) return;
+        const all = speechSynthesis.getVoices().filter(function (v) {
+          if (!/^en/i.test(v.lang)) return false;
+          return JOKE_VOICES.indexOf(v.name.replace(/\s*\(.*\)$/, '')) === -1;
+        });
+        if (!all.length) return;
+        all.sort(function (a, b) {
+          return rankVoice(a) - rankVoice(b) || a.name.localeCompare(b.name);
+        });
+        VOICES = all;
+        chosenVoice = null;
+        if (P.voiceName) {
+          chosenVoice = all.find(function (v) { return v.name === P.voiceName; }) || null;
+        }
+        if (!chosenVoice) chosenVoice = all[0];
+        const sel = document.getElementById('wq-voicesel');
+        if (sel) fillVoiceSel(sel);
+      } catch (_) {}
+    }
+    loadVoices();
+    /* voice list often arrives asynchronously after page load */
+    try { speechSynthesis.onvoiceschanged = loadVoices; } catch (_) {}
+    setTimeout(loadVoices, 300);
+
+    function fillVoiceSel(sel) {
+      sel.innerHTML = '';
+      const auto = document.createElement('option');
+      auto.value = '';
+      auto.textContent = '✨ Best available' +
+        (VOICES.length && !P.voiceName ? ' — ' + VOICES[0].name : '');
+      sel.appendChild(auto);
+      VOICES.forEach(function (v) {
+        const o = document.createElement('option');
+        o.value = v.name;
+        o.textContent = v.name + ' (' + v.lang + ')';
+        sel.appendChild(o);
+      });
+      sel.value = (P.voiceName && VOICES.some(function (v) { return v.name === P.voiceName; }))
+        ? P.voiceName : '';
+    }
 
     function speak(text) {
       if (!P.voice) return;
@@ -572,7 +654,13 @@ layout: default
         speechSynthesis.cancel();
         const u = new SpeechSynthesisUtterance(String(text).replace(/[🎉⭐🌟💪🎯✨🚀…]/g, ''));
         u.rate = 0.85;
-        u.pitch = 1.05;
+        if (chosenVoice) {
+          u.voice = chosenVoice;
+          u.lang = chosenVoice.lang;
+          u.pitch = 1;      /* pitch-shifting makes the good voices weird */
+        } else {
+          u.pitch = 1.05;
+        }
         speechSynthesis.speak(u);
       } catch (_) {}
     }
@@ -695,6 +783,36 @@ layout: default
       hero.innerHTML = '<h1>🔍 WH Question Quest</h1>' +
         '<p>Pick a question word and start collecting stars!</p>';
       el.appendChild(hero);
+
+      /* reading-voice picker — the device usually has several voices and
+         the default is the most robotic one */
+      if (window.speechSynthesis) {
+        const vrow = document.createElement('div');
+        vrow.className = 'wq-voicerow';
+        const lbl = document.createElement('label');
+        lbl.className = 'lbl';
+        lbl.htmlFor = 'wq-voicesel';
+        lbl.textContent = '🗣️ Reading voice:';
+        vrow.appendChild(lbl);
+        const sel = document.createElement('select');
+        sel.id = 'wq-voicesel';
+        fillVoiceSel(sel);
+        sel.addEventListener('change', function () {
+          P.voiceName = sel.value;
+          save();
+          loadVoices();
+          speak('Hi! I will read the questions to you.');
+        });
+        vrow.appendChild(sel);
+        const tryBtn = document.createElement('button');
+        tryBtn.className = 'wq-pill';
+        tryBtn.textContent = '▶ Hear it';
+        tryBtn.addEventListener('click', function () {
+          speak('Hi! I will read the questions to you. Ready to play?');
+        });
+        vrow.appendChild(tryBtn);
+        el.appendChild(vrow);
+      }
 
       /* number friends shelf — tap a friend to hear its number fact */
       const shelf = document.createElement('div');

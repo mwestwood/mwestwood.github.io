@@ -568,6 +568,19 @@ learner who loves numbers, so keep its design rules when editing:
   questions auto-read via speechSynthesis (toggleable), quiet sine-tone
   sounds (toggleable), no failure state — a second miss reveals the answer
   with the teaching line and still awards a point.
+- **Reading voice** (July 2026 — "the voice sounds too robotic"): the
+  browser's DEFAULT speech voice is usually its worst one, so the engine
+  ranks every English voice (`rankVoice()`: Edge "Natural/Neural" → Apple
+  "Enhanced/Premium" → known-good Apple names like Samantha/Karen/Daniel →
+  Google voices → other local), auto-picks the best, and filters out
+  macOS's sound-effect novelty voices (Zarvox, Bells…) entirely. A
+  "🗣️ Reading voice" dropdown + "▶ Hear it" preview on the home screen
+  lets the reader pick any listed voice, persisted as `P.voiceName`
+  ('' = auto). `speak()` sets `u.pitch = 1` when a specific voice is
+  resolved — the old 1.05 pitch-shift makes good voices sound weird.
+  Voice lists load asynchronously: `loadVoices()` runs at boot, on
+  `speechSynthesis.onvoiceschanged`, and on a 300ms fallback timer, and
+  refreshes the dropdown in place if it's on screen.
 - **Numbers are the reward**: explicit-arithmetic point count-ups, number
   facts on the Number Friends badges, "how many" questions, math tie-ins in
   stories, and a 10-level Math Power-Up (through 4-digit ops, division,
