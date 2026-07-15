@@ -570,9 +570,10 @@ learner who loves numbers, so keep its design rules when editing:
   with the teaching line and still awards a point.
 - **Reading voice** (July 2026 — "the voice sounds too robotic"): the
   browser's DEFAULT speech voice is usually its worst one, so the engine
-  ranks every English voice (`rankVoice()`: Edge "Natural/Neural" → Apple
+  ranks every English voice (`rankVoice()`: "Google US English" pinned
+  first as the preferred default, then Edge "Natural/Neural" → Apple
   "Enhanced/Premium" → known-good Apple names like Samantha/Karen/Daniel →
-  Google voices → other local), auto-picks the best, and filters out
+  other Google voices → other local), auto-picks the best, and filters out
   macOS's sound-effect novelty voices (Zarvox, Bells…) entirely. A
   "🗣️ Reading voice" dropdown + "▶ Hear it" preview on the home screen
   lets the reader pick any listed voice, persisted as `P.voiceName`

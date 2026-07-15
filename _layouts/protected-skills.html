@@ -587,7 +587,8 @@ layout: default
     function rankVoice(v) {
       const n = v.name;
       let r = 60;
-      if (/natural|neural/i.test(n)) r = 0;        /* Edge online voices  */
+      if (n === 'Google US English') r = -100;      /* preferred default   */
+      else if (/natural|neural/i.test(n)) r = 0;    /* Edge online voices  */
       else if (/enhanced|premium/i.test(n)) r = 10; /* Apple high-quality */
       else if (NICE_NAMES.test(n)) r = 20;          /* good Apple defaults */
       else if (/^Google/i.test(n)) r = 30;          /* Chrome voices       */
