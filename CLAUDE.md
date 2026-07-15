@@ -590,7 +590,7 @@ permalink `/autism/skill-quest/`) from `_tools/skills_data.py` (committed —
 original content, like `wh_data.py`). Executive-function practice games
 matching the strategy guide at `/autism/executive-skills/` (the two pages
 link to each other — the guide's "Practice Through Play" section and the
-game's home-screen "for grown-ups" footer). Seven skill worlds:
+game's home-screen "for grown-ups" footer). Nine skill worlds:
 
 - **🪜 Step Sorter** (sequencing) — tap shuffled routine steps into numbered
   order; tiers by length (3-4 / 5-6 / 7-8 steps, `SEQUENCES` in the data).
@@ -604,9 +604,20 @@ game's home-screen "for grown-ups" footer). Seven skill worlds:
   real-life duration MCQ) and *Leave On Time* (backward clock math,
   engine-generated: 1 job / 2 jobs / 2 jobs + 5-minute buffer, with a
   leave+dur trap option).
-- **🗂️ Sort & Pack** (organization) — *Everything Has a Home* (`HOMES`) and
+- **🗂️ Sort & Pack** (organization) — *Everything Has a Home* (`HOMES`),
   *Pack the Backpack* (`PACKS`: tap all needed items for tomorrow's
-  schedule; each distractor carries its own "why not" line).
+  schedule; each distractor carries its own "why not" line) and *Odd One
+  Out* (`ODDONE`: which item doesn't belong in this box).
+- **🚌 Beat the Bus** (time budgeting / routines) — playable day-simulator
+  (`BUSMISSIONS`): a live clock, required jobs and tempting time-eaters as
+  "+N min" cards; every tap advances the clock with visible arithmetic.
+  Being late is never a fail — it renders as clock math ("the fun stuff
+  ate 30 minutes") plus a retry nudge; required tasks must sum to at least
+  5 min under the window (builder-enforced) so winning is always possible.
+- **💪 On My Own** (independence) — *Say It Strong* (`SAYIT`:
+  self-advocacy scripts — "Can you write that down for me?") and *Myself
+  or Help?* (`MEHELP`: calibrating do-it-myself vs ask-a-grown-up,
+  including the safety cases that must ALWAYS be ask-first).
 - **🧠 Memory Steps** (working memory) — memorize 2/3/4 tile steps, hide
   them YOURSELF (no auto-hide timer), tap the order on an 8-tile grid;
   after 2 misses the sequence reopens to copy.

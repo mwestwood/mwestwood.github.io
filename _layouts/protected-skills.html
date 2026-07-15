@@ -229,6 +229,14 @@ layout: default
   .sq-item.dim { opacity: 0.35; }
   .sq-item.miss { border-color: var(--bad); animation: sqNudge 0.35s; }
 
+  /* Beat the Bus */
+  .sq-clock { text-align: center; font-size: 1.15rem; font-weight: 700;
+              margin: 0.2rem 0 0.9rem; line-height: 1.7; }
+  .sq-clock .big { font-size: 2rem; color: #facc15; }
+  .sq-clock .left { display: block; font-size: 1rem; opacity: 0.8; }
+  .sq-item .min { display: block; font-size: 0.85rem; color: #facc15;
+                  margin-top: 0.2rem; font-weight: 800; }
+
   /* Time Lab */
   .sq-timebig {
     display: block; margin: 1.2rem auto; width: 11rem; height: 11rem;
@@ -482,7 +490,10 @@ layout: default
        second-precision readouts in the Time Lab, numbered step badges.
      - Skills map to /autism/executive-skills/ (the grown-up guide):
        sequencing, task initiation, time sense, organization, working
-       memory, flexibility, study-skills knowledge.
+       memory, flexibility, study-skills knowledge, time budgeting
+       (Beat the Bus) and independence/self-advocacy (On My Own).
+     - Beat the Bus: being late is never a fail — it renders as clock
+       arithmetic ("the fun stuff ate 30 minutes") plus a retry nudge.
   ═══════════════════════════════════════════════════════════════════════ */
 
   const Quest = (function () {
@@ -670,7 +681,13 @@ layout: default
         fn: function () { timeMenu(); } },
       { id: 'sort', em: '🗂️', name: 'Sort & Pack', color: '#c084fc',
         tag: 'Everything has a home',
-        stars: ['home', 'pack'], fn: function () { sortMenu(); } },
+        stars: ['home', 'pack', 'odd'], fn: function () { sortMenu(); } },
+      { id: 'bus', em: '🚌', name: 'Beat the Bus', color: '#fb7185',
+        tag: 'Every choice costs minutes — make the clock!',
+        stars: ['bus'], fn: function () { startBus(); } },
+      { id: 'own', em: '💪', name: 'On My Own', color: '#a3e635',
+        tag: 'Strong words and do-it-myself power',
+        stars: ['sayit', 'mehelp'], fn: function () { ownMenu(); } },
       { id: 'mem', em: '🧠', name: 'Memory Steps', color: '#f472b6',
         tag: 'Hold steps in your head',
         stars: ['mem2', 'mem3', 'mem4'], fn: function () { memMenu(); } },
@@ -799,7 +816,21 @@ layout: default
           fn: function () { startHome(); } },
         { em: '🎒', name: 'Pack the Backpack', id: 'pack',
           desc: 'Read tomorrow’s plan — pack what you need, skip the rest.',
-          fn: function () { startPack(); } }
+          fn: function () { startPack(); } },
+        { em: '🔍', name: 'Odd One Out', id: 'odd',
+          desc: 'One thing does NOT belong in this box. Find it!',
+          fn: function () { startOdd(); } }
+      ]);
+    }
+
+    function ownMenu() {
+      menuScreen('💪 On My Own', 'Independence power: strong words, smart choices.', [
+        { em: '🗣️', name: 'Say It Strong', id: 'sayit',
+          desc: 'The exact words that get you what you need.',
+          fn: function () { startSayIt(); } },
+        { em: '🤔', name: 'Myself or Help?', id: 'mehelp',
+          desc: 'Some jobs are yours. Some need a grown-up. Which is which?',
+          fn: function () { startMeHelp(); } }
       ]);
     }
 
@@ -886,6 +917,53 @@ layout: default
                            teach: q.teach });
         }),
         backTo: home, replay: startCoach
+      });
+    }
+
+    function startOdd() {
+      playRound({
+        id: 'odd', title: '🔍 Odd One Out',
+        steps: shuffle(DATA.odd).slice(0, 8).map(function (q) {
+          return mcqStep({ scene: q.e, title: q.group,
+                           text: 'Which one does NOT belong?',
+                           opts: q.items.map(function (it, i) {
+                             return [it[0], it[1], i === q.odd];
+                           }),
+                           teach: q.teach });
+        }),
+        backTo: sortMenu, replay: startOdd
+      });
+    }
+
+    function startSayIt() {
+      playRound({
+        id: 'sayit', title: '🗣️ Say It Strong',
+        steps: shuffle(DATA.sayit).slice(0, 8).map(function (q) {
+          return mcqStep({ scene: q.e, text: q.q, opts: q.opts,
+                           teach: q.teach });
+        }),
+        backTo: ownMenu, replay: startSayIt
+      });
+    }
+
+    function startMeHelp() {
+      playRound({
+        id: 'mehelp', title: '🤔 Myself or Help?',
+        steps: shuffle(DATA.mehelp).slice(0, 8).map(function (q) {
+          return mcqStep({ scene: q.e, text: q.q, opts: q.opts,
+                           teach: q.teach });
+        }),
+        backTo: ownMenu, replay: startMeHelp
+      });
+    }
+
+    function startBus() {
+      playRound({
+        id: 'bus', title: '🚌 Beat the Bus',
+        steps: shuffle(DATA.bus).slice(0, 3).map(function (m) {
+          return { type: 'bus', m: m };
+        }),
+        backTo: home, replay: startBus
       });
     }
 
@@ -1026,6 +1104,7 @@ layout: default
       else if (step.type === 'seq') renderSeq(step);
       else if (step.type === 'pack') renderPack(step);
       else if (step.type === 'time') renderTime(step);
+      else if (step.type === 'bus') renderBus(step);
       else renderMem(step);
       window.scrollTo(0, 0);
     }
@@ -1331,6 +1410,136 @@ layout: default
       el.appendChild(grid);
       feedbackArea();
       speak(p.t + '. Pack the ' + needN + ' things you need — and skip the rest!');
+    }
+
+    /* ── step: Beat the Bus (time-budget mission) ─────────────────────── */
+
+    function parseHM(hm) {
+      const p = hm.split(':');
+      return (parseInt(p[0], 10) % 12) * 60 + parseInt(p[1], 10);
+    }
+
+    function renderBus(step) {
+      const m = step.m;
+      const start = parseHM(m.start);
+      const deadline = start + ((parseHM(m.deadline) - parseHM(m.start) + 720) % 720);
+      let now = start, doneReq = 0, mistakes = 0, funSpent = 0;
+      const reqN = m.req.length;
+
+      const t = document.createElement('div');
+      t.className = 'sq-titlecard';
+      t.innerHTML = '<span class="em">' + m.e + '</span>' + esc(m.t);
+      el.appendChild(t);
+
+      const qEl = document.createElement('div');
+      qEl.className = 'sq-q';
+      qEl.textContent = m.goal + ' — do all ' + reqN + ' jobs and skip the time-eaters!';
+      el.appendChild(qEl);
+
+      const say = document.createElement('button');
+      say.className = 'sq-say';
+      say.textContent = '🔊 Read it to me';
+      say.addEventListener('click', function () {
+        speak(m.t + '. ' + m.goal + '. It is ' + fmtTime(now) +
+              '. Do all ' + reqN + ' jobs and skip the time eaters.');
+      });
+      el.appendChild(say);
+
+      const clock = document.createElement('div');
+      clock.className = 'sq-clock';
+      function drawClock(mathLine) {
+        const left = deadline - now;
+        clock.innerHTML = '🕐 <span class="big">' + fmtTime(now) + '</span>' +
+          ' &nbsp;→&nbsp; leave by <strong>' + fmtTime(deadline) + '</strong>' +
+          '<span class="left">' +
+          (left >= 0 ? left + ' minutes left' :
+                       (-left) + ' minutes PAST leaving time') +
+          (mathLine ? ' · ' + esc(mathLine) : '') + '</span>';
+      }
+      drawClock('');
+      el.appendChild(clock);
+
+      const grid = document.createElement('div');
+      grid.className = 'sq-packgrid';
+      const cards = shuffle(
+        m.req.map(function (it) { return { e: it[0], name: it[1], min: it[2], ok: true }; })
+          .concat(m.fun.map(function (it) {
+            return { e: it[0], name: it[1], min: it[2], ok: false, why: it[3] };
+          })));
+
+      function finish(fb) {
+        Array.prototype.forEach.call(grid.children, function (x) {
+          x.disabled = true;
+          if (!x.classList.contains('good')) x.classList.add('dim');
+        });
+        const onTime = now <= deadline;
+        const clean = onTime && mistakes === 0;
+        if (clean) R.firstTry++;
+        addPts(clean ? 2 : 1);
+        sfx(onTime ? 'good' : 'soft');
+        if (onTime) {
+          const early = deadline - now;
+          fb.innerHTML = '<span class="praise">' + pick(PRAISE) +
+            ' Out the door at ' + fmtTime(now) + ' — ' + early +
+            ' minute' + (early === 1 ? '' : 's') + ' early!</span>' +
+            '<span class="sq-pill pts" style="margin-left:0.6rem">+' +
+            (clean ? 2 : 1) + ' ⭐</span>' +
+            (mistakes ? '<div class="sq-teach">The extras still ate ' +
+              funSpent + ' minutes — imagine the lead with 0!</div>' : '');
+          speak('Out the door at ' + fmtTime(now) + '. ' + early +
+                ' minutes early. ' + (clean ? 'Perfect run!' : 'You made it!'));
+        } else {
+          /* late is a math lesson, not a failure */
+          fb.innerHTML = '<span class="again">Ready at ' + fmtTime(now) +
+            ' — but leaving time was ' + fmtTime(deadline) + '. 💛</span>' +
+            '<span class="sq-pill pts" style="margin-left:0.6rem">+1 ⭐</span>' +
+            '<div class="sq-teach">The fun stuff ate ' + funSpent +
+            ' minutes. Without it you’d have made it with time to spare — ' +
+            'next run, beat that clock!</div>';
+          speak('Ready at ' + fmtTime(now) + ', but leaving time was ' +
+                fmtTime(deadline) + '. The fun stuff ate ' + funSpent +
+                ' minutes. Next run, beat that clock!');
+        }
+        fb.after(nextButton());
+      }
+
+      cards.forEach(function (c) {
+        const b = document.createElement('button');
+        b.className = 'sq-item';
+        b.innerHTML = '<span class="em">' + c.e + '</span>' + esc(c.name) +
+          '<span class="min">+' + c.min + ' min</span>';
+        b.addEventListener('click', function () {
+          const fb = document.getElementById('sq-fb');
+          const before = now;
+          now += c.min;
+          const mathLine = fmtTime(before) + ' + ' + c.min + ' = ' + fmtTime(now);
+          drawClock(mathLine);
+          b.disabled = true;
+          if (c.ok) {
+            b.classList.add('good');
+            doneReq++;
+            sfx('tick');
+            fb.innerHTML = '';
+            if (doneReq === reqN) { finish(fb); return; }
+            speak(c.name + ' done. ' + fmtTime(before) + ' plus ' + c.min +
+                  ' makes ' + fmtTime(now) + '.');
+          } else {
+            mistakes++;
+            funSpent += c.min;
+            sfx('soft');
+            b.classList.add('miss');
+            setTimeout(function () { b.classList.remove('miss'); b.classList.add('dim'); }, 380);
+            fb.innerHTML = '<span class="again">Time-eater! ⏳</span>' +
+              '<div class="sq-teach">' + esc(c.why) + '</div>';
+            speak(c.why);
+          }
+        });
+        grid.appendChild(b);
+      });
+      el.appendChild(grid);
+      feedbackArea();
+      speak(m.t + '. It is ' + fmtTime(now) + '. ' + m.goal +
+            '. Do all ' + reqN + ' jobs — and skip the time eaters!');
     }
 
     /* ── step: Time Lab (feel the seconds) ────────────────────────────── */

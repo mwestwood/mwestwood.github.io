@@ -63,6 +63,19 @@ def build_payload():
                    "teach": q["teach"]} for q in data.PLANB],
         "smart": [{"q": q["q"], "e": q["e"], "opts": opts(q["opts"]),
                    "teach": q["teach"]} for q in data.SMART],
+        "odd": [{"group": q["group"], "e": q["e"],
+                 "items": [[e, n] for (e, n) in q["items"]],
+                 "odd": q["odd"], "teach": q["teach"]}
+                for q in data.ODDONE],
+        "sayit": [{"q": q["q"], "e": q["e"], "opts": opts(q["opts"]),
+                   "teach": q["teach"]} for q in data.SAYIT],
+        "mehelp": [{"q": q["q"], "e": q["e"], "opts": opts(q["opts"]),
+                    "teach": q["teach"]} for q in data.MEHELP],
+        "bus": [{"t": m["t"], "e": m["e"], "start": m["start"],
+                 "deadline": m["deadline"], "goal": m["goal"],
+                 "req": [[e, n, mins] for (e, n, mins) in m["req"]],
+                 "fun": [[e, n, mins, why] for (e, n, mins, why) in m["fun"]]}
+                for m in data.BUSMISSIONS],
     }, separators=(",", ":"), ensure_ascii=False)
 
 
@@ -79,7 +92,8 @@ def sanity_check():
     """Every MCQ must have exactly one correct option."""
     banks = [("FIRSTSTEPS", data.FIRSTSTEPS), ("DURATIONS", data.DURATIONS),
              ("HOMES", data.HOMES), ("PLANB", data.PLANB),
-             ("SMART", data.SMART)]
+             ("SMART", data.SMART), ("SAYIT", data.SAYIT),
+             ("MEHELP", data.MEHELP)]
     for name, bank in banks:
         for i, q in enumerate(bank):
             n = sum(1 for o in q["opts"] if o[2])
@@ -93,6 +107,19 @@ def sanity_check():
         names = [n for (_, n) in p["need"]] + [n for (_, n, _) in p["skip"]]
         if len(set(names)) != len(names):
             raise SystemExit(f"PACKS[{i}] has duplicate item names")
+    for i, q in enumerate(data.ODDONE):
+        if not (0 <= q["odd"] < len(q["items"])):
+            raise SystemExit(f"ODDONE[{i}] odd index out of range")
+    for i, m in enumerate(data.BUSMISSIONS):
+        def mins(hm):
+            h, mm = hm.split(":")
+            return (int(h) % 12) * 60 + int(mm)
+        window = (mins(m["deadline"]) - mins(m["start"])) % 720
+        total = sum(t for (_, _, t) in m["req"])
+        if total > window - 5:
+            raise SystemExit(
+                f"BUSMISSIONS[{i}] required tasks ({total} min) don't fit "
+                f"the {window}-min window with slack — winning impossible")
 
 
 def main():

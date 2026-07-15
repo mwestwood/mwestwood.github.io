@@ -630,3 +630,305 @@ SMART = [
      "teach": "Mistakes need a PLAN, not a panic. 'It's at school — I'll "
               "do it at lunch' fixes more than any excuse."},
 ]
+
+# ── Odd One Out — organization by category (Sort & Pack world) ──────────────
+#  {"group", "e", "items" [(emoji, name)], "odd" index into items, "teach"}
+
+ODDONE = [
+    {"group": "The art box", "e": "🎨",
+     "items": [("🖍️", "Crayon"), ("🖌️", "Paintbrush"),
+               ("🍌", "Banana"), ("✏️", "Pencil")],
+     "odd": 2,
+     "teach": "Crayon, paintbrush, pencil — all art tools. A banana in the "
+              "art box belongs in the kitchen!"},
+    {"group": "The fridge", "e": "❄️",
+     "items": [("🥛", "Milk"), ("🧀", "Cheese"),
+               ("🧦", "A sock"), ("🥕", "Carrots")],
+     "odd": 2,
+     "teach": "Milk, cheese, carrots — food that needs cold. Socks need a "
+              "drawer, not a fridge."},
+    {"group": "The pencil case", "e": "✏️",
+     "items": [("✏️", "Pencil"), ("🧽", "Eraser"),
+               ("📏", "Ruler"), ("🐠", "A goldfish")],
+     "odd": 3,
+     "teach": "Pencil, eraser, ruler — school tools. A goldfish needs "
+              "water, not a zipper!"},
+    {"group": "The toolbox", "e": "🧰",
+     "items": [("🔨", "Hammer"), ("🪛", "Screwdriver"),
+               ("🧁", "Cupcake"), ("🔧", "Wrench")],
+     "odd": 2,
+     "teach": "Hammer, screwdriver, wrench — tools that fix things. The "
+              "cupcake fixes hunger — in the kitchen."},
+    {"group": "The sports bin", "e": "⚽",
+     "items": [("⚽", "Soccer ball"), ("🏀", "Basketball"),
+               ("🎺", "Trumpet"), ("🏈", "Football")],
+     "odd": 2,
+     "teach": "Three balls and… a trumpet? Instruments live with the "
+              "music things."},
+    {"group": "The bathroom shelf", "e": "🛁",
+     "items": [("🪥", "Toothbrush"), ("🧴", "Shampoo"),
+               ("🧼", "Soap"), ("🥾", "Muddy boot")],
+     "odd": 3,
+     "teach": "Toothbrush, shampoo, soap — clean-up things. Muddy boots "
+              "stay by the door."},
+    {"group": "The bookshelf", "e": "📚",
+     "items": [("📕", "Storybook"), ("📗", "Animal book"),
+               ("🥪", "A sandwich"), ("📘", "Space book")],
+     "odd": 2,
+     "teach": "Books, books, books… and lunch? Sandwiches don't like "
+              "shelves — or bookmarks."},
+    {"group": "The laundry basket", "e": "🧺",
+     "items": [("👕", "T-shirt"), ("🧦", "Socks"),
+               ("👖", "Jeans"), ("📱", "A tablet")],
+     "odd": 3,
+     "teach": "Clothes, clothes, clothes — a tablet in the wash would be "
+              "a very bad day."},
+    {"group": "The freezer", "e": "🧊",
+     "items": [("🍦", "Ice cream"), ("🧊", "Ice cubes"),
+               ("🍕", "Frozen pizza"), ("🧸", "Teddy bear")],
+     "odd": 3,
+     "teach": "Frozen food likes the freezer. Teddy likes your bed — "
+              "he hates the cold."},
+    {"group": "The garden shed", "e": "🌳",
+     "items": [("🪴", "Flower pot"), ("🧤", "Garden gloves"),
+               ("🛏️", "Your pillow"), ("🪣", "Watering can")],
+     "odd": 2,
+     "teach": "Pots, gloves, watering can — garden gear. Pillows sleep "
+              "inside, on beds."},
+    {"group": "The first-aid kit", "e": "🩹",
+     "items": [("🩹", "Band-aids"), ("🌡️", "Thermometer"),
+               ("🍬", "Candy"), ("🧻", "Gauze")],
+     "odd": 2,
+     "teach": "Band-aids, thermometer, gauze — helper things for ouches. "
+              "Candy is not medicine!"},
+    {"group": "The backpack", "e": "🎒",
+     "items": [("📁", "Homework folder"), ("✏️", "Pencil case"),
+               ("💧", "Water bottle"), ("🐈", "The cat")],
+     "odd": 3,
+     "teach": "Folder, pencils, water — backpack team. The cat did NOT "
+              "sign up for school."},
+]
+
+# ── On My Own — self-advocacy scripts + independence calibration ────────────
+
+SAYIT = [
+    {"q": "The teacher gives 3 instructions really fast and you can't "
+          "hold them all. What can you say?", "e": "🏫",
+     "opts": [("", "Can you write that down for me, please?", True),
+              ("", "Nothing — just guess later", False),
+              ("", "You talk too much!", False),
+              ("", "I quit this class", False)],
+     "teach": "Asking for it in writing is a power move — then the paper "
+              "remembers, so your brain doesn't have to."},
+    {"q": "Your brain is tired in the middle of homework. What can "
+          "you say?", "e": "🥱",
+     "opts": [("", "I need a 5-minute break, then I'll finish.", True),
+              ("", "I'm never doing homework again!", False),
+              ("", "Nothing — push until you cry", False),
+              ("", "This is dumb", False)],
+     "teach": "Naming the break AND the comeback ('then I'll finish') "
+              "shows everyone you're still in charge of the plan."},
+    {"q": "The cafeteria is way too loud for you today. What can "
+          "you say?", "e": "📢",
+     "opts": [("", "It's too loud here. May I sit somewhere quieter?", True),
+              ("", "Nothing — just cover your ears and suffer", False),
+              ("", "EVERYONE BE QUIET!", False),
+              ("", "Run out without telling anyone", False)],
+     "teach": "Saying what you need + asking for a fix = self-advocacy. "
+              "Grown-ups can't fix what they don't know about."},
+    {"q": "You don't understand the math question, and you already "
+          "tried once. What can you say?", "e": "➗",
+     "opts": [("", "Can you help me with THIS part?", True),
+              ("", "Nothing — leave it blank forever", False),
+              ("", "Math is impossible", False),
+              ("", "Copy someone else's answer", False)],
+     "teach": "Pointing at the exact part gets you exact help — "
+              "one small question beats twenty minutes of stuck."},
+    {"q": "Someone is rushing you and your shoes aren't tied yet. "
+          "What can you say?", "e": "👟",
+     "opts": [("", "I need 1 more minute, please.", True),
+              ("", "STOP RUSHING ME!", False),
+              ("", "Leave with untied shoes", False),
+              ("", "Sit down and refuse to go", False)],
+     "teach": "'1 more minute' gives them a number they can count on — "
+              "numbers calm everybody down."},
+    {"q": "You want to join a game at recess. What can you say?", "e": "🤾",
+     "opts": [("", "Can I play too?", True),
+              ("", "Nothing — stand and watch sadly", False),
+              ("", "Grab the ball and run", False),
+              ("", "That game looks dumb anyway", False)],
+     "teach": "Four little words open the game. Most kids say yes — "
+              "they just didn't know you wanted in."},
+    {"q": "The tag in your shirt is scratching and you can't think. "
+          "What can you say?", "e": "👕",
+     "opts": [("", "This tag is bothering me. Can I fix my shirt?", True),
+              ("", "Nothing — itch all day", False),
+              ("", "Rip the shirt off right there", False),
+              ("", "Scream", False)],
+     "teach": "Body feelings are real information. Saying it gets it "
+              "fixed in 1 minute instead of ruining 6 hours."},
+    {"q": "You finished the class work early and you're bored. What "
+          "can you say?", "e": "✅",
+     "opts": [("", "I'm finished. What can I do next?", True),
+              ("", "Nothing — poke your neighbor", False),
+              ("", "Announce: this was too easy!", False),
+              ("", "Walk around the room", False)],
+     "teach": "Finished + asking for the next thing = the teacher sees "
+              "a champion, not a problem."},
+    {"q": "Plans changed suddenly and your body feels like a storm. "
+          "What can you say?", "e": "🌪️",
+     "opts": [("", "I need a minute to get used to the new plan.", True),
+              ("", "Nothing — explode", False),
+              ("", "Change it back RIGHT NOW!", False),
+              ("", "Hide under the table", False)],
+     "teach": "Asking for a minute is not weakness — it's telling your "
+              "brain: we've got this, we just need 60 seconds."},
+    {"q": "Grandma gives you a hug and you don't like hugs today. "
+          "What can you say?", "e": "🤗",
+     "opts": [("", "Can we do a high-five instead today?", True),
+              ("", "Push her away", False),
+              ("", "Nothing — freeze and hate it", False),
+              ("", "Run to your room", False)],
+     "teach": "Offering a swap (high-five!) keeps the love AND your "
+              "comfort. Your body, your call — said kindly."},
+]
+
+MEHELP = [
+    {"q": "Your shoelace came untied — and you know how to tie it. "
+          "What's the move?", "e": "👟",
+     "opts": [("", "Tie it myself", True),
+              ("", "Ask someone to tie it", False),
+              ("", "Walk around with it untied", False),
+              ("", "Take the shoes off forever", False)],
+     "teach": "You KNOW this one — so it's a do-it-myself. Every solo "
+              "shoelace is proof you're growing stronger."},
+    {"q": "The milk is on the very top shelf, way above your head. "
+          "What's the move?", "e": "🥛",
+     "opts": [("", "Say: can you reach the milk for me, please?", True),
+              ("", "Climb the shelves like a ladder", False),
+              ("", "Give up on cereal", False),
+              ("", "Throw a ball at it", False)],
+     "teach": "Too high = danger, not a challenge. Asking for the "
+              "out-of-reach stuff IS the smart independent move."},
+    {"q": "Time to pack your backpack — the checklist is on the wall. "
+          "What's the move?", "e": "🎒",
+     "opts": [("", "Pack it myself, using the checklist", True),
+              ("", "Ask someone to pack it for me", False),
+              ("", "Skip packing tonight", False),
+              ("", "Pack random things fast", False)],
+     "teach": "You + the checklist = a complete team. No grown-up "
+              "needed when the wall remembers the list."},
+    {"q": "You spilled a whole glass of juice on the floor. What's "
+          "the move?", "e": "🧃",
+     "opts": [("", "Grab a towel and wipe it up myself", True),
+              ("", "Pretend it didn't happen", False),
+              ("", "Cry about the juice", False),
+              ("", "Wait for someone to find it", False)],
+     "teach": "Spills happen to everyone. Wiping it yourself turns an "
+              "oops into a 60-second fix — no big deal, all handled."},
+    {"q": "The stove is on and something is boiling over! What's "
+          "the move?", "e": "🍳",
+     "opts": [("", "Tell a grown-up right away", True),
+              ("", "Fix the hot pot myself", False),
+              ("", "Watch it bubble", False),
+              ("", "Leave the kitchen quietly", False)],
+     "teach": "Hot, sharp, and electric = grown-up jobs. Getting help "
+              "FAST for danger is the strongest move there is."},
+    {"q": "Morning routine: getting dressed. What's the move?", "e": "👖",
+     "opts": [("", "Dress myself, checking the routine card", True),
+              ("", "Ask to be dressed like a baby", False),
+              ("", "Stay in pajamas all day", False),
+              ("", "Wear the blanket to school", False)],
+     "teach": "The routine card is your coach now. Follow it yourself "
+              "and the morning belongs to YOU."},
+    {"q": "Your homework says a word you've never seen. You tried "
+          "sounding it out twice. What's the move?", "e": "📖",
+     "opts": [("", "Ask: what does this word mean?", True),
+              ("", "Skip the whole page", False),
+              ("", "Make up a meaning", False),
+              ("", "Erase the word", False)],
+     "teach": "Try first, then ask — that's the pattern. Two tries + "
+              "one question = exactly how learning is built."},
+    {"q": "Your water bottle needs filling and the sink is right "
+          "there. What's the move?", "e": "💧",
+     "opts": [("", "Fill it myself at the sink", True),
+              ("", "Ask someone to fill it", False),
+              ("", "Go thirsty", False),
+              ("", "Drink from the dog bowl", False)],
+     "teach": "Reachable + safe + you know how = yours to do. That "
+              "bottle doesn't stand a chance."},
+    {"q": "You feel sick and your tummy really hurts at school. "
+          "What's the move?", "e": "🤒",
+     "opts": [("", "Tell the teacher: I feel sick, I need the nurse", True),
+              ("", "Hide it and hope", False),
+              ("", "Cry quietly at your desk", False),
+              ("", "Just go home without telling", False)],
+     "teach": "Bodies that hurt need grown-up help — saying it clearly "
+              "and fast is taking care of YOURSELF."},
+    {"q": "The tablet asks to install something new. What's the move?",
+     "e": "📲",
+     "opts": [("", "Ask a grown-up before tapping anything", True),
+              ("", "Tap yes to everything", False),
+              ("", "Tap buttons until it goes away", False),
+              ("", "Hide the tablet", False)],
+     "teach": "New installs, passwords, and buying = ask-first zone. "
+              "Knowing WHICH things need a grown-up is real independence."},
+]
+
+# ── Beat the Bus — time-budget missions ─────────────────────────────────────
+#  {"t", "e", "start" "H:MM", "deadline" "H:MM", "goal" (what the deadline
+#   is), "req" [(emoji, task, minutes)], "fun" [(emoji, tempting thing,
+#   minutes, why-it-costs-you line)]}
+#  Required tasks must total comfortably under the window so winning is
+#  always possible; fun items are the time-eaters.
+
+BUSMISSIONS = [
+    {"t": "School Morning", "e": "🚌", "start": "7:00", "deadline": "8:00",
+     "goal": "The bus leaves at 8:00",
+     "req": [("👖", "Get dressed", 6), ("🥣", "Eat breakfast", 15),
+             ("🪥", "Brush teeth", 3), ("👟", "Shoes + backpack", 5)],
+     "fun": [("📺", "Watch one cartoon", 22,
+              "The cartoon ate 22 minutes of bus time!"),
+             ("🧸", "Play with toys", 15,
+              "The toys took 15 minutes — they'll still be here at 3:30!")]},
+    {"t": "Homework Hour", "e": "📝", "start": "3:30", "deadline": "5:00",
+     "goal": "Free play starts at 5:00 — homework must be done",
+     "req": [("🍎", "Snack + break", 20), ("➗", "Hardest homework first", 25),
+             ("📖", "Reading homework", 15), ("🎒", "Pack the backpack", 4)],
+     "fun": [("🎮", "Just one video game level", 30,
+              "One level became 30 minutes — games don't let go!"),
+             ("📱", "Watch shorts", 20,
+              "Shorts ate 20 minutes and gave back zero.")]},
+    {"t": "Bedtime Countdown", "e": "🌙", "start": "7:30", "deadline": "8:30",
+     "goal": "Lights off at 8:30 — sleep makes tomorrow work",
+     "req": [("🛁", "Bath", 20), ("🩱", "Pajamas on", 4),
+             ("🪥", "Brush teeth", 3), ("📚", "Story time", 15)],
+     "fun": [("📺", "One more episode", 25,
+              "That episode cost 25 minutes of story time!"),
+             ("🪀", "Start a new game", 15,
+              "New games at bedtime wake your brain UP — 15 minutes gone.")]},
+    {"t": "Soccer Saturday", "e": "⚽", "start": "9:00", "deadline": "10:00",
+     "goal": "Kickoff is at 10:00",
+     "req": [("🥣", "Eat breakfast", 15), ("👕", "Uniform + shin guards", 8),
+             ("💧", "Fill water bottle", 3), ("🚗", "Drive to the field", 20)],
+     "fun": [("📺", "Morning cartoons", 25,
+              "Cartoons ate 25 minutes — the team was warming up!"),
+             ("🧩", "Start a puzzle", 15,
+              "A 100-piece puzzle is not a 15-minute friend.")]},
+    {"t": "Library Trip", "e": "📚", "start": "1:00", "deadline": "2:00",
+     "goal": "Story hour starts at 2:00",
+     "req": [("🔍", "Find the books to return", 10), ("👜", "Pack the library bag", 4),
+             ("👟", "Shoes on", 3), ("🚶", "Walk to the library", 25)],
+     "fun": [("📖", "Start re-reading a book", 20,
+              "You can read it AT the library — 20 minutes gone."),
+             ("🐕", "Play with the dog", 15,
+              "The dog is fun — and story hour doesn't wait 15 minutes.")]},
+    {"t": "Swim Lesson", "e": "🏊", "start": "4:00", "deadline": "5:00",
+     "goal": "Lessons start at 5:00 sharp",
+     "req": [("🩳", "Pack swimsuit + towel", 6), ("🥽", "Find the goggles", 5),
+             ("🍌", "Quick snack", 10), ("🚗", "Drive to the pool", 22)],
+     "fun": [("🎮", "Quick game round", 25,
+              "That round cost 25 minutes — the pool doesn't pause."),
+             ("📺", "One show while packing", 20,
+              "Packing with the TV on took DOUBLE the time.")]},
+]
