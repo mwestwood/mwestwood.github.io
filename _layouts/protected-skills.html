@@ -655,8 +655,13 @@ layout: default
       if (!P.voice) return;
       try {
         if (!window.speechSynthesis) return;
-        const u = new SpeechSynthesisUtterance(
-          String(text).replace(/[🎉⭐🌟💪🎯✨🚀🙈…→]/g, ''));
+        /* speak() must run synchronously inside the click/tap handler —
+           iOS Safari silently drops speech requested from a setTimeout,
+           promise, or any other deferred callback (no user-gesture
+           credit), so don't defer this call for any reason. */
+        speechSynthesis.cancel();
+        const clean = String(text).replace(/[🎉⭐🌟💪🎯✨🚀🙈…→]/g, '');
+        const u = new SpeechSynthesisUtterance(clean);
         u.rate = 0.85;
         if (chosenVoice) {
           u.voice = chosenVoice;
@@ -665,19 +670,20 @@ layout: default
         } else {
           u.pitch = 1.05;
         }
-        /* Chrome silently drops speak() when it lands in the same tick as
-           cancel() — this is what "read aloud just stops working after a
-           while" looks like (Chromium bug 679437). Only cancel when
-           something is actually queued, and give the cancel a beat to
-           flush before queuing the next utterance. */
-        if (speechSynthesis.speaking || speechSynthesis.pending) {
-          speechSynthesis.cancel();
-          setTimeout(function () {
-            try { speechSynthesis.speak(u); } catch (_) {}
-          }, 50);
-        } else {
-          speechSynthesis.speak(u);
+        /* A specific voice (e.g. a network "Google" voice with no
+           connection) can fail without ever making sound — fall back once
+           to the plain default voice so something is always heard. */
+        if (chosenVoice) {
+          u.onerror = function () {
+            try {
+              const fb = new SpeechSynthesisUtterance(clean);
+              fb.rate = 0.85;
+              fb.pitch = 1.05;
+              speechSynthesis.speak(fb);
+            } catch (_) {}
+          };
         }
+        speechSynthesis.speak(u);
       } catch (_) {}
     }
 
