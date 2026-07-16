@@ -569,9 +569,18 @@ layout: default
     P.stars = P.stars || {};             /* activity id -> 0..3 best */
     if (P.voice === undefined) P.voice = true;
     if (P.sound === undefined) P.sound = true;
-    if (typeof P.voiceName !== 'string') P.voiceName = '';  /* '' = auto-pick best */
     function save() {
       try { localStorage.setItem(PKEY, JSON.stringify(P)); } catch (_) {}
+    }
+
+    /* reading voice is shared across every game on the site (one
+       localStorage key, not per-game) so the choice stays consistent
+       everywhere; migrate an old per-game pick the first time we see it */
+    const VOICE_KEY = 'mwestwood-voice-name';
+    let voiceName = localStorage.getItem(VOICE_KEY);
+    if (voiceName === null) voiceName = P.voiceName || '';
+    function saveVoice() {
+      try { localStorage.setItem(VOICE_KEY, voiceName); } catch (_) {}
     }
 
     /* ── speech + gentle sounds ───────────────────────────────────────── */
@@ -580,7 +589,8 @@ layout: default
        but most devices ship several much nicer voices (Apple "Enhanced"
        voices, Edge "Natural" voices, Google voices…). Rank every English
        voice by quality, auto-pick the best, and let the reader choose a
-       different one from the home screen (persisted as P.voiceName). */
+       different one from the home screen — the pick is shared across every
+       game on the site via voiceName/VOICE_KEY above. */
 
     /* sound-effect novelty voices (macOS) that mangle speech — never list */
     const JOKE_VOICES = ['Albert', 'Bad News', 'Bahh', 'Bells', 'Boing',
@@ -618,8 +628,8 @@ layout: default
         });
         VOICES = all;
         chosenVoice = null;
-        if (P.voiceName) {
-          chosenVoice = all.find(function (v) { return v.name === P.voiceName; }) || null;
+        if (voiceName) {
+          chosenVoice = all.find(function (v) { return v.name === voiceName; }) || null;
         }
         if (!chosenVoice) chosenVoice = all[0];
         const sel = document.getElementById('wq-voicesel');
@@ -636,7 +646,7 @@ layout: default
       const auto = document.createElement('option');
       auto.value = '';
       auto.textContent = '✨ Best available' +
-        (VOICES.length && !P.voiceName ? ' — ' + VOICES[0].name : '');
+        (VOICES.length && !voiceName ? ' — ' + VOICES[0].name : '');
       sel.appendChild(auto);
       VOICES.forEach(function (v) {
         const o = document.createElement('option');
@@ -644,8 +654,8 @@ layout: default
         o.textContent = v.name + ' (' + v.lang + ')';
         sel.appendChild(o);
       });
-      sel.value = (P.voiceName && VOICES.some(function (v) { return v.name === P.voiceName; }))
-        ? P.voiceName : '';
+      sel.value = (voiceName && VOICES.some(function (v) { return v.name === voiceName; }))
+        ? voiceName : '';
     }
 
     function speak(text) {
@@ -799,8 +809,8 @@ layout: default
         sel.id = 'wq-voicesel';
         fillVoiceSel(sel);
         sel.addEventListener('change', function () {
-          P.voiceName = sel.value;
-          save();
+          voiceName = sel.value;
+          saveVoice();
           loadVoices();
           speak('Hi! I will read the questions to you.');
         });

@@ -286,6 +286,23 @@ Key implementation details:
 
 ## Common Tasks
 
+### Autism section structure
+
+`autism/` has two kinds of pages: encrypted **posts** (`sensory-processing.md`,
+`executive-skills.md`) parented directly under `Autism`, and interactive
+**games** (WH Question Quest, Super Skills Quest, Language Lab) grouped
+under a `Games` sub-category — `autism/games.md`, a plain unencrypted
+`has_children: true` index page (`parent: Autism`, no `layout:`/`encrypted:`,
+same minimal pattern as `teaching/mk/index.md`). The three game builders set
+`parent: Games` with their own `nav_order` (1/2/3) scoped under that
+sub-category; their permalinks stay flat at `/autism/<slug>/` (only the nav
+grouping changed, not the URLs, so no links needed updating). Just the Docs
+nests three levels deep here (Autism → Games → game) via plain `parent:`
+chaining — no `grand_parent:` needed on this theme version. If a sidebar
+rebuild ever looks flat instead of nested, it's almost always a stale
+`jekyll-include-cache` render surviving a `--livereload` incremental rebuild,
+not a front-matter bug — restart the Jekyll process for a clean cache.
+
 ### Add a new page to a category
 
 1. Create `category/slug.md` with front matter (no `encrypted:` yet)
@@ -536,8 +553,9 @@ Progress: `vocab-hopper-v1`.
 python3 _tools/build-wh-quest.py "passphrase"
 ```
 
-Generates `autism/wh-quest.md` (`layout: protected-wh`) from
-`_tools/wh_data.py` — WH-comprehension questions, number stories, and the
+Generates `autism/wh-quest.md` (`layout: protected-wh`, parent Games,
+nav_order 1) from `_tools/wh_data.py` — WH-comprehension questions, number
+stories, and the
 50 US states/capitals are packed as JSON and encrypted into front matter.
 Built to teach WH-questions (who/what/where/why/how) to a young autistic
 learner who loves numbers, so keep its design rules when editing:
@@ -568,18 +586,23 @@ learner who loves numbers, so keep its design rules when editing:
   questions auto-read via speechSynthesis (toggleable), quiet sine-tone
   sounds (toggleable), no failure state — a second miss reveals the answer
   with the teaching line and still awards a point.
-- **Reading voice** (July 2026 — "the voice sounds too robotic"): the
-  browser's DEFAULT speech voice is usually its worst one, so the engine
-  ranks every English voice (`rankVoice()`: "Google US English" pinned
-  first as the preferred default, then Edge "Natural/Neural" → Apple
-  "Enhanced/Premium" → known-good Apple names like Samantha/Karen/Daniel →
-  other Google voices → other local), auto-picks the best, and filters out
-  macOS's sound-effect novelty voices (Zarvox, Bells…) entirely. A
-  "🗣️ Reading voice" dropdown + "▶ Hear it" preview on the home screen
-  lets the reader pick any listed voice, persisted as `P.voiceName`
-  ('' = auto). `speak()` sets `u.pitch = 1` when a specific voice is
-  resolved — the old 1.05 pitch-shift makes good voices sound weird.
-  Voice lists load asynchronously: `loadVoices()` runs at boot, on
+- **Reading voice** (July 2026 — "the voice sounds too robotic"; made
+  cross-game consistent later that month): the browser's DEFAULT speech
+  voice is usually its worst one, so the engine ranks every English voice
+  (`rankVoice()`: "Google US English" pinned first as the preferred
+  default, then Edge "Natural/Neural" → Apple "Enhanced/Premium" →
+  known-good Apple names like Samantha/Karen/Daniel → other Google voices
+  → other local), auto-picks the best, and filters out macOS's sound-effect
+  novelty voices (Zarvox, Bells…) entirely. A "🗣️ Reading voice" dropdown +
+  "▶ Hear it" preview on the home screen lets the reader pick any listed
+  voice. **The pick is stored under one shared `localStorage` key,
+  `mwestwood-voice-name` (`voiceName`/`saveVoice()`), not per-game** — so
+  choosing a voice in any one of WH Quest / Super Skills Quest / Language
+  Lab applies everywhere ('' = auto-pick best). Each engine migrates an
+  old per-game `P.voiceName` into the shared key the first time it runs.
+  `speak()` sets `u.pitch = 1` when a specific voice is resolved — the old
+  1.05 pitch-shift makes good voices sound weird. Voice lists load
+  asynchronously: `loadVoices()` runs at boot, on
   `speechSynthesis.onvoiceschanged`, and on a 300ms fallback timer, and
   refreshes the dropdown in place if it's on screen.
 - **Numbers are the reward**: explicit-arithmetic point count-ups, number
@@ -599,8 +622,8 @@ games never requires re-encryption, only content changes in `wh_data.py` do.
 python3 _tools/build-skill-quest.py "passphrase"
 ```
 
-Generates `autism/skill-quest.md` (`layout: protected-skills`, nav_order 4,
-permalink `/autism/skill-quest/`) from `_tools/skills_data.py` (committed —
+Generates `autism/skill-quest.md` (`layout: protected-skills`, parent Games,
+nav_order 2, permalink `/autism/skill-quest/`) from `_tools/skills_data.py` (committed —
 original content, like `wh_data.py`). Executive-function practice games
 matching the strategy guide at `/autism/executive-skills/` (the two pages
 link to each other — the guide's "Practice Through Play" section and the
@@ -646,9 +669,10 @@ question, big Next button, nothing auto-advances, no countdown pressure
 with a point anyway (no failure state), quiet sine tones + read-aloud
 toggles, numbers as the reward (explicit-arithmetic count-ups, second
 readouts, numbered badges) — **including the same reading-voice picker**
-(`rankVoice()`/`loadVoices()`/`fillVoiceSel()`, `P.voiceName`, `sq-` prefix
-instead of `wq-`) described under WH Quest above; keep the two in sync if
-you tune the voice ranking. Feel-the-seconds, clock math and Memory Steps
+(`rankVoice()`/`loadVoices()`/`fillVoiceSel()`, `sq-` prefix instead of
+`wq-`) described under WH Quest above, sharing the same cross-game
+`mwestwood-voice-name` pick; keep all three engines in sync if you tune the
+voice ranking. Feel-the-seconds, clock math and Memory Steps
 are engine-generated (no data). `encrypt-batch.py` skips this page (empty
 body). Progress in localStorage under `skill-quest-v1`.
 
@@ -658,8 +682,8 @@ body). Progress in localStorage under `skill-quest-v1`.
 python3 _tools/build-language-lab.py "passphrase"
 ```
 
-Generates `autism/language-lab.md` (`layout: protected-lang`, parent Autism,
-nav_order 5, permalink `/autism/language-lab/`) from `_tools/lang_data.py`
+Generates `autism/language-lab.md` (`layout: protected-lang`, parent Games,
+nav_order 3, permalink `/autism/language-lab/`) from `_tools/lang_data.py`
 (committed — original content, like `wh_data.py`). Companion to WH Question
 Quest, built on the same autism-friendly engine rules (no timers, big Next,
 identical layout, auto speech, quiet tones, two-try no-failure). Targets a
@@ -693,6 +717,12 @@ lags). Six modes, each with 🌱/🌿/🌳 tiers (stars per tier, ids `build1`�
   to a **Phrase Wall** (`P.phrases`) browsable from home — tap to re-hear.
   All wrong options are things a kid could actually say, so the contrast
   teaches.
+
+Same reading-voice picker as WH Quest and Super Skills Quest (`rankVoice()`/
+`loadVoices()`/`fillVoiceSel()`, `ll-` prefix), sharing the cross-game
+`mwestwood-voice-name` localStorage pick — see the Reading voice bullet
+under WH Quest above; keep all three engines in sync if you tune the voice
+ranking.
 
 The builder validates the banks (exactly-one-correct, seq/ok ranges, every
 tier populated) before encrypting. The engine is public code in
