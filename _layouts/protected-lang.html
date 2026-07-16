@@ -1,0 +1,1613 @@
+---
+layout: default
+---
+
+<style>
+  /* ── Password gate (same look as protected.html) ─────────────────────── */
+  #protected-gate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 40vh;
+    padding: 2rem 1rem;
+  }
+  .gate-card {
+    background: var(--sidebar-color, #f5f6fa);
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 8px;
+    padding: 2.5rem 2rem;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .gate-lock { font-size: 2.5rem; margin-bottom: 0.75rem; line-height: 1; }
+  .gate-title {
+    font-size: 1.25rem; font-weight: 600;
+    color: var(--body-text-color, #27262b); margin: 0 0 0.5rem 0;
+  }
+  .gate-subtitle {
+    font-size: 0.875rem; color: var(--body-text-color, #5c5962);
+    opacity: 0.75; margin: 0 0 1.5rem 0;
+  }
+  .gate-input-row { display: flex; gap: 0.5rem; width: 100%; }
+  #gate-password {
+    flex: 1; padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color, #d0d0d0); border-radius: 4px;
+    font-size: 1rem; background: var(--body-background-color, #fff);
+    color: var(--body-text-color, #27262b); outline: none;
+    transition: border-color 0.15s;
+  }
+  #gate-password:focus { border-color: var(--links-color, #7253ed); }
+  #gate-submit {
+    padding: 0.5rem 1.1rem; background: var(--links-color, #7253ed);
+    color: #fff; border: none; border-radius: 4px; font-size: 0.95rem;
+    font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+  #gate-submit:hover { opacity: 0.88; }
+  #gate-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+  #gate-error {
+    margin-top: 0.85rem; font-size: 0.875rem; color: #c0392b;
+    min-height: 1.25rem; display: none;
+  }
+  #gate-status {
+    margin-top: 0.85rem; font-size: 0.875rem;
+    color: var(--body-text-color, #5c5962); opacity: 0.7;
+    min-height: 1.25rem; display: none;
+  }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+
+  /* ── Language Lab ────────────────────────────────────────────────────── */
+  #lab-root { display: none; }
+
+  .ll { --good: #4ade80; --bad: #f87171;
+        --card: rgba(255,255,255,0.05); --line: rgba(255,255,255,0.14);
+        max-width: 760px; }
+  .ll, .ll * { box-sizing: border-box; }
+  .ll button { font-family: inherit; }
+
+  .ll-top {
+    display: flex; align-items: center; gap: 0.6rem;
+    margin-bottom: 1rem; flex-wrap: wrap;
+  }
+  .ll-back {
+    background: var(--card); border: 1px solid var(--line);
+    color: inherit; border-radius: 999px; padding: 0.45rem 1.1rem;
+    font-size: 1rem; cursor: pointer;
+  }
+  .ll-back:hover { border-color: #facc15; }
+  .ll-spacer { flex: 1; }
+  .ll-pill {
+    font-size: 0.95rem; padding: 0.35rem 0.85rem; border-radius: 999px;
+    background: var(--card); border: 1px solid var(--line);
+    white-space: nowrap; color: inherit; cursor: default;
+  }
+  .ll-pill.pts { border-color: #facc15; color: #facc15; font-weight: 700;
+                 font-size: 1.05rem; }
+  .ll-pill.pop { animation: llPop 0.4s; }
+  button.ll-pill { cursor: pointer; }
+  button.ll-pill.off { opacity: 0.45; }
+
+  .ll-hero { text-align: center; margin: 0.4rem 0 1.4rem; }
+  .ll-hero h1 { margin: 0 0 0.3rem; font-size: 1.9rem; }
+  .ll-hero p { margin: 0; opacity: 0.7; font-size: 1rem; }
+
+  /* sentences-built counter */
+  .ll-counter {
+    text-align: center; background: var(--card); border: 1px solid var(--line);
+    border-radius: 14px; padding: 0.7rem 1rem; max-width: 460px;
+    margin: 0 auto 1.5rem; font-size: 1.05rem;
+  }
+  .ll-counter .n { color: #facc15; font-weight: 800; font-size: 1.3rem; }
+  .ll-counter .pv { display: block; font-size: 0.85rem; opacity: 0.65;
+                    margin-top: 0.15rem; }
+
+  .ll-sect { font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase;
+             opacity: 0.55; margin: 1.4rem 0 0.6rem; }
+
+  .ll-worlds { display: grid; gap: 0.7rem;
+               grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+  .ll-world {
+    display: flex; align-items: center; gap: 0.8rem; text-align: left;
+    background: var(--card); border: 1px solid var(--line);
+    border-left: 6px solid var(--wc, var(--line));
+    border-radius: 14px; padding: 0.95rem 1rem; color: inherit;
+    cursor: pointer; transition: transform 0.12s, border-color 0.12s;
+  }
+  .ll-world:hover { transform: translateY(-2px); border-color: var(--wc); }
+  .ll-world .em { font-size: 2.1rem; }
+  .ll-world .name { font-weight: 800; font-size: 1.08rem; color: var(--wc); }
+  .ll-world .tag { font-size: 0.82rem; opacity: 0.7; margin-top: 0.1rem; }
+  .ll-world .st { font-size: 0.9rem; color: #facc15; margin-top: 0.25rem;
+                  min-height: 1em; letter-spacing: 0.1em; }
+
+  .ll-cards { display: grid; gap: 0.7rem;
+              grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+  .ll-card {
+    text-align: left; background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 0.95rem 1rem; color: inherit; cursor: pointer;
+    transition: transform 0.12s, border-color 0.12s;
+  }
+  .ll-card:hover { transform: translateY(-2px); border-color: #facc15; }
+  .ll-card .em { font-size: 1.9rem; }
+  .ll-card .name { font-weight: 700; margin-top: 0.3rem; font-size: 1.02rem; }
+  .ll-card .desc { font-size: 0.85rem; opacity: 0.65; margin-top: 0.2rem;
+                   line-height: 1.45; }
+  .ll-card .st { font-size: 0.9rem; color: #facc15; margin-top: 0.35rem;
+                 min-height: 1em; letter-spacing: 0.1em; }
+
+  /* play screen */
+  .ll-prog { display: flex; gap: 0.35rem; justify-content: center;
+             margin: 0.2rem 0 1rem; }
+  .ll-dot { width: 0.85rem; height: 0.85rem; border-radius: 50%;
+            background: rgba(255,255,255,0.12); }
+  .ll-dot.done { background: var(--good); }
+  .ll-dot.now { background: #facc15; transform: scale(1.25); }
+
+  .ll-scene { text-align: center; font-size: 3.2rem; line-height: 1.25;
+              margin: 0.8rem 0 0.4rem; letter-spacing: 0.3rem; }
+  .ll-situ {
+    text-align: center; font-size: 1.2rem; line-height: 1.6;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 0.7rem 1rem; max-width: 620px;
+    margin: 0 auto 0.4rem;
+  }
+  .ll-q { text-align: center; font-size: 1.4rem; font-weight: 700;
+          line-height: 1.5; max-width: 620px; margin: 0.6rem auto 0.4rem; }
+  .ll-label { text-align: center; font-size: 0.82rem; letter-spacing: 0.08em;
+              text-transform: uppercase; opacity: 0.55; margin: 0.8rem 0 0.4rem;
+              color: var(--wc, inherit); }
+  .ll-say {
+    display: block; margin: 0.4rem auto 1rem; background: var(--card);
+    border: 1px solid var(--line); color: inherit; border-radius: 999px;
+    padding: 0.4rem 1.2rem; font-size: 1rem; cursor: pointer;
+  }
+  .ll-say:hover { border-color: #facc15; }
+
+  .ll-opts { display: grid; gap: 0.7rem; max-width: 560px; margin: 0 auto; }
+  .ll-opt {
+    width: 100%; display: flex; align-items: center; gap: 0.9rem;
+    text-align: left; background: var(--card);
+    border: 2px solid var(--line); border-radius: 14px;
+    padding: 0.85rem 1.1rem; color: inherit; font-size: 1.12rem;
+    font-weight: 600; line-height: 1.45; cursor: pointer;
+    transition: border-color 0.12s;
+  }
+  .ll-opt:hover:not(:disabled) { border-color: #facc15; }
+  .ll-opt:disabled { cursor: default; }
+  .ll-opt.good { border-color: var(--good);
+                 background: rgba(74, 222, 128, 0.14); animation: llPop 0.4s; }
+  .ll-opt.dim { opacity: 0.35; }
+  .ll-opt.miss { border-color: var(--bad); animation: llNudge 0.35s; }
+
+  /* picture options: big emoji scenes, no captions */
+  .ll-opts.pics { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+                  max-width: 620px; }
+  .ll-opt.pic { justify-content: center; text-align: center;
+                font-size: 2.5rem; line-height: 1.35; padding: 1rem 0.5rem;
+                white-space: pre-line; letter-spacing: 0.1rem; }
+
+  /* sentence builder */
+  .ll-built {
+    text-align: center; font-size: 1.5rem; font-weight: 800; line-height: 1.5;
+    background: var(--card); border: 2px dashed var(--line);
+    border-radius: 14px; padding: 0.9rem 1rem; max-width: 620px;
+    margin: 0.8rem auto; min-height: 3.4rem;
+  }
+  .ll-built .slot { opacity: 0.35; letter-spacing: 0.2em; }
+  .ll-built .chunk { color: #4ade80; }
+  .ll-built.win { border-style: solid; border-color: var(--good);
+                  background: rgba(74, 222, 128, 0.12); animation: llPop 0.4s; }
+  .ll-chips { display: flex; flex-wrap: wrap; gap: 0.6rem;
+              justify-content: center; max-width: 620px; margin: 0 auto 0.5rem; }
+  .ll-chip {
+    background: var(--card); border: 2px solid var(--line); color: inherit;
+    border-radius: 999px; padding: 0.65rem 1.2rem; font-size: 1.1rem;
+    font-weight: 700; cursor: pointer; transition: border-color 0.12s;
+  }
+  .ll-chip:hover:not(:disabled) { border-color: #facc15; }
+  .ll-chip:disabled { cursor: default; }
+  .ll-chip.sel { border-color: #4ade80; background: rgba(74,222,128,0.12); }
+  .ll-chip.dim { opacity: 0.35; }
+  .ll-chip.miss { border-color: var(--bad); animation: llNudge 0.35s; }
+  .ll-restart {
+    display: block; margin: 0.2rem auto 0.6rem; background: none;
+    border: none; color: inherit; opacity: 0.6; font-size: 0.9rem;
+    cursor: pointer; text-decoration: underline;
+  }
+  .ll-restart:hover { opacity: 1; }
+
+  /* robo says tiles */
+  .ll-tiles { display: flex; flex-wrap: wrap; gap: 0.8rem;
+              justify-content: center; max-width: 620px; margin: 0.4rem auto; }
+  .ll-tile {
+    position: relative; width: 7.2rem; padding: 0.9rem 0.3rem 0.6rem;
+    background: var(--card); border: 2px solid var(--line);
+    border-radius: 14px; color: inherit; cursor: pointer; text-align: center;
+    transition: border-color 0.12s;
+  }
+  .ll-tile:hover:not(:disabled) { border-color: #facc15; }
+  .ll-tile:disabled { cursor: default; }
+  .ll-tile .em { font-size: 2.6rem; line-height: 1.15; display: block; }
+  .ll-tile.big .em { font-size: 3.6rem; }
+  .ll-tile.small .em { font-size: 1.7rem; padding: 0.55rem 0; display: block; }
+  .ll-tile .lb { font-size: 0.72rem; opacity: 0.65; display: block;
+                 margin-top: 0.3rem; line-height: 1.3; }
+  .ll-tile.done { border-color: var(--good);
+                  background: rgba(74, 222, 128, 0.12); }
+  .ll-tile.miss { border-color: var(--bad); animation: llNudge 0.35s; }
+  .ll-tile .badge {
+    position: absolute; top: -0.55rem; right: -0.55rem;
+    background: var(--good); color: #14321f; font-weight: 800;
+    font-size: 0.95rem; width: 1.6rem; height: 1.6rem; border-radius: 50%;
+    display: none; align-items: center; justify-content: center;
+    animation: llPop 0.35s;
+  }
+  .ll-tile.done .badge { display: flex; }
+
+  .ll-feedback { text-align: center; margin-top: 1.1rem; min-height: 2.2rem;
+                 font-size: 1.15rem; font-weight: 700; }
+  .ll-feedback .praise { color: var(--good); font-size: 1.3rem; }
+  .ll-feedback .again { color: #facc15; }
+  .ll-teach { text-align: center; opacity: 0.85; font-size: 1rem;
+              font-weight: 400; margin-top: 0.4rem; line-height: 1.5;
+              max-width: 560px; margin-left: auto; margin-right: auto; }
+  .ll-wall-note { text-align: center; color: #facc15; font-size: 0.95rem;
+                  font-weight: 600; margin-top: 0.5rem; }
+  .ll-next {
+    display: block; margin: 1.2rem auto 0; background: var(--good);
+    border: none; color: #14321f; border-radius: 999px;
+    padding: 0.7rem 2.6rem; font-size: 1.2rem; font-weight: 800;
+    cursor: pointer; animation: llPop 0.4s;
+  }
+  .ll-next:hover { opacity: 0.9; }
+
+  /* story intro + side panel */
+  .ll-storycard {
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+    padding: 1.4rem 1.5rem; max-width: 620px; margin: 0 auto; text-align: center;
+  }
+  .ll-storycard .em { font-size: 3.4rem; }
+  .ll-storycard h2 { margin: 0.4rem 0 0.8rem; font-size: 1.5rem; }
+  .ll-storycard .txt { font-size: 1.2rem; line-height: 1.8; text-align: left; }
+  .ll-viz {
+    text-align: center; font-size: 1rem; color: #f472b6; font-weight: 600;
+    margin: 0.9rem auto 0; max-width: 460px; line-height: 1.5;
+  }
+  .ll-storymini {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 0.75rem 1rem 0.85rem;
+    font-size: 1.02rem; line-height: 1.7; max-width: 620px;
+    margin: 0.4rem auto 0.9rem;
+  }
+  .ll-storymini .ttl {
+    font-weight: 700; font-size: 0.85rem; letter-spacing: 0.06em;
+    text-transform: uppercase; opacity: 0.65; margin-bottom: 0.35rem;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  .ll-storymini .ttl button {
+    background: none; border: 1px solid var(--line); border-radius: 999px;
+    color: inherit; cursor: pointer; font-size: 0.8rem; padding: 0.1rem 0.6rem;
+  }
+  .ll-storymini .ttl button:hover { border-color: #facc15; }
+
+  /* phrase wall */
+  .ll-wall { display: grid; gap: 0.6rem; max-width: 620px; margin: 0 auto;
+             grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+  .ll-phrase {
+    background: var(--card); border: 1px solid #facc15; border-radius: 12px;
+    padding: 0.7rem 0.9rem; color: inherit; cursor: pointer; text-align: left;
+    font-size: 1.02rem; font-weight: 600; line-height: 1.45;
+  }
+  .ll-phrase:hover { transform: translateY(-2px); }
+  .ll-phrase::before { content: '💬 '; }
+  .ll-empty { text-align: center; opacity: 0.7; max-width: 460px;
+              margin: 1rem auto; line-height: 1.6; }
+
+  /* results */
+  .ll-results { text-align: center; padding: 1.2rem 0 2rem; }
+  .ll-results .em { font-size: 3.6rem; }
+  .ll-results h2 { margin: 0.4rem 0 0.8rem; }
+  .ll-starrow { font-size: 2.8rem; letter-spacing: 0.4rem; margin: 0.4rem 0 1rem; }
+  .ll-starrow span { opacity: 0.22; display: inline-block; }
+  .ll-starrow span.on { opacity: 1; color: #facc15; animation: llPop 0.5s both; }
+  .ll-starrow span.on:nth-child(2) { animation-delay: 0.18s; }
+  .ll-starrow span.on:nth-child(3) { animation-delay: 0.36s; }
+  .ll-mathline { font-size: 1.5rem; font-weight: 800; margin: 0.8rem 0;
+                 color: #facc15; }
+  .ll-resbtns { display: flex; gap: 0.7rem; justify-content: center;
+                flex-wrap: wrap; margin-top: 1.2rem; }
+  .ll-bigbtn {
+    background: var(--card); border: 1px solid var(--line); color: inherit;
+    border-radius: 999px; padding: 0.7rem 1.8rem; font-size: 1.1rem;
+    font-weight: 700; cursor: pointer;
+  }
+  .ll-bigbtn:hover { border-color: #facc15; }
+  .ll-bigbtn.go { background: #facc15; border-color: #facc15; color: #1a1a1e; }
+
+  .ll-burst { position: fixed; inset: 0; pointer-events: none; z-index: 999;
+              overflow: hidden; }
+  .ll-burst span { position: absolute; top: -6vh; font-size: 1.5rem;
+                   animation: llFall linear forwards; }
+
+  @keyframes llFall { to { transform: translateY(115vh) rotate(680deg); } }
+  @keyframes llPop {
+    0% { transform: scale(0.3); } 70% { transform: scale(1.22); }
+    100% { transform: scale(1); }
+  }
+  @keyframes llNudge {
+    25% { transform: translateX(-4px); } 75% { transform: translateX(4px); }
+  }
+
+  @media (max-width: 500px) {
+    .ll-scene { font-size: 2.6rem; }
+    .ll-q { font-size: 1.22rem; }
+    .ll-opt { font-size: 1.02rem; }
+    .ll-built { font-size: 1.25rem; }
+    .ll-tile { width: 6rem; }
+  }
+</style>
+
+<!-- Password gate -->
+<div id="protected-gate">
+  <div class="gate-card">
+    <div class="gate-lock" aria-hidden="true">🔒</div>
+    <p class="gate-title">{{ page.title | default: "Protected Page" }}</p>
+    <p class="gate-subtitle">This page is password-protected. Enter the passphrase to unlock.</p>
+    <div class="gate-input-row">
+      <label for="gate-password" class="sr-only">Passphrase</label>
+      <input id="gate-password" type="password" placeholder="Passphrase" autocomplete="off" autofocus />
+      <button id="gate-submit">Unlock</button>
+    </div>
+    <div id="gate-error" role="alert" aria-live="polite">Incorrect passphrase — please try again.</div>
+    <div id="gate-status" role="status" aria-live="polite">Decrypting…</div>
+  </div>
+</div>
+
+<div id="lab-root"><div class="ll" id="ll"></div></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* Encrypted blob injected by Jekyll from front matter field `encrypted` */
+  const ENCRYPTED_B64 = {{ page.encrypted | jsonify }};
+
+  const STORAGE_KEY = 'mwestwood-passphrase';
+
+  /* ── Gate (same crypto as protected.html) ───────────────────────────── */
+
+  function b64ToBytes(b64) {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+
+  async function deriveKey(passphrase, salt) {
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw', enc.encode(passphrase), { name: 'PBKDF2' }, false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: salt, iterations: 100000, hash: 'SHA-256' },
+      keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+  }
+
+  async function decrypt(passphrase) {
+    const blob = b64ToBytes(ENCRYPTED_B64);
+    const salt = blob.slice(0, 16);
+    const iv = blob.slice(16, 28);
+    const ct = blob.slice(28);
+    const key = await deriveKey(passphrase, salt);
+    const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, ct);
+    return new TextDecoder().decode(plaintext);
+  }
+
+  const gate = document.getElementById('protected-gate');
+  const rootWrap = document.getElementById('lab-root');
+  const input = document.getElementById('gate-password');
+  const btn = document.getElementById('gate-submit');
+  const errEl = document.getElementById('gate-error');
+  const statusEl = document.getElementById('gate-status');
+
+  function showError(msg) {
+    errEl.textContent = msg || 'Incorrect passphrase — please try again.';
+    errEl.style.display = 'block';
+    statusEl.style.display = 'none';
+    btn.disabled = false;
+    input.select();
+  }
+
+  function showStatus(msg) {
+    statusEl.textContent = msg;
+    statusEl.style.display = 'block';
+    errEl.style.display = 'none';
+  }
+
+  function reveal(text) {
+    let data;
+    try { data = JSON.parse(text); }
+    catch (e) { showError('Data error: could not parse content bank.'); return; }
+    gate.style.display = 'none';
+    rootWrap.style.display = 'block';
+    Lab.boot(data);
+  }
+
+  async function tryUnlock(passphrase, cache) {
+    try {
+      showStatus('Decrypting…');
+      btn.disabled = true;
+      const text = await decrypt(passphrase);
+      if (cache) {
+        try { localStorage.setItem(STORAGE_KEY, passphrase); } catch (_) {}
+      }
+      reveal(text);
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'OperationError') {
+        showError('Incorrect passphrase — please try again.');
+      } else if (e instanceof TypeError && e.message.includes('subtle')) {
+        showError('Error: Web Crypto API unavailable. This page requires HTTPS.');
+      } else {
+        showError('Error (' + e.name + '): ' + e.message);
+      }
+    }
+  }
+
+  async function init() {
+    if (!ENCRYPTED_B64) { showError('No encrypted data on this page.'); return; }
+    try {
+      const cached = localStorage.getItem(STORAGE_KEY);
+      if (cached) {
+        showStatus('Unlocking…');
+        btn.disabled = true;
+        input.disabled = true;
+        try {
+          const text = await decrypt(cached);
+          reveal(text);
+          return;
+        } catch (_) {
+          localStorage.removeItem(STORAGE_KEY);
+          btn.disabled = false;
+          input.disabled = false;
+          statusEl.style.display = 'none';
+        }
+      }
+    } catch (_) {}
+  }
+
+  btn.addEventListener('click', function () {
+    const pw = input.value;
+    if (!pw) { input.focus(); return; }
+    tryUnlock(pw, true);
+  });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') btn.click();
+  });
+
+  /* ═══════════════════════════ Language Lab ═════════════════════════════
+     Receptive + expressive language games for a young autistic learner who
+     is a GESTALT LANGUAGE PROCESSOR and hyperlexic (reads > understands).
+
+     Design rules (shared with WH Question Quest):
+     - Same layout every question; the child controls pacing with one big
+       NEXT button — nothing auto-advances. No timers anywhere.
+     - Everything is read aloud automatically (toggleable) — spoken models
+       matter for a gestalt language processor.
+     - Wrong answer #1: gentle dim + try again. Wrong answer #2: the answer
+       is revealed with the teaching line and STILL earns a point — there is
+       no failure state.
+     - Quiet sine-tone sounds (toggleable); soft low boop for misses.
+     - Numbers are the reward: explicit-arithmetic count-ups, a
+       sentences-built counter with a place-value breakdown.
+
+     Mode-specific:
+     - Sentence Builder: snap a starter chunk + ending chunk together —
+       Natural Language Acquisition stage-2 mitigation practice. Wrong
+       combos are read aloud (hearing "Let's cook the moon" IS the lesson)
+       and the child just tries another ending.
+     - Robo Says: tap the objects in the spoken order; numbered badges
+       appear as you go. A second miss plays a slow demo of the right order.
+     - Picture Match: emoji-only scene options — pure sentence-to-scene
+       comprehension, no caption to read around.
+     - What Would You Say?: every correct phrase is saved to a personal
+       Phrase Wall the child can revisit and replay — his own script bank.
+  ═══════════════════════════════════════════════════════════════════════ */
+
+  const Lab = (function () {
+
+    const el = document.getElementById('ll');
+
+    const MODES = {
+      build: { em: '🧩', name: 'Sentence Builder', color: '#4ade80',
+               tag: 'Snap word chunks together',
+               label: 'Build your sentence!',
+               tdesc: ['Ask, tell and share — your first sentence frames.',
+                       'Help, ideas and feelings — with because!',
+                       'Big connectors: because, but, so, first…then.'] },
+      match: { em: '🖼️', name: 'Picture Match', color: '#60a5fa',
+               tag: 'Read it — find it',
+               label: 'Find the matching picture!',
+               tdesc: ['Who is doing what — match the sentence.',
+                       'Position words, NOT, he / she / they.',
+                       'First/then, all/some, and, because.'] },
+      dirs:  { em: '🤖', name: 'Robo Says', color: '#fb923c',
+               tag: 'Listen and follow the steps',
+               label: 'Follow the direction!',
+               tdesc: ['One step: colors, shapes, sizes, groups.',
+                       'Two steps: this, THEN that.',
+                       'Tricky steps: before, after, ordering.'] },
+      same:  { em: '🔁', name: 'Say It Another Way', color: '#c084fc',
+               tag: 'Two ways to say one thing',
+               label: 'Which one means the same?',
+               tdesc: ['Same meaning, different words.',
+                       'Things people really say — what do they mean?',
+                       'Sayings and idioms — words in disguise!'] },
+      story: { em: '🎬', name: 'Mind Movies', color: '#f472b6',
+               tag: 'Read, imagine, solve',
+               label: '' },
+      say:   { em: '💬', name: 'What Would You Say?', color: '#facc15',
+               tag: 'Power phrases for real life',
+               label: 'What could you say?',
+               tdesc: ['Asking and telling — first power phrases.',
+                       'Fixing mix-ups, joining games, being polite.',
+                       'Feelings, flexible plans and kind honesty.'] }
+    };
+    const MODE_ORDER = ['build', 'match', 'dirs', 'same', 'story', 'say'];
+
+    const TIERS = [
+      { lvl: 1, key: '1', em: '🌱', name: 'Beginner' },
+      { lvl: 2, key: '2', em: '🌿', name: 'Intermediate' },
+      { lvl: 3, key: '3', em: '🌳', name: 'Advanced' }
+    ];
+
+    const PRAISE = ['Great job! 🎉', 'Yes! ⭐', 'You got it! 🌟', 'Super! 💪',
+                    'Amazing! 🎯', "That's right! ✨", 'Wow! 🚀'];
+
+    let DATA = null;
+
+    /* ── helpers ──────────────────────────────────────────────────────── */
+
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function shuffle(a) {
+      a = a.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = a[i]; a[i] = a[j]; a[j] = t;
+      }
+      return a;
+    }
+    function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+    function stars3(n) {
+      let h = '';
+      for (let i = 1; i <= 3; i++) h += i <= n ? '★' : '☆';
+      return h;
+    }
+    /* place-value breakdown: 347 -> "300 + 40 + 7" */
+    function placeValue(n) {
+      if (n < 10) return '';
+      const parts = [];
+      let place = 1;
+      let x = n;
+      while (x > 0) {
+        const d = x % 10;
+        if (d) parts.unshift(d * place);
+        x = Math.floor(x / 10);
+        place *= 10;
+      }
+      return parts.length > 1 ? n + ' = ' + parts.join(' + ') : '';
+    }
+
+    /* ── progress + settings (localStorage) ───────────────────────────── */
+
+    const PKEY = 'lang-lab-v1';
+    let P = null;
+    try { P = JSON.parse(localStorage.getItem(PKEY) || 'null'); } catch (_) {}
+    if (!P || typeof P !== 'object') P = {};
+    P.pts = P.pts || 0;
+    P.stars = P.stars || {};             /* activity id -> 0..3 best */
+    P.built = P.built || 0;              /* sentences built (Builder) */
+    P.phrases = P.phrases || [];         /* phrase wall (What Would You Say) */
+    if (P.voice === undefined) P.voice = true;
+    if (P.sound === undefined) P.sound = true;
+    function save() {
+      try { localStorage.setItem(PKEY, JSON.stringify(P)); } catch (_) {}
+    }
+
+    /* ── speech + gentle sounds ───────────────────────────────────────── */
+
+    function speak(text) {
+      if (!P.voice) return;
+      try {
+        if (!window.speechSynthesis) return;
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(
+          String(text).replace(/[🎉⭐🌟💪🎯✨🚀💛👀…]/g, ''));
+        u.rate = 0.85;
+        u.pitch = 1.05;
+        speechSynthesis.speak(u);
+      } catch (_) {}
+    }
+
+    let audioCtx = null;
+    function tone(freq, start, dur, vol) {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sine';
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0, audioCtx.currentTime + start);
+      g.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + start + 0.02);
+      g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + start + dur);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(audioCtx.currentTime + start);
+      o.stop(audioCtx.currentTime + start + dur + 0.05);
+    }
+    function sfx(kind) {
+      if (!P.sound) return;
+      try {
+        if (!audioCtx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) return;
+          audioCtx = new AC();
+        }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (kind === 'good') { tone(523, 0, 0.14, 0.07); tone(784, 0.12, 0.2, 0.07); }
+        else if (kind === 'soft') { tone(233, 0, 0.18, 0.045); }
+        else if (kind === 'star') { tone(659, 0, 0.12, 0.06); tone(784, 0.1, 0.12, 0.06); tone(1047, 0.2, 0.25, 0.06); }
+        else if (kind === 'tick') { tone(880, 0, 0.05, 0.03); }
+      } catch (_) {}
+    }
+
+    function burst() {
+      const wrap = document.createElement('div');
+      wrap.className = 'll-burst';
+      const EMO = ['🧩', '💬', '🖼️', '🎬', '⭐', '✨', '🎉',
+                   '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣'];
+      for (let i = 0; i < 26; i++) {
+        const s = document.createElement('span');
+        s.textContent = pick(EMO);
+        s.style.left = (Math.random() * 100) + 'vw';
+        s.style.animationDuration = (2 + Math.random() * 2.2) + 's';
+        s.style.animationDelay = (Math.random() * 0.5) + 's';
+        wrap.appendChild(s);
+      }
+      document.body.appendChild(wrap);
+      setTimeout(function () { wrap.remove(); }, 5200);
+    }
+
+    /* ── shared chrome ────────────────────────────────────────────────── */
+
+    function topBar(backLabel, backFn) {
+      const bar = document.createElement('div');
+      bar.className = 'll-top';
+      if (backFn) {
+        const b = document.createElement('button');
+        b.className = 'll-back';
+        b.textContent = '← ' + backLabel;
+        b.addEventListener('click', function () {
+          try { speechSynthesis.cancel(); } catch (_) {}
+          backFn();
+        });
+        bar.appendChild(b);
+      }
+      const sp = document.createElement('div');
+      sp.className = 'll-spacer';
+      bar.appendChild(sp);
+
+      const voiceBtn = document.createElement('button');
+      voiceBtn.className = 'll-pill' + (P.voice ? '' : ' off');
+      voiceBtn.textContent = '🗣️ Read aloud';
+      voiceBtn.setAttribute('aria-pressed', String(P.voice));
+      voiceBtn.addEventListener('click', function () {
+        P.voice = !P.voice; save();
+        voiceBtn.className = 'll-pill' + (P.voice ? '' : ' off');
+        voiceBtn.setAttribute('aria-pressed', String(P.voice));
+        if (!P.voice) { try { speechSynthesis.cancel(); } catch (_) {} }
+      });
+      bar.appendChild(voiceBtn);
+
+      const soundBtn = document.createElement('button');
+      soundBtn.className = 'll-pill' + (P.sound ? '' : ' off');
+      soundBtn.textContent = '🔔 Sounds';
+      soundBtn.setAttribute('aria-pressed', String(P.sound));
+      soundBtn.addEventListener('click', function () {
+        P.sound = !P.sound; save();
+        soundBtn.className = 'll-pill' + (P.sound ? '' : ' off');
+        soundBtn.setAttribute('aria-pressed', String(P.sound));
+      });
+      bar.appendChild(soundBtn);
+
+      const pts = document.createElement('span');
+      pts.className = 'll-pill pts';
+      pts.id = 'll-pts';
+      pts.textContent = P.pts + ' ⭐';
+      bar.appendChild(pts);
+      return bar;
+    }
+
+    /* ── home ─────────────────────────────────────────────────────────── */
+
+    function modeStars(m) {
+      if (m === 'story') {
+        let n = 0;
+        DATA.stories.forEach(function (_, i) { n += P.stars['st' + i] || 0; });
+        return { got: n, max: DATA.stories.length * 3 };
+      }
+      let n = 0;
+      TIERS.forEach(function (t) { n += P.stars[m + t.key] || 0; });
+      return { got: n, max: 9 };
+    }
+
+    function home() {
+      el.innerHTML = '';
+      el.appendChild(topBar(null, null));
+
+      const hero = document.createElement('div');
+      hero.className = 'll-hero';
+      hero.innerHTML = '<h1>🧪 Language Lab</h1>' +
+        '<p>Six word games — build sentences, crack meanings, collect stars!</p>';
+      el.appendChild(hero);
+
+      /* sentences-built counter — numbers are the reward */
+      const cnt = document.createElement('div');
+      cnt.className = 'll-counter';
+      const pv = placeValue(P.built);
+      cnt.innerHTML = '🧩 You have built <span class="n">' + P.built +
+        '</span> sentence' + (P.built === 1 ? '' : 's') + '!' +
+        (pv ? '<span class="pv">' + esc(pv) + '</span>' : '');
+      el.appendChild(cnt);
+
+      const s1 = document.createElement('div');
+      s1.className = 'll-sect';
+      s1.textContent = 'Word games';
+      el.appendChild(s1);
+
+      const worlds = document.createElement('div');
+      worlds.className = 'll-worlds';
+      MODE_ORDER.forEach(function (m) {
+        const M = MODES[m];
+        const st = modeStars(m);
+        const b = document.createElement('button');
+        b.className = 'll-world';
+        b.style.setProperty('--wc', M.color);
+        b.innerHTML = '<span class="em">' + M.em + '</span>' +
+          '<span><span class="name">' + esc(M.name) + '</span>' +
+          '<div class="tag">' + esc(M.tag) + '</div>' +
+          '<div class="st">' + (st.got ? '★ ' + st.got + ' / ' + st.max
+                                       : '☆ ☆ ☆') + '</div></span>';
+        b.addEventListener('click', function () {
+          if (m === 'story') storyMenu();
+          else modeMenu(m);
+        });
+        worlds.appendChild(b);
+      });
+      el.appendChild(worlds);
+
+      const s2 = document.createElement('div');
+      s2.className = 'll-sect';
+      s2.textContent = 'My collection';
+      el.appendChild(s2);
+
+      const acts = document.createElement('div');
+      acts.className = 'll-cards';
+      const wall = document.createElement('button');
+      wall.className = 'll-card';
+      wall.innerHTML = '<div class="em">💬</div>' +
+        '<div class="name">My Phrase Wall</div>' +
+        '<div class="desc">' + P.phrases.length + ' power phrase' +
+        (P.phrases.length === 1 ? '' : 's') +
+        ' collected. Tap any phrase to hear it again.</div>';
+      wall.addEventListener('click', phraseWall);
+      acts.appendChild(wall);
+      el.appendChild(acts);
+      window.scrollTo(0, 0);
+    }
+
+    /* ── menus ────────────────────────────────────────────────────────── */
+
+    function modeMenu(m) {
+      const M = MODES[m];
+      el.innerHTML = '';
+      el.appendChild(topBar('Home', home));
+      const hero = document.createElement('div');
+      hero.className = 'll-hero';
+      hero.innerHTML = '<h1>' + M.em + ' ' + esc(M.name) + '</h1>' +
+        '<p>' + esc(M.tag) + '. Pick your level!</p>';
+      el.appendChild(hero);
+
+      const grid = document.createElement('div');
+      grid.className = 'll-cards';
+      TIERS.forEach(function (t, i) {
+        const b = document.createElement('button');
+        b.className = 'll-card';
+        b.innerHTML = '<div class="em">' + t.em + '</div>' +
+          '<div class="name">' + esc(t.name) + '</div>' +
+          '<div class="desc">' + esc(M.tdesc[i]) + '</div>' +
+          '<div class="st">' + stars3(P.stars[m + t.key] || 0) + '</div>';
+        b.addEventListener('click', function () { startMode(m, t.lvl); });
+        grid.appendChild(b);
+      });
+      el.appendChild(grid);
+      window.scrollTo(0, 0);
+    }
+
+    function storyMenu() {
+      el.innerHTML = '';
+      el.appendChild(topBar('Home', home));
+      const hero = document.createElement('div');
+      hero.className = 'll-hero';
+      hero.innerHTML = '<h1>🎬 Mind Movies</h1>' +
+        '<p>Read the story and make a movie in your mind. Then answer like a detective!</p>';
+      el.appendChild(hero);
+
+      const grid = document.createElement('div');
+      grid.className = 'll-cards';
+      DATA.stories.forEach(function (s, i) {
+        const t = TIERS[s.lvl - 1];
+        const b = document.createElement('button');
+        b.className = 'll-card';
+        b.innerHTML = '<div class="em">' + s.emoji + '</div>' +
+          '<div class="name">' + esc(s.title) + '</div>' +
+          '<div class="desc">' + t.em + ' ' + esc(t.name) + ' · ' +
+          s.qs.length + ' questions</div>' +
+          '<div class="st">' + stars3(P.stars['st' + i] || 0) + '</div>';
+        b.addEventListener('click', function () { startStory(s, i); });
+        grid.appendChild(b);
+      });
+      el.appendChild(grid);
+      window.scrollTo(0, 0);
+    }
+
+    function phraseWall() {
+      el.innerHTML = '';
+      el.appendChild(topBar('Home', home));
+      const hero = document.createElement('div');
+      hero.className = 'll-hero';
+      hero.innerHTML = '<h1>💬 My Phrase Wall</h1>' +
+        '<p>Every phrase you win in "What Would You Say?" lives here. Tap to hear it!</p>';
+      el.appendChild(hero);
+
+      if (!P.phrases.length) {
+        const e = document.createElement('div');
+        e.className = 'll-empty';
+        e.textContent = 'No phrases yet. Play 💬 What Would You Say? — every right answer adds a power phrase to your wall!';
+        el.appendChild(e);
+      } else {
+        const grid = document.createElement('div');
+        grid.className = 'll-wall';
+        P.phrases.forEach(function (ph) {
+          const b = document.createElement('button');
+          b.className = 'll-phrase';
+          b.textContent = ph;
+          b.addEventListener('click', function () { speak(ph); });
+          grid.appendChild(b);
+        });
+        el.appendChild(grid);
+      }
+      window.scrollTo(0, 0);
+    }
+
+    function addPhrase(text) {
+      if (P.phrases.indexOf(text) === -1) {
+        P.phrases.push(text);
+        save();
+        return true;
+      }
+      return false;
+    }
+
+    /* ── round construction ───────────────────────────────────────────── */
+
+    function poolFor(m, lvl) {
+      const bank = m === 'build' ? DATA.build
+                 : m === 'match' ? DATA.match
+                 : m === 'dirs' ? DATA.dirs
+                 : m === 'same' ? DATA.same
+                 : DATA.say;
+      return bank.filter(function (x) { return x.lvl === lvl; });
+    }
+
+    function startMode(m, lvl) {
+      const items = shuffle(poolFor(m, lvl)).slice(0, 8);
+      const t = TIERS[lvl - 1];
+      playRound({
+        id: m + lvl,
+        title: MODES[m].em + ' ' + MODES[m].name + ' · ' + t.name,
+        mode: m,
+        steps: items.map(function (it) { return { type: m, it: it }; }),
+        backTo: function () { modeMenu(m); },
+        backLabel: 'Levels',
+        replay: function () { startMode(m, lvl); }
+      });
+    }
+
+    function startStory(story, idx) {
+      playRound({
+        id: 'st' + idx,
+        title: story.emoji + ' ' + story.title,
+        mode: 'story',
+        story: story,
+        steps: story.qs.map(function (q) {
+          return { type: 'story', it: q, story: story };
+        }),
+        backTo: storyMenu,
+        backLabel: 'Stories',
+        replay: function () { startStory(story, idx); }
+      });
+    }
+
+    /* ── round engine ─────────────────────────────────────────────────── */
+
+    let R = null; /* current round */
+
+    function playRound(spec) {
+      R = { spec: spec, idx: 0, firstTry: 0, tries: 0, earned: 0,
+            startPts: P.pts };
+      if (spec.story) { storyIntro(spec); return; }
+      renderStep();
+    }
+
+    function storyIntro(spec) {
+      el.innerHTML = '';
+      el.appendChild(topBar('Stories', spec.backTo));
+      const card = document.createElement('div');
+      card.className = 'll-storycard';
+      card.innerHTML = '<div class="em">' + spec.story.emoji + '</div>' +
+        '<h2>' + esc(spec.story.title) + '</h2>' +
+        '<div class="txt">' + esc(spec.story.text) + '</div>';
+      el.appendChild(card);
+
+      const viz = document.createElement('div');
+      viz.className = 'll-viz';
+      viz.textContent = '🎬 Make a movie in your mind: can you SEE it happening?';
+      el.appendChild(viz);
+
+      const say = document.createElement('button');
+      say.className = 'll-say';
+      say.textContent = '🔊 Read the story to me';
+      say.addEventListener('click', function () { speak(spec.story.text); });
+      el.appendChild(say);
+
+      const go = document.createElement('button');
+      go.className = 'll-next';
+      go.textContent = 'I can see it! ▶';
+      go.addEventListener('click', function () {
+        try { speechSynthesis.cancel(); } catch (_) {}
+        renderStep();
+      });
+      el.appendChild(go);
+      speak(spec.story.text);
+      window.scrollTo(0, 0);
+    }
+
+    function addPts(n) {
+      P.pts += n;
+      R.earned += n;
+      save();
+      const pill = document.getElementById('ll-pts');
+      if (pill) {
+        pill.textContent = P.pts + ' ⭐';
+        pill.classList.remove('pop');
+        void pill.offsetWidth;
+        pill.classList.add('pop');
+      }
+    }
+
+    function progressDots() {
+      const wrap = document.createElement('div');
+      wrap.className = 'll-prog';
+      R.spec.steps.forEach(function (_, i) {
+        const d = document.createElement('span');
+        d.className = 'll-dot' + (i < R.idx ? ' done' : i === R.idx ? ' now' : '');
+        wrap.appendChild(d);
+      });
+      return wrap;
+    }
+
+    function renderStep() {
+      if (R.idx >= R.spec.steps.length) { results(); return; }
+      const step = R.spec.steps[R.idx];
+      R.tries = 0;
+      el.innerHTML = '';
+      el.appendChild(topBar(R.spec.backLabel || 'Home', function () {
+        (R.spec.backTo || home)();
+      }));
+      el.appendChild(progressDots());
+      if (step.type === 'build') renderBuild(step);
+      else if (step.type === 'dirs') renderDirs(step);
+      else if (step.type === 'match') renderMatch(step);
+      else if (step.type === 'same') renderSame(step);
+      else if (step.type === 'say') renderSay(step);
+      else renderStoryQ(step);
+      window.scrollTo(0, 0);
+    }
+
+    function feedbackArea() {
+      const f = document.createElement('div');
+      f.className = 'll-feedback';
+      f.id = 'll-fb';
+      el.appendChild(f);
+      return f;
+    }
+
+    function nextButton(label) {
+      const b = document.createElement('button');
+      b.className = 'll-next';
+      b.textContent = label ||
+        (R.idx + 1 >= R.spec.steps.length ? 'Finish 🏁' : 'Next ▶');
+      b.addEventListener('click', function () {
+        try { speechSynthesis.cancel(); } catch (_) {}
+        R.idx++;
+        renderStep();
+      });
+      return b;
+    }
+
+    /* correct: gentle celebrate, teach, show Next. extraFn may append
+       mode-specific bits (Phrase Wall note, "say it with me" button) */
+    function onCorrect(fb, teachLines, spokenAnswer, extraFn) {
+      const first = R.tries === 0;
+      if (first) R.firstTry++;
+      addPts(first ? 2 : 1);
+      sfx('good');
+      const praise = pick(PRAISE);
+      fb.innerHTML = '<span class="praise">' + praise + '</span>' +
+        '<span class="ll-pill pts" style="margin-left:0.6rem">+' +
+        (first ? 2 : 1) + ' ⭐</span>' +
+        '<div class="ll-teach">' + teachLines.map(esc).join('<br>') + '</div>';
+      speak((spokenAnswer ? spokenAnswer + '. ' : '') + praise + ' ' +
+            teachLines.join(' '));
+      if (extraFn) extraFn(fb);
+      fb.after(nextButton());
+    }
+
+    function onWrong(fb, btnEl, correctBtn, teachLines, correctSpoken) {
+      R.tries++;
+      sfx('soft');
+      btnEl.classList.add('miss');
+      setTimeout(function () {
+        btnEl.classList.remove('miss');
+        btnEl.classList.add('dim');
+      }, 380);
+      btnEl.disabled = true;
+      if (R.tries === 1) {
+        fb.innerHTML = '<span class="again">Not that one — try again! 💛</span>';
+        speak('Not that one. Try again!');
+      } else {
+        /* second miss: reveal the answer, teach, move on */
+        correctBtn.classList.add('good');
+        Array.prototype.forEach.call(el.querySelectorAll('.ll-opt'), function (o) {
+          o.disabled = true;
+          if (o !== correctBtn) o.classList.add('dim');
+        });
+        addPts(1); /* still rewards finishing — no failure state */
+        fb.innerHTML = '<span class="again">Here it is! 👀</span>' +
+          '<div class="ll-teach">' + teachLines.map(esc).join('<br>') + '</div>';
+        speak('Here is the answer. ' + correctSpoken + '. ' + teachLines.join(' '));
+        fb.after(nextButton());
+      }
+    }
+
+    function addLabel(m, text) {
+      const lab = document.createElement('div');
+      lab.className = 'll-label';
+      lab.style.setProperty('--wc', MODES[m].color);
+      lab.textContent = text;
+      el.appendChild(lab);
+    }
+
+    function addSayBtn(spoken) {
+      const say = document.createElement('button');
+      say.className = 'll-say';
+      say.textContent = '🔊 Read it to me';
+      say.addEventListener('click', function () { speak(spoken); });
+      el.appendChild(say);
+    }
+
+    /* ── step: Sentence Builder ───────────────────────────────────────── */
+
+    function renderBuild(step) {
+      const q = step.it;
+
+      const sc = document.createElement('div');
+      sc.className = 'll-scene';
+      sc.textContent = q.scene;
+      el.appendChild(sc);
+
+      const situ = document.createElement('div');
+      situ.className = 'll-situ';
+      situ.textContent = q.situ;
+      el.appendChild(situ);
+
+      const spoken = q.situ + ' Build your sentence: pick the start, then the ending.';
+      addSayBtn(spoken);
+
+      const bar = document.createElement('div');
+      bar.className = 'll-built';
+      bar.id = 'll-built';
+      el.appendChild(bar);
+
+      let chosenS = -1;
+      let solved = false;
+
+      function drawBar(endTxt) {
+        bar.innerHTML =
+          (chosenS >= 0 ? '<span class="chunk">' + esc(q.starters[chosenS]) +
+                          '</span>' : '<span class="slot">______</span>') +
+          ' ' +
+          (endTxt ? '<span class="chunk">' + esc(endTxt) + '</span>'
+                  : '<span class="slot">______</span>');
+      }
+      drawBar(null);
+
+      addLabel('build', 'Pick the start');
+      const srow = document.createElement('div');
+      srow.className = 'll-chips';
+      el.appendChild(srow);
+
+      const elab = document.createElement('div');
+      elab.className = 'll-label';
+      elab.style.setProperty('--wc', MODES.build.color);
+      elab.textContent = 'Now finish it';
+      elab.style.display = 'none';
+      el.appendChild(elab);
+
+      const erow = document.createElement('div');
+      erow.className = 'll-chips';
+      erow.style.display = 'none';
+      el.appendChild(erow);
+
+      const restart = document.createElement('button');
+      restart.className = 'll-restart';
+      restart.textContent = '↺ Start over';
+      restart.style.display = 'none';
+      el.appendChild(restart);
+
+      const fb = feedbackArea();
+
+      function isOk(s, e) {
+        return q.ok.some(function (p) { return p[0] === s && p[1] === e; });
+      }
+
+      function win(sIdx, eIdx, revealed) {
+        solved = true;
+        chosenS = sIdx;
+        const sentence = q.starters[sIdx] + ' ' + q.ends[eIdx];
+        drawBar(q.ends[eIdx]);
+        bar.classList.add('win');
+        restart.style.display = 'none';
+        Array.prototype.forEach.call(srow.children, function (c) { c.disabled = true; });
+        Array.prototype.forEach.call(erow.children, function (c) { c.disabled = true; });
+        P.built++;
+        save();
+        if (revealed) {
+          addPts(1);
+          fb.innerHTML = '<span class="again">Here is one that works! 👀</span>' +
+            '<div class="ll-teach">' + esc(q.teach) + '</div>';
+        } else {
+          const first = R.tries === 0;
+          if (first) R.firstTry++;
+          addPts(first ? 2 : 1);
+          sfx('good');
+          const praise = pick(PRAISE);
+          fb.innerHTML = '<span class="praise">' + praise + '</span>' +
+            '<span class="ll-pill pts" style="margin-left:0.6rem">+' +
+            (first ? 2 : 1) + ' ⭐</span>' +
+            '<div class="ll-teach">' + esc(q.teach) + '</div>';
+        }
+        const again = document.createElement('button');
+        again.className = 'll-say';
+        again.textContent = '🔊 Say it with me';
+        again.addEventListener('click', function () { speak(sentence); });
+        fb.appendChild(again);
+        fb.after(nextButton());
+        speak('You built: ' + sentence + ' ' + q.teach);
+      }
+
+      function miss(sIdx, eIdx, chip) {
+        R.tries++;
+        sfx('soft');
+        chip.classList.add('miss');
+        setTimeout(function () { chip.classList.remove('miss'); }, 380);
+        const silly = q.starters[sIdx] + ' ' + q.ends[eIdx];
+        if (R.tries >= 2) {
+          win(q.ok[0][0], q.ok[0][1], true);
+          return;
+        }
+        fb.innerHTML = '<span class="again">' + esc(silly) +
+          ' — hmm, that doesn\'t fit this time. Try again! 💛</span>';
+        speak(silly + '. Hmm, that does not fit this time. Try again!');
+      }
+
+      q.starters.forEach(function (s, i) {
+        const c = document.createElement('button');
+        c.className = 'll-chip';
+        c.textContent = s;
+        c.addEventListener('click', function () {
+          if (solved) return;
+          chosenS = i;
+          Array.prototype.forEach.call(srow.children, function (x, xi) {
+            x.classList.toggle('sel', xi === i);
+          });
+          drawBar(null);
+          elab.style.display = '';
+          erow.style.display = '';
+          restart.style.display = '';
+          speak(s);
+        });
+        srow.appendChild(c);
+      });
+
+      q.ends.forEach(function (e, j) {
+        const c = document.createElement('button');
+        c.className = 'll-chip';
+        c.textContent = e;
+        c.addEventListener('click', function () {
+          if (solved || chosenS < 0) return;
+          if (isOk(chosenS, j)) win(chosenS, j, false);
+          else miss(chosenS, j, c);
+        });
+        erow.appendChild(c);
+      });
+
+      restart.addEventListener('click', function () {
+        if (solved) return;
+        chosenS = -1;
+        Array.prototype.forEach.call(srow.children, function (x) {
+          x.classList.remove('sel');
+        });
+        drawBar(null);
+        elab.style.display = 'none';
+        erow.style.display = 'none';
+        restart.style.display = 'none';
+      });
+
+      speak(spoken);
+    }
+
+    /* ── step: Robo Says ──────────────────────────────────────────────── */
+
+    function renderDirs(step) {
+      const q = step.it;
+
+      const sc = document.createElement('div');
+      sc.className = 'll-scene';
+      sc.textContent = '🤖';
+      el.appendChild(sc);
+
+      const qEl = document.createElement('div');
+      qEl.className = 'll-q';
+      qEl.textContent = q.instr;
+      el.appendChild(qEl);
+
+      const spoken = 'Robo says: ' + q.instr;
+      addSayBtn(spoken);
+
+      const grid = document.createElement('div');
+      grid.className = 'll-tiles';
+      el.appendChild(grid);
+
+      const fb = feedbackArea();
+
+      /* display order: shuffled unless the instruction uses positional
+         words (fixed flag) — then screen order must match data order */
+      let order = q.items.map(function (_, i) { return i; });
+      if (!q.fixed) order = shuffle(order);
+
+      const tiles = {};
+      let pos = 0;
+      const done = {};
+      let over = false;
+
+      function recap() {
+        return q.seq.map(function (ix, k) {
+          return (q.seq.length > 1 ? 'number ' + (k + 1) + ': ' : '') +
+                 q.items[ix][1];
+        }).join(', then ');
+      }
+
+      function finish(revealed) {
+        over = true;
+        Object.keys(tiles).forEach(function (k) { tiles[k].disabled = true; });
+        if (revealed) {
+          addPts(1);
+          fb.innerHTML = '<span class="again">Watch — here is the order! 👀</span>' +
+            '<div class="ll-teach">' + esc(q.teach) + '</div>';
+          speak('Watch. ' + recap() + '. ' + q.teach);
+          /* slow demo: badge the right tiles one by one */
+          q.seq.forEach(function (ix, k) {
+            setTimeout(function () {
+              const t = tiles[ix];
+              t.querySelector('.badge').textContent = k + 1;
+              t.classList.add('done');
+              sfx('tick');
+            }, 600 * (k + 1));
+          });
+        } else {
+          const first = R.tries === 0;
+          if (first) R.firstTry++;
+          addPts(first ? 2 : 1);
+          sfx('good');
+          const praise = pick(PRAISE);
+          fb.innerHTML = '<span class="praise">' + praise + '</span>' +
+            '<span class="ll-pill pts" style="margin-left:0.6rem">+' +
+            (first ? 2 : 1) + ' ⭐</span>' +
+            '<div class="ll-teach">' + esc(q.teach) + '</div>';
+          speak(praise + ' ' + q.teach);
+        }
+        fb.after(nextButton());
+      }
+
+      function resetTaps() {
+        pos = 0;
+        Object.keys(done).forEach(function (k) { delete done[k]; });
+        Object.keys(tiles).forEach(function (k) {
+          tiles[k].classList.remove('done');
+        });
+      }
+
+      function tap(ix, tile) {
+        if (over || done[ix]) return;
+        const good = q.any
+          ? q.seq.indexOf(ix) !== -1
+          : q.seq[pos] === ix;
+        if (good) {
+          done[ix] = true;
+          tile.querySelector('.badge').textContent = pos + 1;
+          tile.classList.add('done');
+          sfx('tick');
+          pos++;
+          if (pos >= q.seq.length) finish(false);
+        } else {
+          R.tries++;
+          sfx('soft');
+          tile.classList.add('miss');
+          setTimeout(function () { tile.classList.remove('miss'); }, 380);
+          if (R.tries >= 2) { finish(true); return; }
+          resetTaps();
+          fb.innerHTML = '<span class="again">Let\'s start over — listen again! 💛</span>';
+          speak('Not that one. Listen again! ' + q.instr);
+        }
+      }
+
+      order.forEach(function (ix) {
+        const it = q.items[ix];
+        const t = document.createElement('button');
+        t.className = 'll-tile' + (it[2] ? ' ' + it[2] : '');
+        t.innerHTML = '<span class="badge"></span>' +
+          '<span class="em">' + it[0] + '</span>' +
+          '<span class="lb">' + esc(it[1]) + '</span>';
+        t.addEventListener('click', function () { tap(ix, t); });
+        tiles[ix] = t;
+        grid.appendChild(t);
+      });
+
+      speak(spoken);
+    }
+
+    /* ── shared MCQ steps ─────────────────────────────────────────────── */
+
+    /* opts: array of [emoji, label, correct] (pic style) or
+       [text, correct] (text style) */
+    function mcq(opts, style, teach, correctSpoken, extraFn) {
+      const wrap = document.createElement('div');
+      wrap.className = 'll-opts' + (style === 'pic' ? ' pics' : '');
+      let correctBtn = null;
+      const isPic = style === 'pic';
+      const correct = opts.filter(function (o) {
+        return o[o.length - 1] === 1;
+      })[0];
+
+      shuffle(opts).forEach(function (o) {
+        const good = o[o.length - 1] === 1;
+        const b = document.createElement('button');
+        b.className = 'll-opt' + (isPic ? ' pic' : '');
+        b.textContent = o[0];
+        if (isPic) b.setAttribute('aria-label', o[1]);
+        if (good) correctBtn = b;
+        b.addEventListener('click', function () {
+          const fb = document.getElementById('ll-fb');
+          if (good) {
+            Array.prototype.forEach.call(wrap.children, function (x) {
+              x.disabled = true;
+            });
+            b.classList.add('good');
+            onCorrect(fb, [teach],
+                      isPic ? o[1] : o[0], extraFn);
+          } else {
+            onWrong(fb, b, correctBtn, [teach],
+                    correctSpoken || (isPic ? correct[1] : correct[0]));
+          }
+        });
+        wrap.appendChild(b);
+      });
+      el.appendChild(wrap);
+      feedbackArea();
+    }
+
+    /* ── step: Picture Match ──────────────────────────────────────────── */
+
+    function renderMatch(step) {
+      const q = step.it;
+      const qEl = document.createElement('div');
+      qEl.className = 'll-q';
+      qEl.textContent = q.sent;
+      el.appendChild(qEl);
+      addSayBtn(q.sent + ' Find the matching picture!');
+      addLabel('match', MODES.match.label);
+      mcq(q.opts, 'pic', q.teach, null, null);
+      speak(q.sent + ' Find the matching picture!');
+    }
+
+    /* ── step: Say It Another Way ─────────────────────────────────────── */
+
+    function renderSame(step) {
+      const q = step.it;
+      const sc = document.createElement('div');
+      sc.className = 'll-scene';
+      sc.textContent = '🔁';
+      el.appendChild(sc);
+      const situ = document.createElement('div');
+      situ.className = 'll-situ';
+      situ.innerHTML = '<strong>&ldquo;' + esc(q.sent) + '&rdquo;</strong>';
+      el.appendChild(situ);
+      const spoken = q.sent + '. Which one means the same?';
+      addSayBtn(spoken);
+      addLabel('same', MODES.same.label);
+      mcq(q.opts, 'text', q.teach, null, null);
+      speak(spoken);
+    }
+
+    /* ── step: What Would You Say? ────────────────────────────────────── */
+
+    function renderSay(step) {
+      const q = step.it;
+      const sc = document.createElement('div');
+      sc.className = 'll-scene';
+      sc.textContent = q.scene;
+      el.appendChild(sc);
+      const situ = document.createElement('div');
+      situ.className = 'll-situ';
+      situ.textContent = q.situ;
+      el.appendChild(situ);
+      const spoken = q.situ + ' What could you say?';
+      addSayBtn(spoken);
+      addLabel('say', MODES.say.label);
+
+      const winning = q.opts.filter(function (o) { return o[1] === 1; })[0][0];
+      mcq(q.opts, 'text', q.teach, null, function (fb) {
+        const isNew = addPhrase(winning);
+        if (isNew) {
+          const note = document.createElement('div');
+          note.className = 'll-wall-note';
+          note.textContent = '✨ Added to your Phrase Wall!';
+          fb.appendChild(note);
+        }
+        const again = document.createElement('button');
+        again.className = 'll-say';
+        again.textContent = '🔊 Say it with me';
+        again.addEventListener('click', function () { speak(winning); });
+        fb.appendChild(again);
+      });
+      speak(spoken);
+    }
+
+    /* ── step: Mind Movies question ───────────────────────────────────── */
+
+    function renderStoryQ(step) {
+      const q = step.it;
+
+      /* keep the story visible next to its questions for re-reading */
+      const mini = document.createElement('div');
+      mini.className = 'll-storymini';
+      const ttl = document.createElement('div');
+      ttl.className = 'ttl';
+      ttl.innerHTML = '<span>' + step.story.emoji + ' ' +
+        esc(step.story.title) + '</span>';
+      const rb = document.createElement('button');
+      rb.textContent = '🔊 Read';
+      rb.addEventListener('click', function () { speak(step.story.text); });
+      ttl.appendChild(rb);
+      mini.appendChild(ttl);
+      mini.appendChild(document.createTextNode(step.story.text));
+      el.appendChild(mini);
+
+      const qEl = document.createElement('div');
+      qEl.className = 'll-q';
+      qEl.textContent = q.q;
+      el.appendChild(qEl);
+      addSayBtn(q.q);
+      mcq(q.opts, 'text', q.teach, null, null);
+      speak(q.q);
+    }
+
+    /* ── results ──────────────────────────────────────────────────────── */
+
+    function results() {
+      const total = R.spec.steps.length;
+      const nStars = R.firstTry >= total ? 3
+                   : R.firstTry >= Math.ceil(total * 0.6) ? 2 : 1;
+      const prevBest = P.stars[R.spec.id] || 0;
+      if (nStars > prevBest) P.stars[R.spec.id] = nStars;
+
+      save();
+
+      el.innerHTML = '';
+      el.appendChild(topBar('Home', home));
+
+      const box = document.createElement('div');
+      box.className = 'll-results';
+      box.innerHTML = '<div class="em">🏁</div><h2>' + esc(R.spec.title) +
+        ' — done!</h2>' +
+        '<div class="ll-starrow">' +
+        [1, 2, 3].map(function (i) {
+          return '<span' + (i <= nStars ? ' class="on"' : '') + '>★</span>';
+        }).join('') + '</div>';
+
+      /* count-up with explicit arithmetic — numbers are the reward */
+      const mathline = document.createElement('div');
+      mathline.className = 'll-mathline';
+      mathline.id = 'll-count';
+      box.appendChild(mathline);
+
+      const btns = document.createElement('div');
+      btns.className = 'll-resbtns';
+      const again = document.createElement('button');
+      again.className = 'll-bigbtn go';
+      again.textContent = '🔁 Play again';
+      again.addEventListener('click', function () {
+        if (R.spec.replay) R.spec.replay();
+        else home();
+      });
+      btns.appendChild(again);
+      const homeB = document.createElement('button');
+      homeB.className = 'll-bigbtn';
+      homeB.textContent = '🏠 Home';
+      homeB.addEventListener('click', home);
+      btns.appendChild(homeB);
+      box.appendChild(btns);
+      el.appendChild(box);
+
+      sfx('star');
+      if (nStars === 3) burst();
+      speak('All done! You earned ' + R.earned + ' stars. ' +
+            R.startPts + ' plus ' + R.earned + ' makes ' + P.pts + '!');
+
+      /* animate: "37 + 12 = 49 ⭐" counting up */
+      const target = P.pts;
+      let shown = R.startPts;
+      const cnt = document.getElementById('ll-count');
+      function tick() {
+        cnt.textContent = R.startPts + ' + ' + R.earned + ' = ' +
+          shown + (shown === target ? ' ⭐' : '…');
+        if (shown < target) {
+          shown++;
+          sfx('tick');
+          setTimeout(tick, 160);
+        }
+      }
+      tick();
+      window.scrollTo(0, 0);
+    }
+
+    /* ── boot ─────────────────────────────────────────────────────────── */
+
+    function boot(data) {
+      DATA = data;
+      home();
+    }
+
+    return { boot: boot };
+  })();
+
+  init();
+})();
+</script>

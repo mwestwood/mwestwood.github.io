@@ -652,6 +652,55 @@ you tune the voice ranking. Feel-the-seconds, clock math and Memory Steps
 are engine-generated (no data). `encrypt-batch.py` skips this page (empty
 body). Progress in localStorage under `skill-quest-v1`.
 
+### Rebuild the Language Lab (receptive/expressive language game)
+
+```bash
+python3 _tools/build-language-lab.py "passphrase"
+```
+
+Generates `autism/language-lab.md` (`layout: protected-lang`, parent Autism,
+nav_order 5, permalink `/autism/language-lab/`) from `_tools/lang_data.py`
+(committed — original content, like `wh_data.py`). Companion to WH Question
+Quest, built on the same autism-friendly engine rules (no timers, big Next,
+identical layout, auto speech, quiet tones, two-try no-failure). Targets a
+GESTALT LANGUAGE PROCESSOR who is hyperlexic (decodes fluently, comprehension
+lags). Six modes, each with 🌱/🌿/🌳 tiers (stars per tier, ids `build1`…
+`say3`; stories `st0`–`st8`; rounds draw 8 of the tier pool):
+
+- **🧩 Sentence Builder** — NLA stage-2 mitigation: snap a starter chunk +
+  ending chunk into a frame ("Can I have ___", "I feel ___ because ___").
+  Data gives 3 starters × 3 ends + `ok` pairs; wrong combos are READ ALOUD
+  (hearing "Let's cook the moon" is the lesson) then retried; wins bump the
+  home-screen "sentences built" counter (`P.built`, shown with a place-value
+  breakdown).
+- **🖼️ Picture Match** — sentence → emoji-only scene options (captions live
+  in speech/teach only, so nothing can be read around). `\n` in an option
+  emoji renders as a line break — used for on/under/above layouts. Tiers:
+  who-does-what → prepositions/NOT/pronouns → first-then, all/some, ordinals.
+- **🤖 Robo Says** — following directions; tapped tiles get numbered badges.
+  Tiers: 1-step attribute/category → "X, then Y" → before/after + ordering.
+  `any: True` = order-free set; `fixed: True` keeps screen order (needed for
+  positional wording — display order is otherwise shuffled). A second miss
+  plays a slow numbered demo of the right order.
+- **🔁 Say It Another Way** — paraphrase → real spoken expressions → idioms;
+  every idiom has a literal-trap foil and the teach line names it "a saying".
+  Directly attacks the hyperlexic gap.
+- **🎬 Mind Movies** — 9 number-rich micro-stories with a visualization
+  prompt (V&V style); questions climb literal → prediction/why → inference,
+  "how do you know", main idea. Story text stays visible beside questions.
+- **💬 What Would You Say?** — functional scripts (requesting, repair,
+  self-advocacy, flexibility, kind honesty); every correct phrase is saved
+  to a **Phrase Wall** (`P.phrases`) browsable from home — tap to re-hear.
+  All wrong options are things a kid could actually say, so the contrast
+  teaches.
+
+The builder validates the banks (exactly-one-correct, seq/ok ranges, every
+tier populated) before encrypting. The engine is public code in
+`_layouts/protected-lang.html` — editing games never requires re-encryption,
+only content changes in `lang_data.py` do (then re-run the builder).
+`encrypt-batch.py` skips this page (empty body). Progress lives in
+localStorage under `lang-lab-v1`.
+
 ### Rebuild the Kangaroo Arena (Math Kangaroo practice game)
 
 ```bash
