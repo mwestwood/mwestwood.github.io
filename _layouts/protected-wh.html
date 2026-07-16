@@ -662,7 +662,6 @@ layout: default
       if (!P.voice) return;
       try {
         if (!window.speechSynthesis) return;
-        speechSynthesis.cancel();
         const u = new SpeechSynthesisUtterance(String(text).replace(/[🎉⭐🌟💪🎯✨🚀…]/g, ''));
         u.rate = 0.85;
         if (chosenVoice) {
@@ -672,7 +671,19 @@ layout: default
         } else {
           u.pitch = 1.05;
         }
-        speechSynthesis.speak(u);
+        /* Chrome silently drops speak() when it lands in the same tick as
+           cancel() — this is what "read aloud just stops working after a
+           while" looks like (Chromium bug 679437). Only cancel when
+           something is actually queued, and give the cancel a beat to
+           flush before queuing the next utterance. */
+        if (speechSynthesis.speaking || speechSynthesis.pending) {
+          speechSynthesis.cancel();
+          setTimeout(function () {
+            try { speechSynthesis.speak(u); } catch (_) {}
+          }, 50);
+        } else {
+          speechSynthesis.speak(u);
+        }
       } catch (_) {}
     }
 
