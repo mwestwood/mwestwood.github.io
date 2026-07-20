@@ -293,8 +293,9 @@ Key implementation details:
 **games** (WH Question Quest, Super Skills Quest, Language Lab) grouped
 under a `Games` sub-category — `autism/games.md`, a plain unencrypted
 `has_children: true` index page (`parent: Autism`, no `layout:`/`encrypted:`,
-same minimal pattern as `teaching/mk/index.md`). The three game builders set
-`parent: Games` with their own `nav_order` (1/2/3) scoped under that
+same minimal pattern as `teaching/mk/index.md`). The game builders set
+`parent: Games` with their own `nav_order` (1/2/3, plus 4 for the WH
+Question Bank reference table) scoped under that
 sub-category; their permalinks stay flat at `/autism/<slug>/` (only the nav
 grouping changed, not the URLs, so no links needed updating). Just the Docs
 nests three levels deep here (Autism → Games → game) via plain `parent:`
@@ -577,6 +578,28 @@ autistic learner who loves numbers, so keep its design rules when editing:
   QUESTIONS) before `wh_data.py` extends its bank with the result — editing
   `wh_gen.py`'s tables/templates never needs touching `wh_data.py` itself,
   just a rebuild.
+- **Verb conjugation in fact tables**: the PROFESSIONS `action` field is
+  third-person ("puts out fires") because "Who {action}?" needs it — but
+  any template that puts it after "does" must run it through
+  `base_form()` first ("Why does the firefighter **put** out fires?").
+  This shipped broken once ("does the firefighter puts out fires", ~225
+  questions) and was caught in headless testing; `base_form()`
+  de-conjugates the leading verb plus an "and"-coordinated second verb
+  ("checks and cleans teeth" → "check and clean teeth") while leaving
+  noun phrases alone ("bakes bread and treats" → "bake bread and
+  treats"). Any new template with "does/do/did + {field}" needs the same
+  treatment.
+- **WH Question Bank page** (`autism/wh-questions.md`, parent Games,
+  nav_order 4, permalink `/autism/wh-questions/`) — a companion reference
+  page: filterable/searchable table of every question in the bank
+  (category tabs with counts, level 1–4 chips, text search, 200-row
+  pagination), so a grown-up can review exactly what the game can ask.
+  Engine is public code in `_layouts/protected-wh-bank.html`; data rows
+  `[wh, lvl, scene, q, answer]` are encrypted by
+  `python3 _tools/build-wh-bank.py "passphrase"`. **Rebuild it together
+  with build-wh-quest.py whenever `wh_data.py`/`wh_gen.py` change** — the
+  two pages read the same bank and must stay in sync. Story-mode and
+  states/capitals questions are deliberately excluded.
 - **WHEN** (July 2026) — was missing entirely; added as a full 6th world.
   `wh_gen.py`'s tables supply lvl 1–3 "when" questions the same way as
   every other category (reusing each table's existing time-of-day/season/

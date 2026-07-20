@@ -1,0 +1,444 @@
+---
+layout: default
+---
+
+<style>
+  /* ── Password gate (same look as protected.html) ─────────────────────── */
+  #protected-gate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 40vh;
+    padding: 2rem 1rem;
+  }
+  .gate-card {
+    background: var(--sidebar-color, #f5f6fa);
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 8px;
+    padding: 2.5rem 2rem;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .gate-lock { font-size: 2.5rem; margin-bottom: 0.75rem; line-height: 1; }
+  .gate-title {
+    font-size: 1.25rem; font-weight: 600;
+    color: var(--body-text-color, #27262b); margin: 0 0 0.5rem 0;
+  }
+  .gate-subtitle {
+    font-size: 0.875rem; color: var(--body-text-color, #5c5962);
+    opacity: 0.75; margin: 0 0 1.5rem 0;
+  }
+  .gate-input-row { display: flex; gap: 0.5rem; width: 100%; }
+  #gate-password {
+    flex: 1; padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color, #d0d0d0); border-radius: 4px;
+    font-size: 1rem; background: var(--body-background-color, #fff);
+    color: var(--body-text-color, #27262b); outline: none;
+    transition: border-color 0.15s;
+  }
+  #gate-password:focus { border-color: var(--links-color, #7253ed); }
+  #gate-submit {
+    padding: 0.5rem 1.1rem; background: var(--links-color, #7253ed);
+    color: #fff; border: none; border-radius: 4px; font-size: 0.95rem;
+    font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+  #gate-submit:hover { opacity: 0.88; }
+  #gate-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+  #gate-error {
+    margin-top: 0.85rem; font-size: 0.875rem; color: #c0392b;
+    min-height: 1.25rem; display: none;
+  }
+  #gate-status {
+    margin-top: 0.85rem; font-size: 0.875rem;
+    color: var(--body-text-color, #5c5962); opacity: 0.7;
+    min-height: 1.25rem; display: none;
+  }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+
+  /* ── WH Question Bank browser ────────────────────────────────────────── */
+  #bank-root { display: none; }
+
+  .whb { --card: rgba(255,255,255,0.05); --line: rgba(255,255,255,0.14);
+         max-width: 900px; }
+  .whb, .whb * { box-sizing: border-box; }
+  .whb button { font-family: inherit; }
+
+  .whb-hero { text-align: center; margin: 0.4rem 0 1.2rem; }
+  .whb-hero h1 { margin: 0 0 0.3rem; font-size: 1.7rem; }
+  .whb-hero p { margin: 0; opacity: 0.7; font-size: 0.95rem; }
+
+  .whb-tabs {
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.45rem;
+    margin-bottom: 0.9rem;
+  }
+  @media (max-width: 700px) { .whb-tabs { grid-template-columns: repeat(3, 1fr); } }
+  .whb-tab {
+    --wc: #999;
+    background: var(--card); border: 1px solid var(--line);
+    border-left: 4px solid var(--wc); border-radius: 10px;
+    color: inherit; padding: 0.5rem 0.55rem; cursor: pointer;
+    text-align: left; font-size: 0.85rem; line-height: 1.35;
+  }
+  .whb-tab .em { font-size: 1rem; margin-right: 0.25rem; }
+  .whb-tab .nm {
+    font-weight: 700; font-size: 0.78rem; letter-spacing: 0.04em;
+    color: var(--wc);
+  }
+  .whb-tab .n { display: block; font-size: 1.2rem; font-weight: 700; }
+  .whb-tab.on {
+    background: color-mix(in srgb, var(--wc) 16%, transparent);
+    border-color: var(--wc);
+  }
+
+  .whb-bar {
+    display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+    padding: 0.5rem 0; border-bottom: 1px solid var(--line);
+    margin-bottom: 0.3rem;
+  }
+  .whb-chip {
+    background: var(--card); border: 1px solid var(--line);
+    color: inherit; border-radius: 999px; padding: 0.28rem 0.7rem;
+    font-size: 0.8rem; cursor: pointer; opacity: 0.8;
+  }
+  .whb-chip.on {
+    background: var(--wc, #7253ed); border-color: var(--wc, #7253ed);
+    color: #14120f; font-weight: 700; opacity: 1;
+  }
+  .whb-search {
+    flex: 1 1 200px; min-width: 160px;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 8px; padding: 0.4rem 0.7rem; color: inherit;
+    font-size: 0.88rem; outline: none;
+  }
+  .whb-search:focus { border-color: var(--wc, #7253ed); }
+  .whb-shown { font-size: 0.78rem; opacity: 0.6; white-space: nowrap; }
+
+  .whb-tablewrap { overflow-x: auto; margin-top: 0.6rem; }
+  .whb table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  .whb thead th {
+    text-align: left; font-size: 0.68rem; letter-spacing: 0.05em;
+    text-transform: uppercase; opacity: 0.55; font-weight: 600;
+    padding: 0.35rem 0.55rem; border-bottom: 1px solid var(--line);
+  }
+  .whb tbody td {
+    padding: 0.45rem 0.55rem; border-bottom: 1px solid var(--line);
+    vertical-align: top; line-height: 1.45;
+  }
+  .whb tbody tr:hover td { background: rgba(255,255,255,0.04); }
+  .whb td.lv { white-space: nowrap; }
+  .whb .lvdot {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 1.4rem; height: 1.4rem; border-radius: 6px;
+    font-size: 0.72rem; font-weight: 700;
+    background: color-mix(in srgb, var(--wc, #7253ed) 24%, transparent);
+    color: var(--wc, #7253ed);
+  }
+  .whb td.sc { font-size: 1.1rem; width: 2.2rem; text-align: center; }
+  .whb td.qq { min-width: 20ch; }
+  .whb td.aa { opacity: 0.85; min-width: 14ch; font-weight: 600; }
+
+  .whb-empty { padding: 2.2rem 1rem; text-align: center; opacity: 0.55;
+               font-size: 0.9rem; }
+  .whb-more {
+    display: block; margin: 1rem auto 0; padding: 0.5rem 1.1rem;
+    background: var(--card); border: 1px solid var(--line); color: inherit;
+    border-radius: 8px; font-size: 0.85rem; cursor: pointer;
+  }
+  .whb-more:hover { border-color: var(--wc, #7253ed); }
+
+  .whb-note { margin-top: 2rem; padding-top: 0.9rem;
+              border-top: 1px solid var(--line);
+              opacity: 0.55; font-size: 0.78rem; line-height: 1.6; }
+</style>
+
+<!-- Password gate -->
+<div id="protected-gate">
+  <div class="gate-card">
+    <div class="gate-lock" aria-hidden="true">🔒</div>
+    <p class="gate-title">{{ page.title | default: "Protected Page" }}</p>
+    <p class="gate-subtitle">This page is password-protected. Enter the passphrase to unlock.</p>
+    <div class="gate-input-row">
+      <label for="gate-password" class="sr-only">Passphrase</label>
+      <input id="gate-password" type="password" placeholder="Passphrase" autocomplete="off" autofocus />
+      <button id="gate-submit">Unlock</button>
+    </div>
+    <div id="gate-error" role="alert" aria-live="polite">Incorrect passphrase — please try again.</div>
+    <div id="gate-status" role="status" aria-live="polite">Decrypting…</div>
+  </div>
+</div>
+
+<div id="bank-root"><div class="whb" id="whb"></div></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* Encrypted blob injected by Jekyll from front matter field `encrypted` */
+  const ENCRYPTED_B64 = {{ page.encrypted | jsonify }};
+
+  const STORAGE_KEY = 'mwestwood-passphrase';
+
+  /* ── Gate (same crypto as protected.html) ───────────────────────────── */
+
+  function b64ToBytes(b64) {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+
+  async function deriveKey(passphrase, salt) {
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw', enc.encode(passphrase), { name: 'PBKDF2' }, false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: salt, iterations: 100000, hash: 'SHA-256' },
+      keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+  }
+
+  async function decrypt(passphrase) {
+    const blob = b64ToBytes(ENCRYPTED_B64);
+    const salt = blob.slice(0, 16);
+    const iv = blob.slice(16, 28);
+    const ct = blob.slice(28);
+    const key = await deriveKey(passphrase, salt);
+    const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, ct);
+    return new TextDecoder().decode(plaintext);
+  }
+
+  const gate = document.getElementById('protected-gate');
+  const rootWrap = document.getElementById('bank-root');
+  const input = document.getElementById('gate-password');
+  const btn = document.getElementById('gate-submit');
+  const errEl = document.getElementById('gate-error');
+  const statusEl = document.getElementById('gate-status');
+
+  function showError(msg) {
+    errEl.textContent = msg || 'Incorrect passphrase — please try again.';
+    errEl.style.display = 'block';
+    statusEl.style.display = 'none';
+    btn.disabled = false;
+    input.select();
+  }
+
+  function showStatus(msg) {
+    statusEl.textContent = msg;
+    statusEl.style.display = 'block';
+    errEl.style.display = 'none';
+  }
+
+  function reveal(text) {
+    let data;
+    try { data = JSON.parse(text); }
+    catch (e) { showError('Data error: could not parse question bank.'); return; }
+    gate.style.display = 'none';
+    rootWrap.style.display = 'block';
+    Bank.boot(data);
+  }
+
+  async function tryUnlock(passphrase, cache) {
+    try {
+      showStatus('Decrypting…');
+      btn.disabled = true;
+      const text = await decrypt(passphrase);
+      if (cache) {
+        try { localStorage.setItem(STORAGE_KEY, passphrase); } catch (_) {}
+      }
+      reveal(text);
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'OperationError') {
+        showError('Incorrect passphrase — please try again.');
+      } else if (e instanceof TypeError && e.message.includes('subtle')) {
+        showError('Error: Web Crypto API unavailable. This page requires HTTPS.');
+      } else {
+        showError('Error (' + e.name + '): ' + e.message);
+      }
+    }
+  }
+
+  async function init() {
+    if (!ENCRYPTED_B64) { showError('No encrypted data on this page.'); return; }
+    try {
+      const cached = localStorage.getItem(STORAGE_KEY);
+      if (cached) {
+        showStatus('Unlocking…');
+        btn.disabled = true;
+        input.disabled = true;
+        try {
+          const text = await decrypt(cached);
+          reveal(text);
+          return;
+        } catch (_) {
+          localStorage.removeItem(STORAGE_KEY);
+          btn.disabled = false;
+          input.disabled = false;
+          statusEl.style.display = 'none';
+        }
+      }
+    } catch (_) {}
+  }
+
+  btn.addEventListener('click', function () {
+    const pw = input.value;
+    if (!pw) { input.focus(); return; }
+    tryUnlock(pw, true);
+  });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') btn.click();
+  });
+
+  /* ═══════════════════════ Question Bank browser ═══════════════════════
+     A reference table of every question WH Question Quest can ask.
+     Same WH colors/icons as the game so the categories match visually.
+  ═══════════════════════════════════════════════════════════════════════ */
+
+  const Bank = (function () {
+
+    const el = document.getElementById('whb');
+
+    const WH = {
+      who:   { name: 'WHO',   emoji: '🧑', color: '#60a5fa' },
+      what:  { name: 'WHAT',  emoji: '📦', color: '#4ade80' },
+      where: { name: 'WHERE', emoji: '📍', color: '#fb923c' },
+      why:   { name: 'WHY',   emoji: '💡', color: '#c084fc' },
+      how:   { name: 'HOW',   emoji: '🛠️', color: '#f472b6' },
+      when:  { name: 'WHEN',  emoji: '⏰', color: '#facc15' }
+    };
+    const WH_ORDER = ['who', 'what', 'where', 'why', 'how', 'when'];
+    const PAGE = 200;
+
+    let byCat = {};
+    let state = { cat: 'who', lvl: 'all', q: '', limit: PAGE };
+
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;',
+                 '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+
+    function build() {
+      const total = WH_ORDER.reduce(function (n, c) {
+        return n + byCat[c].length;
+      }, 0);
+
+      let tabs = '';
+      WH_ORDER.forEach(function (c) {
+        const m = WH[c];
+        tabs += '<button class="whb-tab" data-cat="' + c + '" style="--wc:' +
+          m.color + '"><span class="em">' + m.emoji + '</span>' +
+          '<span class="nm">' + m.name + '</span>' +
+          '<span class="n">' + byCat[c].length + '</span></button>';
+      });
+
+      let chips = '';
+      ['all', '1', '2', '3', '4'].forEach(function (l) {
+        chips += '<button class="whb-chip" data-lvl="' + l + '">' +
+          (l === 'all' ? 'All levels' : 'Level ' + l) + '</button>';
+      });
+
+      el.innerHTML =
+        '<div class="whb-hero"><h1>📚 WH Question Bank</h1>' +
+        '<p>Every question WH Question Quest can ask — ' + total +
+        ' in all. Levels 1–2 = Beginner, 3 = Intermediate, 4 = Advanced.</p></div>' +
+        '<div class="whb-tabs">' + tabs + '</div>' +
+        '<div class="whb-bar">' + chips +
+        '<input class="whb-search" id="whb-search" type="text"' +
+        ' placeholder="Search questions or answers…" autocomplete="off" />' +
+        '<span class="whb-shown" id="whb-shown"></span></div>' +
+        '<div class="whb-tablewrap"><table><thead><tr>' +
+        '<th style="width:2.4rem">Lvl</th><th style="width:2.2rem"></th>' +
+        '<th>Question</th><th>Answer</th></tr></thead>' +
+        '<tbody id="whb-tbody"></tbody></table>' +
+        '<div class="whb-empty" id="whb-empty" style="display:none">' +
+        'No questions match that search.</div></div>' +
+        '<button class="whb-more" id="whb-more" style="display:none">' +
+        'Show more</button>' +
+        '<div class="whb-note">Story-mode questions and the USA ' +
+        'states &amp; capitals games are separate and not listed here. ' +
+        'The Answer column shows the correct option only.</div>';
+
+      el.querySelectorAll('.whb-tab').forEach(function (b) {
+        b.addEventListener('click', function () {
+          state.cat = b.dataset.cat; state.limit = PAGE; render();
+        });
+      });
+      el.querySelectorAll('.whb-chip').forEach(function (b) {
+        b.addEventListener('click', function () {
+          state.lvl = b.dataset.lvl; state.limit = PAGE; render();
+        });
+      });
+      document.getElementById('whb-search').addEventListener('input', function (e) {
+        state.q = e.target.value.trim().toLowerCase();
+        state.limit = PAGE; render();
+      });
+      document.getElementById('whb-more').addEventListener('click', function () {
+        state.limit += 300; render();
+      });
+
+      render();
+    }
+
+    function render() {
+      const color = WH[state.cat].color;
+
+      el.querySelectorAll('.whb-tab').forEach(function (b) {
+        b.classList.toggle('on', b.dataset.cat === state.cat);
+      });
+      el.querySelectorAll('.whb-chip').forEach(function (b) {
+        b.classList.toggle('on', b.dataset.lvl === state.lvl);
+        b.style.setProperty('--wc', color);
+      });
+
+      let rows = byCat[state.cat];
+      if (state.lvl !== 'all') {
+        const want = Number(state.lvl);
+        rows = rows.filter(function (r) { return r[1] === want; });
+      }
+      if (state.q) {
+        rows = rows.filter(function (r) {
+          return r[3].toLowerCase().indexOf(state.q) !== -1 ||
+                 r[4].toLowerCase().indexOf(state.q) !== -1;
+        });
+      }
+
+      document.getElementById('whb-shown').textContent =
+        Math.min(state.limit, rows.length) + ' of ' + rows.length + ' shown';
+
+      const html = rows.slice(0, state.limit).map(function (r) {
+        return '<tr><td class="lv"><span class="lvdot" style="--wc:' + color +
+          '">' + r[1] + '</span></td>' +
+          '<td class="sc">' + (r[2] || '') + '</td>' +
+          '<td class="qq">' + esc(r[3]) + '</td>' +
+          '<td class="aa">' + esc(r[4]) + '</td></tr>';
+      }).join('');
+      document.getElementById('whb-tbody').innerHTML = html;
+
+      document.getElementById('whb-empty').style.display =
+        rows.length ? 'none' : 'block';
+      document.getElementById('whb-more').style.display =
+        rows.length > state.limit ? 'block' : 'none';
+    }
+
+    function boot(data) {
+      byCat = {};
+      WH_ORDER.forEach(function (c) { byCat[c] = []; });
+      data.rows.forEach(function (r) {
+        if (byCat[r[0]]) byCat[r[0]].push(r);
+      });
+      build();
+    }
+
+    return { boot: boot };
+  })();
+
+  init();
+})();
+</script>
