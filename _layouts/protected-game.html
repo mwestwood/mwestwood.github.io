@@ -1755,27 +1755,23 @@ layout: default
       S.level = null; S.theme = null; S.sess = null;
       setAccent('#f59e0b');
       const done = MIS.filter(function (m) { return P.quests[m.id]; }).length;
-      let open = true;
+      /* every mission is open from the start — best stars still track per
+         mission, they just don't gate anything (matches the other games). */
       const rows = MIS.map(function (m, i) {
         const stars = P.quests[m.id] || 0;
-        const locked = !open;
-        if (!stars) open = false;
-        return '<button class="va-level' + (locked ? ' lk' : '') +
-          '" data-q="' + (locked ? '' : m.id) + '" style="--lc:' + m.color + '"' +
-          (locked ? ' disabled' : '') + '>' +
-          '<span class="em">' + (locked ? '🔒' : m.emoji) + '</span>' +
+        return '<button class="va-level" data-q="' + m.id +
+          '" style="--lc:' + m.color + '">' +
+          '<span class="em">' + m.emoji + '</span>' +
           '<span class="body">' +
             '<div class="name">Mission ' + (i + 1) + ': ' + esc(m.title) + '</div>' +
-            '<div class="tag">' + (locked
-              ? 'Complete the mission above to unlock'
-              : esc(m.teaser)) + '</div>' +
+            '<div class="tag">' + esc(m.teaser) + '</div>' +
             '<div class="meta">' + LMETA[m.level].emoji + ' ' + LMETA[m.level].name +
               ' · ' + m.words.length + ' words to master</div>' +
           '</span>' +
           '<span class="side"><div class="stars">' +
             (stars ? '★'.repeat(stars) + '<span style="opacity:.25">' +
                      '★'.repeat(3 - stars) + '</span>'
-                   : (locked ? '' : '▶ play')) +
+                   : '▶ play') +
           '</div></span>' +
         '</button>';
       }).join('');

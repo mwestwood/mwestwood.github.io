@@ -363,7 +363,9 @@ expeditions, which curate existing basic/intermediate/advanced words). Rules
 the engine enforces (`prep()`): every staged word must resolve in its source,
 and the **last stage must have `"words": []`** — the final gauntlet where every
 word needs `QNEED = 2` total correct answers. Wrong answers requeue the word
-(no failure state). Missions unlock sequentially; best stars persist in
+(no failure state). Every mission is open from the start (July 2026 — was
+sequential-unlock, changed to match the arrow-key games' "every level
+unlocked" rule below); best stars still persist per mission in
 `P.quests[missionId]` (accuracy: ≥85% = 3★, ≥60% = 2★). Completion banks
 score + 25 XP into the mission's level. Quest answers feed `recordAnswer`,
 so mission words enter the Leitner review pipeline like any other word.
@@ -557,18 +559,46 @@ Generates `autism/wh-quest.md` (`layout: protected-wh`, parent Games,
 nav_order 1) from `_tools/wh_data.py` — WH-comprehension questions, number
 stories, and the
 50 US states/capitals are packed as JSON and encrypted into front matter.
-Built to teach WH-questions (who/what/where/why/how) to a young autistic
-learner who loves numbers, so keep its design rules when editing:
+Built to teach WH-questions (who/what/where/why/how/**when**) to a young
+autistic learner who loves numbers, so keep its design rules when editing:
 
+- **Question bank scale** (July 2026 — "questions are just repeating"):
+  `wh_data.py` hand-writes a core bank, then extends it with `_tools/wh_gen.py`
+  — curated fact TABLES (professions, animals, objects, places, daily
+  routines, food, safety rules, holidays, weather/seasons; ~30 rows each)
+  run through per-field string templates to auto-produce lvl 1–3 questions
+  (cross-category foils / same-category foils / richer same-category-foil
+  phrasing) across every WH category. This is what took the bank from a few
+  hundred items — small enough that a tier's random 8-question draw
+  repeated fast — to ~2,800. Level 4 (true inference/detective questions)
+  is **not** auto-generated; that style needs real authorship, so it stays
+  hand-written in `wh_data.py`. `generate_all()` dedupes by exact question
+  text (both within itself and against `wh_data.py`'s hand-written
+  QUESTIONS) before `wh_data.py` extends its bank with the result — editing
+  `wh_gen.py`'s tables/templates never needs touching `wh_data.py` itself,
+  just a rebuild.
+- **WHEN** (July 2026) — was missing entirely; added as a full 6th world.
+  `wh_gen.py`'s tables supply lvl 1–3 "when" questions the same way as
+  every other category (reusing each table's existing time-of-day/season/
+  schedule field); lvl 4 "when" is hand-written in `wh_data.py` (~15
+  inference questions, e.g. "When is it, if the sky is dark, the
+  streetlights just turned on, and you smell dinner cooking?" — note the
+  WH word still leads the sentence, clue-scenario folded in after; every
+  `q` in the bank must start with its capitalized WH word). The engine
+  needs no per-category logic — `WH_ORDER` in `_layouts/protected-wh.html`
+  drives the home-screen world grid, Detective, and everywhere else
+  generically, so adding "when" was just one more entry in the `WH` map
+  (⏰, amber `#facc15`) plus `WH_ORDER`.
 - **Question worlds** — every WH word has a fixed color + icon
   (speech-therapy convention). Each world opens a 3-tier level picker:
   Beginner (lvl 1–2), Intermediate (lvl 3), Advanced (lvl 4), with
-  separate stars per tier (star ids: `who`, `whoi`, `whoa`). Levels in
-  `wh_data.py`: lvl 1 cross-category foils (teaches "who = person"),
-  lvl 2 same-category foils, lvl 3 richer everyday language across many
-  settings (school, store, doctor, airport…), lvl 4 has 4 answer choices
-  and teaches inference from clues, feelings/perspective, sequences,
-  safety and social reasoning, and "how do you know…" questions.
+  separate stars per tier (star ids: `who`, `whoi`, `whoa`, …, `when`,
+  `wheni`, `whena`). Levels in `wh_data.py`: lvl 1 cross-category foils
+  (teaches "who = person"), lvl 2 same-category foils, lvl 3 richer
+  everyday language across many settings (school, store, doctor,
+  airport…), lvl 4 has 4 answer choices and teaches inference from clues,
+  feelings/perspective, sequences, safety and social reasoning, and "how
+  do you know…" questions.
 - **Scene photos** — lvl 3–4 questions may set `img: "<key>"` referencing
   `SCENE_IMAGES` in `wh_data.py` (CC0/public-domain photos in
   `assets/images/wh/`, ≤640px wide). The build resolves keys to paths and
@@ -586,6 +616,22 @@ learner who loves numbers, so keep its design rules when editing:
   questions auto-read via speechSynthesis (toggleable), quiet sine-tone
   sounds (toggleable), no failure state — a second miss reveals the answer
   with the teaching line and still awards a point.
+- **Speech timing gotcha** — there are two *opposite* browser bugs here, so
+  don't "fix" one by reintroducing the other. (1) iOS/iPadOS Safari
+  (including CriOS/FxiOS — Apple forces them onto the same WebKit engine)
+  only allows `speechSynthesis.speak()` to run *synchronously* inside the
+  click/tap handler that triggered it; anything deferred through
+  `setTimeout` loses user-gesture credit and is silently dropped (a July
+  2026 commit reverted an earlier unconditional `setTimeout` "fix" for
+  exactly this reason). (2) Desktop/Android Chrome has Chromium bug
+  #679437 instead: calling `speak()` in the same tick as `cancel()` while
+  an utterance is still actively talking can silently drop or noticeably
+  delay the new one — this is what "the voice is late after answering"
+  looks like when the question read-aloud hadn't finished yet. The fix is
+  to defer *only* on non-iOS (`IS_IOS` / `CAN_DEFER_SPEECH` in `speak()`),
+  and only when something was actually still speaking
+  (`speechSynthesis.speaking` checked before `cancel()`) — iOS never takes
+  that branch, so its gesture-credit requirement stays intact.
 - **Reading voice** (July 2026 — "the voice sounds too robotic"; made
   cross-game consistent later that month): the browser's DEFAULT speech
   voice is usually its worst one, so the engine ranks every English voice
