@@ -501,9 +501,12 @@ layout: default
                teach: 'WHY asks for a REASON. The answer starts with BECAUSE.' },
       how:   { name: 'HOW',   emoji: '🛠️', color: '#f472b6',
                tag: 'asks the way — or how many',
-               teach: 'HOW asks about the WAY we do something — or HOW MANY.' }
+               teach: 'HOW asks about the WAY we do something — or HOW MANY.' },
+      when:  { name: 'WHEN',  emoji: '⏰', color: '#facc15',
+               tag: 'asks about a time',
+               teach: 'WHEN asks about a TIME.' }
     };
-    const WH_ORDER = ['who', 'what', 'where', 'why', 'how'];
+    const WH_ORDER = ['who', 'what', 'where', 'why', 'how', 'when'];
 
     const FRIENDS = [
       { n: 0,  e: '0️⃣🦸', name: 'Zero the Hero',   fact: 'Zero means nothing at all — but he saves every big number!' },
@@ -658,14 +661,26 @@ layout: default
         ? voiceName : '';
     }
 
+    /* iOS/iPadOS Safari (including CriOS/FxiOS — Apple forces them onto
+       the same WebKit speech engine) only allows speechSynthesis.speak()
+       to run synchronously inside the click/tap handler that triggered
+       it; anything deferred through setTimeout loses user-gesture credit
+       and is silently dropped. Desktop/Android Chrome has the opposite
+       bug instead (Chromium #679437): calling speak() in the same tick as
+       cancel() while an utterance is still actively talking can silently
+       drop or noticeably delay the new one — this is what "the voice is
+       late after answering" looks like when the question read-aloud is
+       still finishing. Only Chrome-family browsers get the tiny deferral
+       that works around it; iOS never takes that branch. */
+    const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const CAN_DEFER_SPEECH = !IS_IOS;
+
     function speak(text) {
       if (!P.voice) return;
       try {
         if (!window.speechSynthesis) return;
-        /* speak() must run synchronously inside the click/tap handler —
-           iOS Safari silently drops speech requested from a setTimeout,
-           promise, or any other deferred callback (no user-gesture
-           credit), so don't defer this call for any reason. */
+        const wasSpeaking = speechSynthesis.speaking;
         speechSynthesis.cancel();
         const clean = String(text).replace(/[🎉⭐🌟💪🎯✨🚀…]/g, '');
         const u = new SpeechSynthesisUtterance(clean);
@@ -690,7 +705,13 @@ layout: default
             } catch (_) {}
           };
         }
-        speechSynthesis.speak(u);
+        if (wasSpeaking && CAN_DEFER_SPEECH) {
+          setTimeout(function () {
+            try { speechSynthesis.speak(u); } catch (_) {}
+          }, 50);
+        } else {
+          speechSynthesis.speak(u);
+        }
       } catch (_) {}
     }
 

@@ -6,10 +6,18 @@ into the page front matter. The game engine lives in
 _layouts/protected-wh.html — editing games there never requires re-encryption;
 editing THIS file does (re-run build-wh-quest.py).
 
+This file hand-writes a core bank, then extends it with several thousand
+more from _tools/wh_gen.py — curated fact tables (professions, animals,
+objects, places, routines, food, safety, holidays, weather) run through
+templates to produce lvl 1-3 questions across every WH category, including
+"when" (added July 2026 — see the WHEN block near the end of this file for
+its hand-written lvl4 set). Rebuild with build-wh-quest.py after editing
+either file.
+
 Schema
 ------
 QUESTIONS: list of dicts
-    wh    : "who" | "what" | "where" | "why" | "how"
+    wh    : "who" | "what" | "where" | "why" | "how" | "when"
     lvl   : 1 (cross-category foils — wrong answers are a different WH
               category, which teaches the mapping "who = person" etc.)
             2 (same-category foils — real comprehension required)
@@ -2561,3 +2569,132 @@ QUESTIONS.extend([
               ("😂", "laugh about it", 0)],
      "teach": "Accidents happen — saying sorry and helping makes it right."},
 ])
+
+
+# ═══════════════════ WHEN (July 2026): new question world ══════════════════
+# WHEN was missing entirely — lvl 1-3 "when" questions are generated in bulk
+# by wh_gen.py (see the QUESTIONS.extend(...) at the very bottom of this
+# file), matching every other category's field/level shape from the same
+# fact tables. Level 4 "when" needs real inference/detective authorship
+# (clue-reading, sequencing, safety/social judgment) the same way the other
+# categories' lvl4 items do, so those are hand-written here instead.
+
+QUESTIONS.extend([
+    {"wh": "when", "lvl": 4, "scene": "🌙😴",
+     "q": "When do you know it's time to go to bed?",
+     "opts": [("😴", "when you feel very sleepy and it's dark outside", 1),
+              ("☀️", "when the sun is high in the sky", 0),
+              ("🍔", "when you just finished lunch", 0),
+              ("🏫", "when the school bell rings for class", 0)],
+     "teach": "Feeling sleepy and a dark sky are both bedtime clues."},
+    {"wh": "when", "lvl": 4, "scene": "🧼🤲",
+     "q": "When should you wash your hands, even if they look clean?",
+     "opts": [("🍽️", "before you eat and after using the bathroom", 1),
+              ("📅", "only on Sundays", 0),
+              ("🎉", "once a year", 0),
+              ("😐", "whenever you feel bored", 0)],
+     "teach": "Germs are invisible — clean-looking hands can still have them."},
+    {"wh": "when", "lvl": 4, "scene": "🌆🍽️",
+     "q": "When is it, if the sky is dark, the streetlights just turned on, and you smell dinner cooking?",
+     "opts": [("🌆", "in the evening", 1),
+              ("🌅", "early in the morning", 0),
+              ("☀️", "the middle of the afternoon", 0),
+              ("🌌", "the middle of the night", 0)],
+     "teach": "Dark sky + streetlights + dinner smells = evening clues."},
+    {"wh": "when", "lvl": 4, "scene": "🙋🤔",
+     "q": "When is the best time to ask a grown-up for help with something hard?",
+     "opts": [("🙋", "as soon as you get stuck, before you get too frustrated", 1),
+              ("🚶", "after you've already given up and walked away", 0),
+              ("🌙", "only right before bedtime", 0),
+              ("🚫", "never — you should always figure it out alone", 0)],
+     "teach": "Asking early keeps a hard task from turning into a meltdown."},
+    {"wh": "when", "lvl": 4, "scene": "🍂🍁",
+     "q": "When is it happening, if you see leaves turning orange and falling off the trees?",
+     "opts": [("🍂", "in the fall", 1),
+              ("☀️", "in the middle of summer", 0),
+              ("❄️", "on a snowy winter day", 0),
+              ("🌷", "the first week of spring", 0)],
+     "teach": "Leaves change color and fall in autumn."},
+    {"wh": "when", "lvl": 4, "scene": "🏮🌇",
+     "q": "When do the streetlights usually turn on?",
+     "opts": [("🌇", "as it starts to get dark in the evening", 1),
+              ("🌅", "right when you wake up", 0),
+              ("🥪", "at lunchtime", 0),
+              ("🎉", "only on holidays", 0)],
+     "teach": "Streetlights turn on automatically as it gets dark."},
+    {"wh": "when", "lvl": 4, "scene": "🚨🚶",
+     "q": "When should you walk outside, if you just heard the fire alarm at school?",
+     "opts": [("🏃", "right away, calmly and quickly", 1),
+              ("📝", "after you finish your worksheet", 0),
+              ("😐", "whenever you feel like it", 0),
+              ("👬", "only if your friends go first", 0)],
+     "teach": "A fire alarm means leave right away — every time, no waiting."},
+    {"wh": "when", "lvl": 4, "scene": "🙊🚶",
+     "q": "When is it polite to say \"excuse me\"?",
+     "opts": [("🚶", "when you need to interrupt or walk past someone", 1),
+              ("😡", "only when you're angry", 0),
+              ("🌙", "right before you go to sleep", 0),
+              ("🚫", "never — it's not important", 0)],
+     "teach": "\"Excuse me\" politely gets attention or clears a path."},
+    {"wh": "when", "lvl": 4, "scene": "🎂🕯️",
+     "q": "When does this happen, if a cake with candles comes out and everyone starts singing a song?",
+     "opts": [("🎂", "on someone's birthday", 1),
+              ("🌧️", "on a rainy Tuesday", 0),
+              ("🚨", "during a fire drill", 0),
+              ("🔔", "right when school starts", 0)],
+     "teach": "Candles, cake, and singing together are birthday clues."},
+    {"wh": "when", "lvl": 4, "scene": "🙋😟",
+     "q": "When should you tell a grown-up something is wrong?",
+     "opts": [("🙋", "as soon as you notice it, not after waiting a long time", 1),
+              ("🤫", "only if no one is around", 0),
+              ("📅", "a week later", 0),
+              ("🚫", "never, you should handle it alone", 0)],
+     "teach": "Telling a grown-up right away means help can come sooner."},
+    {"wh": "when", "lvl": 4, "scene": "🌅🍳",
+     "q": "When is it, if you wake up, the sky is bright, and it's time for breakfast?",
+     "opts": [("🌅", "in the morning", 1),
+              ("🌌", "at midnight", 0),
+              ("🌙", "late at night", 0),
+              ("🍽️", "right before dinner", 0)],
+     "teach": "Waking up, a bright sky, and breakfast are all morning clues."},
+    {"wh": "when", "lvl": 4, "scene": "🎄🎁",
+     "q": "When do most people put up a Christmas tree?",
+     "opts": [("🎄", "in December, before the holiday", 1),
+              ("☀️", "in the middle of summer", 0),
+              ("🎃", "on Halloween", 0),
+              ("🎊", "right after New Year's Day", 0)],
+     "teach": "Christmas trees usually go up in December."},
+    {"wh": "when", "lvl": 4, "scene": "💬👂",
+     "q": "When is it your turn to talk in a conversation?",
+     "opts": [("👂", "after the other person finishes talking", 1),
+              ("🗣️", "whenever you want, even mid-sentence", 0),
+              ("📢", "only if you shout the loudest", 0),
+              ("🤐", "never — you should stay quiet", 0)],
+     "teach": "Taking turns talking is how a conversation stays fair."},
+    {"wh": "when", "lvl": 4, "scene": "🎒🚪",
+     "q": "When is this happening, if you see everyone putting away their pencils and lining up by the door?",
+     "opts": [("🔔", "when class is about to end", 1),
+              ("📝", "in the middle of a math test", 0),
+              ("🌅", "right when school starts", 0),
+              ("🛝", "during recess", 0)],
+     "teach": "Packing up and lining up are clues class is ending."},
+    {"wh": "when", "lvl": 4, "scene": "🎒👟",
+     "q": "When should you double-check that you have your backpack and shoes?",
+     "opts": [("🚪", "before you leave the house", 1),
+              ("😳", "after you get to school and realize it's missing", 0),
+              ("🌌", "in the middle of the night", 0),
+              ("🛋️", "only on weekends", 0)],
+     "teach": "A quick check before you leave saves a scramble later."},
+])
+
+
+# Bulk-generated WHO/WHAT/WHERE/WHY/HOW/WHEN questions (levels 1-3) from
+# curated fact tables — see wh_gen.py. This is what takes the bank from a
+# few hundred items (small enough that a tier's random draw repeats fast)
+# to several thousand, and supplies most of the new WHEN category.
+from wh_gen import generate_all as _generate_bulk_questions  # noqa: E402
+
+_existing_q_text = {q["q"] for q in QUESTIONS}
+QUESTIONS.extend(
+    q for q in _generate_bulk_questions() if q["q"] not in _existing_q_text
+)
