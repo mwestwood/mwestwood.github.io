@@ -44,6 +44,39 @@ def q2(q1, idx):
     return q1[:-1] + LVL2_TAILS[idx % len(LVL2_TAILS)]
 
 
+_BASE_IRREGULAR = {"has": "have", "is": "be", "does": "do", "goes": "go"}
+
+
+def _base_verb(v):
+    """3rd-person-singular verb → base form (puts→put, fixes→fix,
+    flies→fly, watches→watch, has→have)."""
+    if v in _BASE_IRREGULAR:
+        return _BASE_IRREGULAR[v]
+    if v.endswith("ies") and len(v) > 4:
+        return v[:-3] + "y"
+    for suf in ("ches", "shes", "sses", "xes", "zes", "oes"):
+        if v.endswith(suf):
+            return v[:-2]
+    if v.endswith("s") and not v.endswith("ss"):
+        return v[:-1]
+    return v
+
+
+def base_form(action):
+    """De-conjugate an action phrase for use after "does": "puts out
+    fires"→"put out fires", "checks and cleans teeth"→"check and clean
+    teeth". Only the leading verb — plus its "and"-coordinated partner
+    verb — changes; a plain noun after "and" ("bakes bread and treats")
+    is untouched because its preceding word isn't "and" at position 1."""
+    words = action.split()
+    if not words:
+        return action
+    words[0] = _base_verb(words[0])
+    if len(words) >= 3 and words[1] == "and":
+        words[2] = _base_verb(words[2])
+    return " ".join(words)
+
+
 # ── cross-category distractor pools (level 1) ───────────────────────────
 # Deliberately silly / obviously-wrong-type answers, matching the existing
 # hand-written lvl1 style (e.g. "a car" as a wrong answer to "who puts out
@@ -262,18 +295,19 @@ def generate_professions():
             "where", places, place, emoji,
             f"Where does {title} work?",
             f"Where does {title} go {reason}?", i)
+        act = base_form(action)
         out += three_levels(
             "why", reasons, reason, emoji,
-            f"Why does {title} {action}?",
-            f"Why does {title} {action} {time}?", i)
+            f"Why does {title} {act}?",
+            f"Why does {title} {act} {time}?", i)
         out += three_levels(
             "how", hows, "with " + tool, emoji,
-            f"How does {title} {action}?",
-            f"How does {title} {action} {place}?", i)
+            f"How does {title} {act}?",
+            f"How does {title} {act} {place}?", i)
         out += three_levels(
             "when", times, time, emoji,
-            f"When does {title} {action}?",
-            f"When does {title} {action} {place}?", i)
+            f"When does {title} {act}?",
+            f"When does {title} {act} {place}?", i)
     return out
 
 
