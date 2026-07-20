@@ -1,0 +1,852 @@
+---
+layout: default
+---
+
+<style>
+  /* ── Password gate (same look as protected.html) ─────────────────────── */
+  #protected-gate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 40vh;
+    padding: 2rem 1rem;
+  }
+  .gate-card {
+    background: var(--sidebar-color, #f5f6fa);
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 8px;
+    padding: 2.5rem 2rem;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .gate-lock { font-size: 2.5rem; margin-bottom: 0.75rem; line-height: 1; }
+  .gate-title {
+    font-size: 1.25rem; font-weight: 600;
+    color: var(--body-text-color, #27262b); margin: 0 0 0.5rem 0;
+  }
+  .gate-subtitle {
+    font-size: 0.875rem; color: var(--body-text-color, #5c5962);
+    opacity: 0.75; margin: 0 0 1.5rem 0;
+  }
+  .gate-input-row { display: flex; gap: 0.5rem; width: 100%; }
+  #gate-password {
+    flex: 1; padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color, #d0d0d0); border-radius: 4px;
+    font-size: 1rem; background: var(--body-background-color, #fff);
+    color: var(--body-text-color, #27262b); outline: none;
+    transition: border-color 0.15s;
+  }
+  #gate-password:focus { border-color: var(--links-color, #7253ed); }
+  #gate-submit {
+    padding: 0.5rem 1.1rem; background: var(--links-color, #7253ed);
+    color: #fff; border: none; border-radius: 4px; font-size: 0.95rem;
+    font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+  #gate-submit:hover { opacity: 0.88; }
+  #gate-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+  #gate-error {
+    margin-top: 0.85rem; font-size: 0.875rem; color: #c0392b;
+    min-height: 1.25rem; display: none;
+  }
+  #gate-status {
+    margin-top: 0.85rem; font-size: 0.875rem;
+    color: var(--body-text-color, #5c5962); opacity: 0.7;
+    min-height: 1.25rem; display: none;
+  }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+
+  /* ── Reading Quest ───────────────────────────────────────────────────── */
+  #reading-root { display: none; }
+
+  .rq { --good: #4ade80; --bad: #f87171; --accent: #38bdf8;
+        --card: rgba(255,255,255,0.05); --line: rgba(255,255,255,0.14);
+        max-width: 760px; }
+  .rq, .rq * { box-sizing: border-box; }
+  .rq button {
+    font-family: inherit;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .rq-top {
+    display: flex; align-items: center; gap: 0.6rem;
+    margin-bottom: 1rem; flex-wrap: wrap;
+  }
+  .rq-back {
+    background: var(--card); border: 1px solid var(--line);
+    color: inherit; border-radius: 999px; padding: 0.45rem 1.1rem;
+    font-size: 1rem; cursor: pointer;
+  }
+  .rq-back:hover { border-color: var(--accent); }
+  .rq-spacer { flex: 1; }
+  .rq-pill {
+    font-size: 0.95rem; padding: 0.35rem 0.85rem; border-radius: 999px;
+    background: var(--card); border: 1px solid var(--line);
+    white-space: nowrap; color: inherit; cursor: default;
+  }
+  .rq-pill.pts { border-color: var(--accent); color: var(--accent);
+                 font-weight: 700; font-size: 1.05rem; }
+  button.rq-pill { cursor: pointer; }
+  button.rq-pill.off { opacity: 0.45; }
+
+  .rq-hero { text-align: center; margin: 0.4rem 0 1.4rem; }
+  .rq-hero h1 { margin: 0 0 0.3rem; font-size: 1.9rem; }
+  .rq-hero p { margin: 0; opacity: 0.7; font-size: 1rem; }
+
+  .rq-voicerow {
+    display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+    justify-content: center; margin: 0 0 1.2rem;
+  }
+  .rq-voicerow label { font-size: 0.9rem; opacity: 0.75; }
+  .rq-voicerow select {
+    background: var(--card); border: 1px solid var(--line); color: inherit;
+    border-radius: 8px; padding: 0.35rem 0.5rem; font-size: 0.9rem;
+    max-width: 260px;
+  }
+
+  .rq-sect {
+    font-size: 1.05rem; font-weight: 700; margin: 1.4rem 0 0.6rem;
+    opacity: 0.85; display: flex; align-items: baseline; gap: 0.6rem;
+  }
+  .rq-sect .done { font-size: 0.8rem; opacity: 0.6; font-weight: 400; }
+
+  .rq-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.55rem;
+  }
+  .rq-story {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 0.7rem 0.6rem; cursor: pointer;
+    color: inherit; text-align: center; line-height: 1.3;
+    display: flex; flex-direction: column; gap: 0.25rem; align-items: center;
+  }
+  .rq-story:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .rq-story .em { font-size: 1.7rem; }
+  .rq-story .nm { font-size: 0.88rem; font-weight: 600; }
+  .rq-story .st { font-size: 0.8rem; letter-spacing: 0.1em; color: #facc15; }
+
+  /* story screen */
+  .rq-storycard {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 14px; padding: 1rem 1.1rem; margin-bottom: 1rem;
+  }
+  .rq-storycard h2 {
+    margin: 0 0 0.5rem; font-size: 1.25rem;
+    display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+  }
+  .rq-storycard .text { font-size: 1.12rem; line-height: 1.75; }
+  .rq-readbtn {
+    margin-top: 0.7rem; background: none; border: 1px solid var(--line);
+    color: inherit; border-radius: 999px; padding: 0.35rem 0.9rem;
+    font-size: 0.9rem; cursor: pointer;
+  }
+  .rq-readbtn:hover { border-color: var(--accent); }
+
+  .rq-qnum { font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.3rem; }
+  .rq-q { font-size: 1.3rem; font-weight: 700; line-height: 1.45;
+          margin-bottom: 0.9rem; }
+  .rq-opts { display: flex; flex-direction: column; gap: 0.55rem; }
+  .rq-opt {
+    background: var(--card); border: 2px solid var(--line);
+    color: inherit; border-radius: 12px; padding: 0.75rem 1rem;
+    font-size: 1.1rem; cursor: pointer; text-align: left; line-height: 1.4;
+  }
+  .rq-opt:hover:not(:disabled) { border-color: var(--accent); }
+  .rq-opt:disabled { cursor: default; }
+  .rq-opt.dim { opacity: 0.35; }
+  .rq-opt.yes { border-color: var(--good);
+                background: rgba(74, 222, 128, 0.12); }
+  .rq-opt.no { border-color: var(--bad); animation: rqNudge 0.35s; }
+
+  .rq-feedback { margin-top: 0.9rem; font-size: 1.05rem; line-height: 1.55;
+                 min-height: 1.6rem; }
+  .rq-feedback .teach {
+    display: block; margin-top: 0.4rem; padding: 0.6rem 0.8rem;
+    background: var(--card); border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0; font-size: 1rem;
+  }
+  .rq-feedback .math { display: block; margin-top: 0.4rem;
+                       color: var(--accent); font-weight: 700; }
+
+  .rq-next {
+    display: block; margin: 1.1rem auto 0; padding: 0.8rem 2.6rem;
+    background: var(--accent); color: #0b1220; border: none;
+    border-radius: 999px; font-size: 1.15rem; font-weight: 700;
+    cursor: pointer;
+  }
+  .rq-next:hover { opacity: 0.9; }
+
+  /* recap */
+  .rq-recap { text-align: center; padding: 1.2rem 0; }
+  .rq-recap .big { font-size: 3rem; margin-bottom: 0.4rem; }
+  .rq-recap h2 { margin: 0 0 0.4rem; font-size: 1.5rem; }
+  .rq-recap .stars { font-size: 2rem; letter-spacing: 0.15em;
+                     color: #facc15; margin: 0.4rem 0; }
+  .rq-recap p { opacity: 0.8; margin: 0.3rem 0; }
+  .rq-recap .row { display: flex; gap: 0.6rem; justify-content: center;
+                   margin-top: 1.1rem; flex-wrap: wrap; }
+
+  @keyframes rqNudge {
+    25% { transform: translateX(-4px); } 75% { transform: translateX(4px); }
+  }
+
+  @media (max-width: 500px) {
+    .rq-storycard .text { font-size: 1.05rem; }
+    .rq-q { font-size: 1.15rem; }
+    .rq-opt { font-size: 1rem; }
+  }
+</style>
+
+<!-- Password gate -->
+<div id="protected-gate">
+  <div class="gate-card">
+    <div class="gate-lock" aria-hidden="true">🔒</div>
+    <p class="gate-title">{{ page.title | default: "Protected Page" }}</p>
+    <p class="gate-subtitle">This page is password-protected. Enter the passphrase to unlock.</p>
+    <div class="gate-input-row">
+      <label for="gate-password" class="sr-only">Passphrase</label>
+      <input id="gate-password" type="password" placeholder="Passphrase" autocomplete="off" autofocus />
+      <button id="gate-submit">Unlock</button>
+    </div>
+    <div id="gate-error" role="alert" aria-live="polite">Incorrect passphrase — please try again.</div>
+    <div id="gate-status" role="status" aria-live="polite">Decrypting…</div>
+  </div>
+</div>
+
+<div id="reading-root"><div class="rq" id="rq"></div></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* Encrypted blob injected by Jekyll from front matter field `encrypted` */
+  const ENCRYPTED_B64 = {{ page.encrypted | jsonify }};
+
+  const STORAGE_KEY = 'mwestwood-passphrase';
+
+  /* ── Gate (same crypto as protected.html) ───────────────────────────── */
+
+  function b64ToBytes(b64) {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+
+  async function deriveKey(passphrase, salt) {
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw', enc.encode(passphrase), { name: 'PBKDF2' }, false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: salt, iterations: 100000, hash: 'SHA-256' },
+      keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+  }
+
+  async function decrypt(passphrase) {
+    const blob = b64ToBytes(ENCRYPTED_B64);
+    const salt = blob.slice(0, 16);
+    const iv = blob.slice(16, 28);
+    const ct = blob.slice(28);
+    const key = await deriveKey(passphrase, salt);
+    const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, ct);
+    return new TextDecoder().decode(plaintext);
+  }
+
+  const gate = document.getElementById('protected-gate');
+  const rootWrap = document.getElementById('reading-root');
+  const input = document.getElementById('gate-password');
+  const btn = document.getElementById('gate-submit');
+  const errEl = document.getElementById('gate-error');
+  const statusEl = document.getElementById('gate-status');
+
+  function showError(msg) {
+    errEl.textContent = msg || 'Incorrect passphrase — please try again.';
+    errEl.style.display = 'block';
+    statusEl.style.display = 'none';
+    btn.disabled = false;
+    input.select();
+  }
+
+  function showStatus(msg) {
+    statusEl.textContent = msg;
+    statusEl.style.display = 'block';
+    errEl.style.display = 'none';
+  }
+
+  function reveal(text) {
+    let data;
+    try { data = JSON.parse(text); }
+    catch (e) { showError('Data error: could not parse story bank.'); return; }
+    gate.style.display = 'none';
+    rootWrap.style.display = 'block';
+    Reader.boot(data);
+  }
+
+  async function tryUnlock(passphrase, cache) {
+    try {
+      showStatus('Decrypting…');
+      btn.disabled = true;
+      const text = await decrypt(passphrase);
+      if (cache) {
+        try { localStorage.setItem(STORAGE_KEY, passphrase); } catch (_) {}
+      }
+      reveal(text);
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'OperationError') {
+        showError('Incorrect passphrase — please try again.');
+      } else if (e instanceof TypeError && e.message.includes('subtle')) {
+        showError('Error: Web Crypto API unavailable. This page requires HTTPS.');
+      } else {
+        showError('Error (' + e.name + '): ' + e.message);
+      }
+    }
+  }
+
+  async function init() {
+    if (!ENCRYPTED_B64) { showError('No encrypted data on this page.'); return; }
+    try {
+      const cached = localStorage.getItem(STORAGE_KEY);
+      if (cached) {
+        showStatus('Unlocking…');
+        btn.disabled = true;
+        input.disabled = true;
+        try {
+          const text = await decrypt(cached);
+          reveal(text);
+          return;
+        } catch (_) {
+          localStorage.removeItem(STORAGE_KEY);
+          btn.disabled = false;
+          input.disabled = false;
+          statusEl.style.display = 'none';
+        }
+      }
+    } catch (_) {}
+  }
+
+  btn.addEventListener('click', function () {
+    const pw = input.value;
+    if (!pw) { input.focus(); return; }
+    tryUnlock(pw, true);
+  });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') btn.click();
+  });
+
+  /* ═══════════════════════ Reading Quest ═══════════════════════════════
+     Design notes (autism-friendly, same rules as the other games):
+     - The story text stays VISIBLE beside every question — comprehension
+       practice, not memory testing.
+     - Same screen layout for every question; one big NEXT button;
+       nothing auto-advances. No timers anywhere.
+     - Questions are read aloud automatically (toggleable), and the story
+       has its own "read to me" button.
+     - Wrong answer #1: the option dims and he tries again. Wrong answer
+       #2: the correct answer lights up with the teach line, and he still
+       gets a point — no failure state.
+     - Quiet sine tones only (toggleable). Explicit point arithmetic.
+  ═══════════════════════════════════════════════════════════════════════ */
+
+  const Reader = (function () {
+
+    const el = document.getElementById('rq');
+    let DATA = null;
+
+    const TIERS = [
+      { n: 1, em: '🌱', name: 'Short & Sweet',
+        desc: 'Little stories, three questions each.' },
+      { n: 2, em: '🌿', name: 'A Bit Longer',
+        desc: 'More happens — why and how questions join in.' },
+      { n: 3, em: '🌳', name: 'Think Deeper',
+        desc: 'Detective reading: clues, feelings, and "how do you know?"' }
+    ];
+
+    /* ── progress store ──────────────────────────────────────────────── */
+    const PKEY = 'reading-quest-v1';
+    let P = {};
+    try { P = JSON.parse(localStorage.getItem(PKEY)) || {}; } catch (_) {}
+    if (!P || typeof P !== 'object') P = {};
+    P.pts = P.pts || 0;
+    P.stars = P.stars || {};             /* story id -> 0..3 best */
+    if (P.voice === undefined) P.voice = true;
+    if (P.sound === undefined) P.sound = true;
+    function save() {
+      try { localStorage.setItem(PKEY, JSON.stringify(P)); } catch (_) {}
+    }
+
+    /* reading voice is shared across every game on the site (one
+       localStorage key, not per-game) so the choice stays consistent
+       everywhere */
+    const VOICE_KEY = 'mwestwood-voice-name';
+    let voiceName = localStorage.getItem(VOICE_KEY) || '';
+    function saveVoice() {
+      try { localStorage.setItem(VOICE_KEY, voiceName); } catch (_) {}
+    }
+
+    /* ── speech + gentle sounds (kept in sync with the other games) ──── */
+
+    const JOKE_VOICES = ['Albert', 'Bad News', 'Bahh', 'Bells', 'Boing',
+      'Bubbles', 'Cellos', 'Good News', 'Jester', 'Organ', 'Superstar',
+      'Trinoids', 'Whisper', 'Wobble', 'Zarvox', 'Deranged', 'Hysterical'];
+    const NICE_NAMES = /^(Samantha|Ava|Allison|Susan|Zoe|Karen|Daniel|Moira|Tessa|Fiona|Serena|Kate)\b/;
+
+    let VOICES = [];
+    let chosenVoice = null;
+
+    function rankVoice(v) {
+      const n = v.name;
+      let r = 60;
+      if (n === 'Google US English') r = -100;
+      else if (/natural|neural/i.test(n)) r = 0;
+      else if (/enhanced|premium/i.test(n)) r = 10;
+      else if (NICE_NAMES.test(n)) r = 20;
+      else if (/^Google/i.test(n)) r = 30;
+      else if (v.localService) r = 40;
+      if (/^en[-_]US/i.test(v.lang)) r -= 5;
+      else if (/^en/i.test(v.lang)) r -= 2;
+      return r;
+    }
+
+    function loadVoices() {
+      try {
+        if (!window.speechSynthesis) return;
+        const all = speechSynthesis.getVoices().filter(function (v) {
+          if (!/^en/i.test(v.lang)) return false;
+          return JOKE_VOICES.indexOf(v.name.replace(/\s*\(.*\)$/, '')) === -1;
+        });
+        if (!all.length) return;
+        all.sort(function (a, b) {
+          return rankVoice(a) - rankVoice(b) || a.name.localeCompare(b.name);
+        });
+        VOICES = all;
+        chosenVoice = null;
+        if (voiceName) {
+          chosenVoice = all.find(function (v) { return v.name === voiceName; }) || null;
+        }
+        if (!chosenVoice) chosenVoice = all[0];
+        const sel = document.getElementById('rq-voicesel');
+        if (sel) fillVoiceSel(sel);
+      } catch (_) {}
+    }
+    loadVoices();
+    try { speechSynthesis.onvoiceschanged = loadVoices; } catch (_) {}
+    setTimeout(loadVoices, 300);
+
+    function fillVoiceSel(sel) {
+      sel.innerHTML = '';
+      const auto = document.createElement('option');
+      auto.value = '';
+      auto.textContent = '✨ Best available' +
+        (VOICES.length && !voiceName ? ' — ' + VOICES[0].name : '');
+      sel.appendChild(auto);
+      VOICES.forEach(function (v) {
+        const o = document.createElement('option');
+        o.value = v.name;
+        o.textContent = v.name + ' (' + v.lang + ')';
+        sel.appendChild(o);
+      });
+      sel.value = (voiceName && VOICES.some(function (v) { return v.name === voiceName; }))
+        ? voiceName : '';
+    }
+
+    /* iOS needs speak() synchronous inside the tap handler; Chrome needs
+       a tiny deferral when cancel() interrupts active speech (Chromium
+       bug 679437). Same logic as the other game engines — keep in sync. */
+    const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const CAN_DEFER_SPEECH = !IS_IOS;
+
+    function speak(text) {
+      if (!P.voice) return;
+      try {
+        if (!window.speechSynthesis) return;
+        const wasSpeaking = speechSynthesis.speaking;
+        speechSynthesis.cancel();
+        const clean = String(text).replace(/[🎉⭐🌟💪🎯✨🚀…]/g, '');
+        const u = new SpeechSynthesisUtterance(clean);
+        u.rate = 0.85;
+        if (chosenVoice) {
+          u.voice = chosenVoice;
+          u.lang = chosenVoice.lang;
+          u.pitch = 1;
+        } else {
+          u.pitch = 1.05;
+        }
+        if (chosenVoice) {
+          u.onerror = function () {
+            try {
+              const fb = new SpeechSynthesisUtterance(clean);
+              fb.rate = 0.85;
+              fb.pitch = 1.05;
+              speechSynthesis.speak(fb);
+            } catch (_) {}
+          };
+        }
+        if (wasSpeaking && CAN_DEFER_SPEECH) {
+          setTimeout(function () {
+            try { speechSynthesis.speak(u); } catch (_) {}
+          }, 50);
+        } else {
+          speechSynthesis.speak(u);
+        }
+      } catch (_) {}
+    }
+
+    let audioCtx = null;
+    function tone(freq, start, dur, vol) {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sine';
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0, audioCtx.currentTime + start);
+      g.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + start + 0.02);
+      g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + start + dur);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(audioCtx.currentTime + start);
+      o.stop(audioCtx.currentTime + start + dur + 0.05);
+    }
+    function sfx(kind) {
+      if (!P.sound) return;
+      try {
+        if (!audioCtx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) return;
+          audioCtx = new AC();
+        }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (kind === 'good') { tone(523, 0, 0.14, 0.07); tone(784, 0.12, 0.2, 0.07); }
+        else if (kind === 'soft') { tone(233, 0, 0.18, 0.045); }
+        else if (kind === 'star') { tone(659, 0, 0.12, 0.06); tone(784, 0.1, 0.12, 0.06); tone(1047, 0.2, 0.25, 0.06); }
+      } catch (_) {}
+    }
+
+    /* ── helpers ─────────────────────────────────────────────────────── */
+
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;',
+                 '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+    function shuffle(a) {
+      const arr = a.slice();
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+      }
+      return arr;
+    }
+    function stars3(n) {
+      return '★'.repeat(n) + '☆'.repeat(3 - n);
+    }
+
+    function topBar(backLabel, backFn) {
+      const bar = document.createElement('div');
+      bar.className = 'rq-top';
+      if (backFn) {
+        const back = document.createElement('button');
+        back.className = 'rq-back';
+        back.textContent = '← ' + (backLabel || 'Back');
+        back.addEventListener('click', function () {
+          try { speechSynthesis.cancel(); } catch (_) {}
+          backFn();
+        });
+        bar.appendChild(back);
+      }
+      const sp = document.createElement('div');
+      sp.className = 'rq-spacer';
+      bar.appendChild(sp);
+
+      const pts = document.createElement('span');
+      pts.className = 'rq-pill pts';
+      pts.id = 'rq-pts';
+      pts.textContent = '⭐ ' + P.pts;
+      bar.appendChild(pts);
+
+      const snd = document.createElement('button');
+      snd.className = 'rq-pill' + (P.sound ? '' : ' off');
+      snd.textContent = '🔔';
+      snd.title = 'Sounds on/off';
+      snd.addEventListener('click', function () {
+        P.sound = !P.sound; save();
+        snd.classList.toggle('off', !P.sound);
+      });
+      bar.appendChild(snd);
+
+      const vc = document.createElement('button');
+      vc.className = 'rq-pill' + (P.voice ? '' : ' off');
+      vc.textContent = '🗣️';
+      vc.title = 'Read-aloud on/off';
+      vc.addEventListener('click', function () {
+        P.voice = !P.voice; save();
+        vc.classList.toggle('off', !P.voice);
+        if (!P.voice) { try { speechSynthesis.cancel(); } catch (_) {} }
+      });
+      bar.appendChild(vc);
+      return bar;
+    }
+
+    function bumpPts(add) {
+      const old = P.pts;
+      P.pts += add;
+      save();
+      const pill = document.getElementById('rq-pts');
+      if (pill) pill.textContent = '⭐ ' + P.pts;
+      return old + ' + ' + add + ' = ' + P.pts;
+    }
+
+    /* ── home screen ─────────────────────────────────────────────────── */
+
+    function home() {
+      el.innerHTML = '';
+      el.appendChild(topBar(null, null));
+
+      const hero = document.createElement('div');
+      hero.className = 'rq-hero';
+      hero.innerHTML = '<h1>📖 Reading Quest</h1>' +
+        '<p>Read a little story, then answer the questions. ' +
+        'The story stays right there to help you!</p>';
+      el.appendChild(hero);
+
+      if (VOICES.length) {
+        const vrow = document.createElement('div');
+        vrow.className = 'rq-voicerow';
+        const lab = document.createElement('label');
+        lab.textContent = '🗣️ Reading voice:';
+        lab.htmlFor = 'rq-voicesel';
+        vrow.appendChild(lab);
+        const sel = document.createElement('select');
+        sel.id = 'rq-voicesel';
+        fillVoiceSel(sel);
+        sel.addEventListener('change', function () {
+          voiceName = sel.value;
+          saveVoice();
+          loadVoices();
+          speak('Hi! I will read the stories to you.');
+        });
+        vrow.appendChild(sel);
+        const tryBtn = document.createElement('button');
+        tryBtn.className = 'rq-pill';
+        tryBtn.textContent = '▶ Hear it';
+        tryBtn.addEventListener('click', function () {
+          speak('Hi! I will read the stories to you. Ready to read?');
+        });
+        vrow.appendChild(tryBtn);
+        el.appendChild(vrow);
+      }
+
+      TIERS.forEach(function (t) {
+        const stories = DATA.stories.filter(function (s) {
+          return s.tier === t.n;
+        });
+        const done = stories.filter(function (s) {
+          return (P.stars[s.id] || 0) > 0;
+        }).length;
+
+        const head = document.createElement('div');
+        head.className = 'rq-sect';
+        head.innerHTML = t.em + ' ' + esc(t.name) +
+          ' <span class="done">' + done + ' / ' + stories.length +
+          ' read · ' + esc(t.desc) + '</span>';
+        el.appendChild(head);
+
+        const grid = document.createElement('div');
+        grid.className = 'rq-grid';
+        stories.forEach(function (s) {
+          const b = document.createElement('button');
+          b.className = 'rq-story';
+          b.innerHTML = '<span class="em">' + s.emoji + '</span>' +
+            '<span class="nm">' + esc(s.title) + '</span>' +
+            '<span class="st">' + stars3(P.stars[s.id] || 0) + '</span>';
+          b.addEventListener('click', function () { play(s); });
+          grid.appendChild(b);
+        });
+        el.appendChild(grid);
+      });
+
+      window.scrollTo(0, 0);
+    }
+
+    /* ── story round ─────────────────────────────────────────────────── */
+
+    function play(story) {
+      const qs = story.qs;
+      let idx = 0;
+      let firstTryRight = 0;
+      let tries = 0;
+
+      el.innerHTML = '';
+      el.appendChild(topBar('Stories', home));
+
+      const card = document.createElement('div');
+      card.className = 'rq-storycard';
+      card.innerHTML = '<h2><span>' + story.emoji + '</span> ' +
+        esc(story.title) + '</h2>' +
+        '<div class="text">' + esc(story.text) + '</div>';
+      const readBtn = document.createElement('button');
+      readBtn.className = 'rq-readbtn';
+      readBtn.textContent = '🔊 Read the story to me';
+      readBtn.addEventListener('click', function () {
+        speak(story.title + '. ' + story.text);
+      });
+      card.appendChild(readBtn);
+      el.appendChild(card);
+
+      const qWrap = document.createElement('div');
+      el.appendChild(qWrap);
+
+      speak(story.title + '. ' + story.text);
+
+      function ask() {
+        const q = qs[idx];
+        tries = 0;
+        qWrap.innerHTML = '';
+
+        const num = document.createElement('div');
+        num.className = 'rq-qnum';
+        num.textContent = 'Question ' + (idx + 1) + ' of ' + qs.length;
+        qWrap.appendChild(num);
+
+        const qEl = document.createElement('div');
+        qEl.className = 'rq-q';
+        qEl.textContent = q.q;
+        qWrap.appendChild(qEl);
+
+        const opts = document.createElement('div');
+        opts.className = 'rq-opts';
+        const feedback = document.createElement('div');
+        feedback.className = 'rq-feedback';
+
+        shuffle(q.opts).forEach(function (o) {
+          const b = document.createElement('button');
+          b.className = 'rq-opt';
+          b.textContent = o[0];
+          b.addEventListener('click', function () { answer(b, o, q, opts, feedback); });
+          opts.appendChild(b);
+        });
+        qWrap.appendChild(opts);
+        qWrap.appendChild(feedback);
+        speak(q.q);
+      }
+
+      function answer(btnEl, opt, q, opts, feedback) {
+        if (opt[1]) {
+          const first = tries === 0;
+          if (first) firstTryRight++;
+          Array.prototype.forEach.call(opts.children, function (b) {
+            b.disabled = true;
+          });
+          btnEl.classList.add('yes');
+          sfx('good');
+          const add = first ? 2 : 1;
+          const math = bumpPts(add);
+          feedback.innerHTML = (first ? '🎉 Yes! ' : '💪 You got it! ') +
+            '<span class="math">⭐ ' + esc(math) + ' points</span>';
+          speak(first ? 'Yes! ' + opt[0] + '!' : 'You got it!');
+          showNext(feedback);
+        } else {
+          tries++;
+          if (tries === 1) {
+            btnEl.classList.add('no');
+            setTimeout(function () {
+              btnEl.classList.remove('no');
+              btnEl.classList.add('dim');
+              btnEl.disabled = true;
+            }, 350);
+            sfx('soft');
+            feedback.textContent = '🔍 Look at the story again — try once more!';
+            speak('Look at the story again. Try once more!');
+          } else {
+            Array.prototype.forEach.call(opts.children, function (b) {
+              b.disabled = true;
+            });
+            let correctText = '';
+            q.opts.forEach(function (o) { if (o[1]) correctText = o[0]; });
+            Array.prototype.forEach.call(opts.children, function (b) {
+              if (b.textContent === correctText) b.classList.add('yes');
+            });
+            sfx('soft');
+            const math = bumpPts(1);
+            feedback.innerHTML = 'The answer is <b>' + esc(correctText) +
+              '</b>.<span class="teach">💡 ' + esc(q.teach) + '</span>' +
+              '<span class="math">⭐ ' + esc(math) + ' points</span>';
+            speak('The answer is ' + correctText + '. ' + q.teach);
+            showNext(feedback);
+          }
+        }
+      }
+
+      function showNext(feedback) {
+        const next = document.createElement('button');
+        next.className = 'rq-next';
+        next.textContent = idx + 1 < qs.length ? 'Next ▶' : 'Finish 🏁';
+        next.addEventListener('click', function () {
+          idx++;
+          if (idx < qs.length) ask();
+          else recap();
+        });
+        feedback.appendChild(next);
+      }
+
+      function recap() {
+        const total = qs.length;
+        const ratio = firstTryRight / total;
+        const starsEarned = ratio >= 0.85 ? 3 : ratio >= 0.6 ? 2 : 1;
+        const best = P.stars[story.id] || 0;
+        if (starsEarned > best) P.stars[story.id] = starsEarned;
+        save();
+        sfx('star');
+
+        el.innerHTML = '';
+        el.appendChild(topBar('Stories', home));
+        const r = document.createElement('div');
+        r.className = 'rq-recap';
+        r.innerHTML = '<div class="big">' + story.emoji + '</div>' +
+          '<h2>' + esc(story.title) + ' — done!</h2>' +
+          '<div class="stars">' + stars3(starsEarned) + '</div>' +
+          '<p>' + firstTryRight + ' of ' + total +
+          ' right on the first try.</p>' +
+          (starsEarned === 3 ? '<p>Perfect reading! 🎉</p>' : '');
+        const row = document.createElement('div');
+        row.className = 'row';
+        const again = document.createElement('button');
+        again.className = 'rq-back';
+        again.textContent = '↻ Read again';
+        again.addEventListener('click', function () { play(story); });
+        row.appendChild(again);
+        const back = document.createElement('button');
+        back.className = 'rq-back';
+        back.textContent = '📚 More stories';
+        back.addEventListener('click', home);
+        row.appendChild(back);
+        r.appendChild(row);
+        el.appendChild(r);
+        speak('You finished ' + story.title + '! ' + firstTryRight +
+              ' out of ' + total + ' on the first try.');
+        window.scrollTo(0, 0);
+      }
+
+      ask();
+      window.scrollTo(0, 0);
+    }
+
+    /* ── boot ─────────────────────────────────────────────────────────── */
+
+    function boot(data) {
+      DATA = data;
+      home();
+    }
+
+    return { boot: boot };
+  })();
+
+  init();
+})();
+</script>

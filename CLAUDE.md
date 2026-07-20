@@ -290,13 +290,14 @@ Key implementation details:
 
 `autism/` has two kinds of pages: encrypted **posts** (`sensory-processing.md`,
 `executive-skills.md`) parented directly under `Autism`, and interactive
-**games** (WH Question Quest, Super Skills Quest, Language Lab) grouped
-under a `Games` sub-category — `autism/games.md`, a plain unencrypted
-`has_children: true` index page (`parent: Autism`, no `layout:`/`encrypted:`,
-same minimal pattern as `teaching/mk/index.md`). The game builders set
-`parent: Games` with their own `nav_order` (1/2/3, plus 4 for the WH
-Question Bank reference table) scoped under that
-sub-category; their permalinks stay flat at `/autism/<slug>/` (only the nav
+**games** (WH Question Quest, Super Skills Quest, Language Lab, Reading
+Quest) grouped under a `Games` sub-category — `autism/games.md`, a plain
+unencrypted `has_children: true` index page (`parent: Autism`, no
+`layout:`/`encrypted:`, same minimal pattern as `teaching/mk/index.md`).
+The game builders set `parent: Games` with their own `nav_order`
+(1/2/3, 4 for the WH Question Bank reference table, 5 for Reading Quest)
+scoped under that sub-category; their permalinks stay flat at
+`/autism/<slug>/` (only the nav
 grouping changed, not the URLs, so no links needed updating). Just the Docs
 nests three levels deep here (Autism → Games → game) via plain `parent:`
 chaining — no `grand_parent:` needed on this theme version. If a sidebar
@@ -799,6 +800,56 @@ tier populated) before encrypting. The engine is public code in
 only content changes in `lang_data.py` do (then re-run the builder).
 `encrypt-batch.py` skips this page (empty body). Progress lives in
 localStorage under `lang-lab-v1`.
+
+### Rebuild Reading Quest (reading-comprehension game page)
+
+```bash
+python3 _tools/build-reading-quest.py "passphrase"
+```
+
+Generates `autism/reading-quest.md` (`layout: protected-reading`, parent
+Games, nav_order 5, permalink `/autism/reading-quest/`) from
+`_tools/reading_data.py` (committed — original content, like `wh_data.py`).
+**75 short reading-comprehension stories** in three tiers of 25
+(`_layouts/protected-reading.html` is the public engine code — editing
+games never requires re-encryption, only story changes in
+`reading_data.py` do):
+
+- **🌱 Short & Sweet** — 3–4 simple sentences, purely literal questions
+  (who/what/where, small countable facts).
+- **🌿 A Bit Longer** — 4–6 sentences, adds why/feelings/sequence
+  questions ("how did X feel", "what happened first").
+- **🌳 Think Deeper** — 5–7 sentences, true inference: "how do you know",
+  predicting what happens next, main idea, reading between the lines
+  (e.g. crumbs + a guilty-looking dog = who ate the sandwich, never
+  stated outright).
+
+Each story has 3 questions, text-only options (no picture-matching — this
+is a reading game), exactly one correct. The builder (`validate()`)
+enforces 2–4 questions per story, 2–4 options per question, exactly one
+correct, no duplicate option text, and a non-empty `teach` line on every
+question, before it will encrypt.
+
+Engine follows the same autism-friendly rules as the other games: the
+**story text stays visible beside every question** (comprehension
+practice, not memory testing), one big Next button, nothing auto-advances,
+no timers, auto read-aloud with a "🔊 Read the story to me" button on the
+story card itself, two tries then reveal-and-teach with a point anyway (no
+failure state), quiet sine tones, explicit point arithmetic. Home screen
+groups story cards under their tier with a live "N / 25 read" counter;
+each story keeps a best-stars record (`P.stars[storyId]`, ≥85%
+first-try-right = 3★, ≥60% = 2★). Same reading-voice picker as the other
+three games (`rankVoice()`/`loadVoices()`/`fillVoiceSel()`, `rq-` prefix),
+sharing the cross-game `mwestwood-voice-name` localStorage pick, and the
+same iOS-sync/Chromium-679437 speech-timing fix (`IS_IOS`/
+`CAN_DEFER_SPEECH` in `speak()`) — keep all four engines in sync if you
+tune voice ranking or the speech-timing logic. `encrypt-batch.py` skips
+this page (empty body). Progress lives in localStorage under
+`reading-quest-v1`.
+
+**Gotcha:** the site build collapses inline `<script>` in layouts to one
+line — a `//` comment swallows the rest of the script. Use `/* */`
+comments only, same as the other game layouts.
 
 ### Rebuild the Kangaroo Arena (Math Kangaroo practice game)
 
