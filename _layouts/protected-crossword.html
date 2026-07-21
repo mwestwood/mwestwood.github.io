@@ -1,0 +1,1228 @@
+---
+layout: default
+---
+
+<style>
+  /* ── Password gate (same look as protected.html) ─────────────────────── */
+  #protected-gate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 40vh;
+    padding: 2rem 1rem;
+  }
+  .gate-card {
+    background: var(--sidebar-color, #f5f6fa);
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 8px;
+    padding: 2.5rem 2rem;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .gate-lock { font-size: 2.5rem; margin-bottom: 0.75rem; line-height: 1; }
+  .gate-title {
+    font-size: 1.25rem; font-weight: 600;
+    color: var(--body-text-color, #27262b); margin: 0 0 0.5rem 0;
+  }
+  .gate-subtitle {
+    font-size: 0.875rem; color: var(--body-text-color, #5c5962);
+    opacity: 0.75; margin: 0 0 1.5rem 0;
+  }
+  .gate-input-row { display: flex; gap: 0.5rem; width: 100%; }
+  #gate-password {
+    flex: 1; padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color, #d0d0d0); border-radius: 4px;
+    font-size: 1rem; background: var(--body-background-color, #fff);
+    color: var(--body-text-color, #27262b); outline: none;
+    transition: border-color 0.15s;
+  }
+  #gate-password:focus { border-color: var(--links-color, #7253ed); }
+  #gate-submit {
+    padding: 0.5rem 1.1rem; background: var(--links-color, #7253ed);
+    color: #fff; border: none; border-radius: 4px; font-size: 0.95rem;
+    font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+  #gate-submit:hover { opacity: 0.88; }
+  #gate-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+  #gate-error {
+    margin-top: 0.85rem; font-size: 0.875rem; color: #c0392b;
+    min-height: 1.25rem; display: none;
+  }
+  #gate-status {
+    margin-top: 0.85rem; font-size: 0.875rem;
+    color: var(--body-text-color, #5c5962); opacity: 0.7;
+    min-height: 1.25rem; display: none;
+  }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+
+  /* ── Word Crossword ──────────────────────────────────────────────────── */
+  #xword-root { display: none; }
+
+  .vc { --acc: #fbbf24; --good: #4ade80; --bad: #f87171;
+        --card: rgba(255,255,255,0.05); --line: rgba(255,255,255,0.12);
+        max-width: 820px; }
+  .vc, .vc * { box-sizing: border-box; }
+  .vc button {
+    font-family: inherit; touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .vc-top {
+    display: flex; align-items: center; gap: 0.6rem;
+    margin-bottom: 1rem; flex-wrap: wrap;
+  }
+  .vc-back {
+    background: var(--card); border: 1px solid var(--line);
+    color: inherit; border-radius: 999px; padding: 0.3rem 0.85rem;
+    font-size: 0.85rem; cursor: pointer;
+  }
+  .vc-back:hover { border-color: var(--acc); }
+  .vc-crumb { font-weight: 700; font-size: 1.05rem; }
+  .vc-spacer { flex: 1; }
+  .vc-pill {
+    font-size: 0.8rem; padding: 0.25rem 0.7rem; border-radius: 999px;
+    background: var(--card); border: 1px solid var(--line); white-space: nowrap;
+  }
+  .vc-pill.acc { border-color: var(--acc); color: var(--acc); font-weight: 600; }
+  .vc-pill.btn { cursor: pointer; }
+
+  .vc-hero { text-align: center; margin: 0.5rem 0 1.6rem; }
+  .vc-hero h1 { margin: 0 0 0.3rem; font-size: 2rem; }
+  .vc-hero p { margin: 0; opacity: 0.7; font-size: 0.95rem; }
+
+  .vc-levels { display: grid; gap: 0.9rem; }
+  .vc-level {
+    display: flex; align-items: center; gap: 1rem; width: 100%;
+    text-align: left; background: var(--card); border: 1px solid var(--line);
+    border-radius: 14px; padding: 1rem 1.2rem; color: inherit;
+    cursor: pointer; transition: transform 0.12s, border-color 0.12s;
+  }
+  .vc-level:hover:not(:disabled) { transform: translateY(-2px);
+                                   border-color: var(--lc, var(--acc)); }
+  .vc-level .em { font-size: 2rem; }
+  .vc-level .body { flex: 1; min-width: 0; }
+  .vc-level .name { font-weight: 700; font-size: 1.1rem; }
+  .vc-level .meta { font-size: 0.8rem; opacity: 0.6; margin-top: 0.2rem; }
+  .vc-level .side { text-align: right; font-size: 0.95rem; white-space: nowrap; }
+  .vc-level .stars { color: #facc15; font-weight: 700; letter-spacing: 0.1em; }
+
+  /* review deck (learn the words before solving) */
+  .vc-review { max-width: 560px; margin: 0 auto; text-align: center; }
+  .vc-review h2 { margin: 0.4rem 0 0.2rem; }
+  .vc-review .sub { opacity: 0.7; font-size: 0.92rem; margin-bottom: 1.1rem; }
+  .vc-card {
+    background: var(--card); border: 1px solid var(--lc, var(--acc));
+    border-radius: 16px; padding: 1.4rem 1.3rem; text-align: left;
+    min-height: 200px;
+  }
+  .vc-card .w { font-size: 1.7rem; font-weight: 800; color: var(--lc, var(--acc)); }
+  .vc-card .m { font-size: 1.05rem; line-height: 1.55; margin-top: 0.4rem; }
+  .vc-card .ex { font-style: italic; opacity: 0.78; margin-top: 0.6rem;
+                 line-height: 1.5; }
+  .vc-card .extra { font-size: 0.85rem; opacity: 0.7; margin-top: 0.5rem; }
+  .vc-card .say {
+    background: none; border: 1px solid var(--line); color: inherit;
+    border-radius: 999px; padding: 0.15rem 0.6rem; font-size: 0.8rem;
+    cursor: pointer; margin-left: 0.5rem; vertical-align: middle;
+  }
+  .vc-dots { margin: 0.9rem 0 0.3rem; letter-spacing: 0.35em; font-size: 0.8rem; }
+  .vc-dots .on { color: var(--lc, var(--acc)); }
+  .vc-dots .off { opacity: 0.3; }
+
+  /* puzzle screen */
+  .vc-clue {
+    background: var(--card); border: 1px solid var(--lc, var(--acc));
+    border-radius: 12px; padding: 0.7rem 1rem; margin-bottom: 0.9rem;
+    font-size: 0.95rem; line-height: 1.5; text-align: center;
+  }
+  .vc-clue .tag { font-size: 0.75rem; letter-spacing: 0.06em;
+                  text-transform: uppercase; opacity: 0.6; display: block; }
+  .vc-clue .say, .vc-clue .hint {
+    background: var(--card); border: 1px solid var(--line); color: inherit;
+    border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.8rem;
+    cursor: pointer; margin: 0.4rem 0.2rem 0;
+  }
+  .vc-clue .hint { border-color: var(--acc); color: var(--acc); }
+
+  .vc-gridwrap { display: flex; justify-content: center; position: relative;
+                 overflow-x: auto; }
+  .vc-grid { display: grid; gap: 2px; padding: 8px; border-radius: 10px;
+             background: rgba(255,255,255,0.04);
+             border: 1px solid var(--line);
+             -webkit-touch-callout: none; -webkit-user-select: none;
+             user-select: none; }
+  .vc-cell {
+    position: relative; display: flex; align-items: center;
+    justify-content: center; background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.16); border-radius: 4px;
+    font-weight: 800; cursor: pointer; text-transform: uppercase;
+  }
+  .vc-cell.void { background: transparent; border-color: transparent;
+                  cursor: default; }
+  .vc-cell.sel { background: rgba(251,191,36,0.22);
+                 border-color: var(--acc); }
+  .vc-cell.cur { background: rgba(251,191,36,0.45);
+                 border-color: var(--acc); }
+  .vc-cell.lock { background: rgba(74,222,128,0.18);
+                  border-color: rgba(74,222,128,0.6); color: var(--good); }
+  .vc-cell.bad { background: rgba(248,113,113,0.3);
+                 border-color: var(--bad); }
+  .vc-cell .n {
+    position: absolute; top: 1px; left: 3px; font-size: 0.5em;
+    font-weight: 600; opacity: 0.65;
+  }
+
+  .vc-toast {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    background: #26252c; border: 1px solid var(--line); border-radius: 12px;
+    padding: 0.8rem 1.1rem; max-width: 90%; text-align: center;
+    font-size: 0.92rem; line-height: 1.5; box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+    pointer-events: none; z-index: 5;
+  }
+  .vc-toast.good { border-color: var(--good); }
+  .vc-toast.bad { border-color: var(--bad); }
+  .vc-toast b { font-size: 1.05rem; }
+
+  /* on-screen keyboard (iPad) */
+  .vc-kbd { margin-top: 0.9rem; }
+  .vc-krow { display: flex; justify-content: center; gap: 0.28rem;
+             margin-top: 0.28rem; }
+  .vc-key {
+    background: var(--card); border: 1px solid var(--line); color: inherit;
+    border-radius: 8px; min-width: 2.1rem; padding: 0.55rem 0;
+    font-size: 0.95rem; font-weight: 700; cursor: pointer;
+    -webkit-user-select: none; user-select: none;
+  }
+  .vc-key:active { background: rgba(255,255,255,0.14); }
+  .vc-key.wide { min-width: 3.4rem; }
+
+  .vc-cluelists { display: flex; gap: 1rem; margin-top: 1.1rem;
+                  flex-wrap: wrap; }
+  .vc-cluecol { flex: 1; min-width: 260px; }
+  .vc-cluecol h3 { margin: 0 0 0.4rem; font-size: 0.9rem; letter-spacing: 0.05em;
+                   text-transform: uppercase; opacity: 0.7; }
+  .vc-clueitem {
+    display: block; width: 100%; text-align: left;
+    background: var(--card); border: 1px solid var(--line); color: inherit;
+    border-radius: 8px; padding: 0.45rem 0.7rem; font-size: 0.85rem;
+    line-height: 1.45; cursor: pointer; margin-top: 0.35rem;
+  }
+  .vc-clueitem:hover { border-color: var(--acc); }
+  .vc-clueitem.on { border-color: var(--acc); }
+  .vc-clueitem.done { opacity: 0.55; text-decoration: line-through;
+                      border-color: rgba(74,222,128,0.4); }
+  .vc-clueitem .num { font-weight: 800; color: var(--acc); }
+
+  .vc-help { text-align: center; font-size: 0.8rem; opacity: 0.55;
+             margin-top: 0.5rem; }
+
+  /* end screens */
+  .vc-win { text-align: center; padding: 1rem 0; }
+  .vc-win .em { font-size: 3.2rem; }
+  .vc-win h2 { margin: 0.4rem 0 0.2rem; }
+  .vc-win .stars { font-size: 2rem; color: #facc15; letter-spacing: 0.15em; }
+  .vc-win .sub { opacity: 0.7; font-size: 0.92rem; margin-top: 0.2rem; }
+  .vc-recap {
+    text-align: left; max-width: 520px; margin: 1.2rem auto 0;
+    display: grid; gap: 0.5rem;
+  }
+  .vc-recap .r {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 10px; padding: 0.6rem 0.9rem; font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .vc-recap .r b { color: var(--acc); }
+  .vc-recap .extra { font-size: 0.82rem; opacity: 0.7; margin-top: 0.15rem; }
+  .wlink { display: inline-block; margin-top: 0.4rem; font-size: 0.82rem;
+           color: var(--acc); text-decoration: none; }
+  .wlink:hover { text-decoration: underline; }
+  .vc-actions { display: flex; justify-content: center; gap: 0.6rem;
+                margin-top: 1.4rem; flex-wrap: wrap; }
+  .vc-btn {
+    background: var(--acc); border: none; color: #2a2007; font-weight: 700;
+    border-radius: 999px; padding: 0.5rem 1.3rem; font-size: 0.95rem;
+    cursor: pointer;
+  }
+  .vc-btn:hover { opacity: 0.88; }
+  .vc-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .vc-btn.ghost { background: var(--card); color: inherit;
+                  border: 1px solid var(--line); }
+</style>
+
+<!-- Password gate -->
+<div id="protected-gate">
+  <div class="gate-card">
+    <div class="gate-lock" aria-hidden="true">🔒</div>
+    <p class="gate-title">{{ page.title | default: "Protected Page" }}</p>
+    <p class="gate-subtitle">This page is password-protected. Enter the passphrase to unlock.</p>
+    <div class="gate-input-row">
+      <label for="gate-password" class="sr-only">Passphrase</label>
+      <input id="gate-password" type="password" placeholder="Passphrase" autocomplete="off" autofocus />
+      <button id="gate-submit">Unlock</button>
+    </div>
+    <div id="gate-error" role="alert" aria-live="polite">Incorrect passphrase — please try again.</div>
+    <div id="gate-status" role="status" aria-live="polite">Decrypting…</div>
+  </div>
+</div>
+
+<div id="xword-root"><div class="vc" id="vc"></div></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* Encrypted blob injected by Jekyll from front matter field `encrypted` */
+  const ENCRYPTED_B64 = {{ page.encrypted | jsonify }};
+
+  const STORAGE_KEY = 'mwestwood-passphrase';
+
+  /* ── Gate (same crypto as protected.html) ───────────────────────────── */
+
+  function b64ToBytes(b64) {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+
+  async function deriveKey(passphrase, salt) {
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw', enc.encode(passphrase), { name: 'PBKDF2' }, false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: salt, iterations: 100000, hash: 'SHA-256' },
+      keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+  }
+
+  async function decrypt(passphrase) {
+    const blob = b64ToBytes(ENCRYPTED_B64);
+    const salt = blob.slice(0, 16);
+    const iv = blob.slice(16, 28);
+    const ct = blob.slice(28);
+    const key = await deriveKey(passphrase, salt);
+    const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, ct);
+    return new TextDecoder().decode(plaintext);
+  }
+
+  const gate = document.getElementById('protected-gate');
+  const rootWrap = document.getElementById('xword-root');
+  const input = document.getElementById('gate-password');
+  const btn = document.getElementById('gate-submit');
+  const errEl = document.getElementById('gate-error');
+  const statusEl = document.getElementById('gate-status');
+
+  function showError(msg) {
+    errEl.textContent = msg || 'Incorrect passphrase — please try again.';
+    errEl.style.display = 'block';
+    statusEl.style.display = 'none';
+    btn.disabled = false;
+    input.select();
+  }
+
+  function showStatus(msg) {
+    statusEl.textContent = msg;
+    statusEl.style.display = 'block';
+    errEl.style.display = 'none';
+  }
+
+  function reveal(text) {
+    let data;
+    try { data = JSON.parse(text); }
+    catch (e) { showError('Data error: could not parse word bank.'); return; }
+    gate.style.display = 'none';
+    rootWrap.style.display = 'block';
+    Xword.boot(data);
+  }
+
+  async function tryUnlock(passphrase, cache) {
+    try {
+      showStatus('Decrypting…');
+      btn.disabled = true;
+      const text = await decrypt(passphrase);
+      if (cache) {
+        try { localStorage.setItem(STORAGE_KEY, passphrase); } catch (_) {}
+      }
+      reveal(text);
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'OperationError') {
+        showError('Incorrect passphrase — please try again.');
+      } else if (e instanceof TypeError && e.message.includes('subtle')) {
+        showError('Error: Web Crypto API unavailable. This page requires HTTPS.');
+      } else {
+        showError('Error (' + e.name + '): ' + e.message);
+      }
+    }
+  }
+
+  async function init() {
+    if (!ENCRYPTED_B64) { showError('No encrypted data on this page.'); return; }
+    try {
+      const cached = localStorage.getItem(STORAGE_KEY);
+      if (cached) {
+        showStatus('Unlocking…');
+        btn.disabled = true;
+        input.disabled = true;
+        try {
+          const text = await decrypt(cached);
+          reveal(text);
+          return;
+        } catch (_) {
+          localStorage.removeItem(STORAGE_KEY);
+          btn.disabled = false;
+          input.disabled = false;
+          statusEl.style.display = 'none';
+        }
+      }
+    } catch (_) {}
+  }
+
+  btn.addEventListener('click', function () {
+    const pw = input.value;
+    if (!pw) { input.focus(); return; }
+    tryUnlock(pw, true);
+  });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') btn.click();
+  });
+
+  /* ════════════════════════ Word Crossword ══════════════════════════════ */
+
+  const Xword = (function () {
+
+    const el = document.getElementById('vc');
+
+    /* 20 themed puzzles; `words` is how many interlocking words the level
+       draws from its tier. */
+    const LEVELS = [
+      { name: 'Garden Grid',      emoji: '🌱', tier: 'intermediate', words: 5, lc: '#4ade80' },
+      { name: 'Pond Puzzle',      emoji: '🪷', tier: 'intermediate', words: 5, lc: '#34d399' },
+      { name: 'Meadow Weave',     emoji: '🌼', tier: 'intermediate', words: 5, lc: '#facc15' },
+      { name: 'River Riddle',     emoji: '🏞️', tier: 'intermediate', words: 6, lc: '#22d3ee' },
+      { name: 'Tidepool Tangle',  emoji: '🐚', tier: 'intermediate', words: 6, lc: '#2dd4bf' },
+      { name: 'Honeycomb',        emoji: '🍯', tier: 'mixed',        words: 6, lc: '#fbbf24' },
+      { name: 'Canyon Cross',     emoji: '🏜️', tier: 'mixed',        words: 6, lc: '#fb923c' },
+      { name: 'Ice Lattice',      emoji: '❄️', tier: 'mixed',        words: 7, lc: '#93c5fd' },
+      { name: 'Jungle Vines',     emoji: '🌴', tier: 'mixed',        words: 7, lc: '#5eead4' },
+      { name: 'Mushroom Rings',   emoji: '🍄', tier: 'mixed',        words: 7, lc: '#e879f9' },
+      { name: 'Owl Library',      emoji: '🦉', tier: 'advanced',     words: 7, lc: '#60a5fa' },
+      { name: 'Spider Web',       emoji: '🕸️', tier: 'advanced',     words: 7, lc: '#a78bfa' },
+      { name: 'Storm Circuit',    emoji: '⛈️', tier: 'advanced',     words: 7, lc: '#818cf8' },
+      { name: 'Crystal Matrix',   emoji: '💎', tier: 'advanced',     words: 8, lc: '#c084fc' },
+      { name: 'Shipwreck Chart',  emoji: '🚢', tier: 'advanced',     words: 8, lc: '#2dd4bf' },
+      { name: 'Dragon Runes',     emoji: '🐉', tier: 'advanced',     words: 8, lc: '#fb923c' },
+      { name: 'Glacier Maze',     emoji: '🧊', tier: 'advanced',     words: 8, lc: '#38bdf8' },
+      { name: 'Cloud Cipher',     emoji: '☁️', tier: 'advanced',     words: 8, lc: '#93c5fd' },
+      { name: 'Comet Code',       emoji: '☄️', tier: 'advanced',     words: 8, lc: '#d8b4fe' },
+      { name: 'Galaxy Grid',      emoji: '🛸', tier: 'advanced',     words: 8, lc: '#f0abfc' }
+    ];
+    const TIER_LABEL = { intermediate: '🚀 Intermediate words',
+                         mixed: '🚀🏆 Mixed words', advanced: '🏆 Advanced words' };
+    /* only clean single words fit in a letter grid */
+    const GRIDDABLE = /^[A-Za-z]{3,12}$/;
+
+    let TIERS = null;
+    let S = null;
+
+    /* ── helpers ──────────────────────────────────────────────────────── */
+
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    /* recap row: meaning + example + (if the word bank supplied them)
+       synonyms/antonyms and a link straight back to the word's full card
+       on the site's Intermediate/Advanced Word List page */
+    function wordRowHtml(w) {
+      let h = '<div class="r"><b>' + esc(w.w) + '</b> — ' + esc(w.mean) +
+        (w.ex ? '<br><i style="opacity:0.75">“' + esc(w.ex) + '”</i>' : '');
+      if (w.syn) h += '<div class="extra">Similar: ' + esc(w.syn) + '</div>';
+      if (w.ant) h += '<div class="extra">Opposite: ' + esc(w.ant) + '</div>';
+      if (w.url) {
+        h += '<a class="wlink" href="' + esc(w.url) +
+          '" target="_blank" rel="noopener">📖 Full word card ↗</a>';
+      }
+      return h + '</div>';
+    }
+    function shuffle(a) {
+      a = a.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = a[i]; a[i] = a[j]; a[j] = t;
+      }
+      return a;
+    }
+    function speak(text) {
+      try {
+        if (!window.speechSynthesis) return;
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.rate = 0.85;
+        speechSynthesis.speak(u);
+      } catch (_) {}
+    }
+
+    let AC = null;
+    function unlockAudio() {
+      try {
+        AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+        if (AC.state === 'suspended') AC.resume();
+      } catch (_) {}
+    }
+    function tone(freq, at, dur) {
+      if (!P.sound) return;
+      try {
+        AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+        const o = AC.createOscillator(), g = AC.createGain();
+        o.frequency.value = freq; o.type = 'sine';
+        g.gain.setValueAtTime(0.0001, AC.currentTime + at);
+        g.gain.linearRampToValueAtTime(0.12, AC.currentTime + at + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime + at + dur);
+        o.connect(g); g.connect(AC.destination);
+        o.start(AC.currentTime + at); o.stop(AC.currentTime + at + dur + 0.05);
+      } catch (_) {}
+    }
+    function sGood() { tone(660, 0, 0.12); tone(880, 0.12, 0.2); }
+    function sBad() { tone(220, 0, 0.1); tone(160, 0.1, 0.22); }
+    function sWin() { tone(523, 0, 0.14); tone(659, 0.14, 0.14); tone(784, 0.28, 0.3); }
+
+    /* ── progress (localStorage) ──────────────────────────────────────── */
+
+    const PKEY = 'vocab-crossword-v1';
+    let P = null;
+    try { P = JSON.parse(localStorage.getItem(PKEY) || 'null'); } catch (_) {}
+    if (!P || typeof P !== 'object') P = {};
+    P.stars = P.stars || {};
+    P.learned = P.learned || {};
+    if (P.sound === undefined) P.sound = true;
+    function save() {
+      try { localStorage.setItem(PKEY, JSON.stringify(P)); } catch (_) {}
+    }
+
+    function tierWords(tier) {
+      if (tier === 'mixed') return TIERS.intermediate.concat(TIERS.advanced);
+      return TIERS[tier];
+    }
+    function buildPool(tier) {
+      const words = shuffle(tierWords(tier))
+        .filter(function (w) { return GRIDDABLE.test(w.w); });
+      const fresh = [], seen = [];
+      words.forEach(function (w) { (P.learned[w.w] ? seen : fresh).push(w); });
+      return fresh.concat(seen);
+    }
+
+    /* ── crossword generation ─────────────────────────────────────────── */
+    /* Greedy interlock: place the first word across at the origin, then
+       walk the candidate list placing each word through a shared letter.
+       Candidates that can't cross anything yet are skipped and the next
+       candidate is tried — with hundreds of words per tier this always
+       fills the requested count. */
+
+    function genPuzzle(cands, want) {
+      for (let attempt = 0; attempt < 12; attempt++) {
+        const res = genOnce(shuffle(cands), want);
+        if (res && res.placed.length >= want) return res;
+        /* last resort: accept one word fewer rather than never loading */
+        if (attempt === 11 && res && res.placed.length >= Math.max(3, want - 1)) return res;
+      }
+      return null;
+    }
+
+    function genOnce(cands, want) {
+      const grid = {};
+      const placed = [];
+
+      function letterAt(x, y) { return grid[x + ',' + y] || null; }
+
+      function canPlace(word, x, y, dx, dy) {
+        /* the cell before the word and after it must be empty */
+        if (letterAt(x - dx, y - dy)) return -1;
+        if (letterAt(x + dx * word.length, y + dy * word.length)) return -1;
+        let crossings = 0;
+        for (let i = 0; i < word.length; i++) {
+          const cx = x + dx * i, cy = y + dy * i;
+          const existing = letterAt(cx, cy);
+          if (existing) {
+            if (existing !== word[i]) return -1;
+            /* the shared cell must be a clean perpendicular crossing — a
+               letter right before/after it along OUR direction means we'd
+               merge collinearly with a parallel word */
+            if (letterAt(cx - dx, cy - dy) && i > 0) return -1;
+            if (letterAt(cx + dx, cy + dy) && i < word.length - 1) return -1;
+            crossings++;
+          } else {
+            /* an empty cell must not touch a neighboring word sideways */
+            if (letterAt(cx + dy, cy + dx) || letterAt(cx - dy, cy - dx)) return -1;
+          }
+        }
+        return crossings;
+      }
+
+      function doPlace(wobj, word, x, y, dx, dy) {
+        for (let i = 0; i < word.length; i++) {
+          grid[(x + dx * i) + ',' + (y + dy * i)] = word[i];
+        }
+        placed.push({ wobj: wobj, word: word, x: x, y: y,
+                      dir: dx ? 'across' : 'down' });
+      }
+
+      let ci = 0;
+      /* first word straight across at the origin */
+      while (ci < cands.length && placed.length === 0) {
+        const w0 = cands[ci++];
+        doPlace(w0, w0.w.toUpperCase(), 0, 0, 1, 0);
+      }
+
+      let scan = 0;
+      while (placed.length < want && ci < cands.length && scan < cands.length * 2) {
+        scan++;
+        const cand = cands[ci++];
+        const word = cand.w.toUpperCase();
+        let best = null;
+        for (let i = 0; i < word.length; i++) {
+          for (let p = 0; p < placed.length; p++) {
+            const pw = placed[p];
+            for (let j = 0; j < pw.word.length; j++) {
+              if (pw.word[j] !== word[i]) continue;
+              /* cross perpendicular to the placed word */
+              const across = pw.dir === 'down';
+              const dx = across ? 1 : 0, dy = across ? 0 : 1;
+              const cx = pw.dir === 'down' ? pw.x : pw.x + j;
+              const cy = pw.dir === 'down' ? pw.y + j : pw.y;
+              const x = cx - dx * i, y = cy - dy * i;
+              const cr = canPlace(word, x, y, dx, dy);
+              if (cr > 0 && (!best || cr > best.cr)) {
+                best = { x: x, y: y, dx: dx, dy: dy, cr: cr };
+              }
+            }
+          }
+        }
+        if (best) doPlace(cand, word, best.x, best.y, best.dx, best.dy);
+      }
+      return { grid: grid, placed: placed };
+    }
+
+    /* normalize coordinates, then number slots the classic way */
+    function layout(res) {
+      let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
+      Object.keys(res.grid).forEach(function (k) {
+        const p = k.split(',');
+        const x = +p[0], y = +p[1];
+        if (x < minX) minX = x; if (x > maxX) maxX = x;
+        if (y < minY) minY = y; if (y > maxY) maxY = y;
+      });
+      const W = maxX - minX + 1, H = maxY - minY + 1;
+      const slots = res.placed.map(function (p, i) {
+        return { id: i, wobj: p.wobj, word: p.word, dir: p.dir,
+                 x: p.x - minX, y: p.y - minY, len: p.word.length,
+                 num: 0, solved: false, wrongs: 0 };
+      });
+      /* classic numbering: scan row-major; a slot start gets the next number */
+      let num = 0;
+      for (let y = 0; y < H; y++) {
+        for (let x = 0; x < W; x++) {
+          const starts = slots.filter(function (s) {
+            return s.x === x && s.y === y;
+          });
+          if (starts.length) {
+            num++;
+            starts.forEach(function (s) { s.num = num; });
+          }
+        }
+      }
+      return { W: W, H: H, slots: slots };
+    }
+
+    function slotCells(s) {
+      const out = [];
+      for (let i = 0; i < s.len; i++) {
+        out.push(s.dir === 'across' ? [s.x + i, s.y] : [s.x, s.y + i]);
+      }
+      return out;
+    }
+
+    /* ── screens ──────────────────────────────────────────────────────── */
+
+    function home() {
+      S = null;
+      const learnedCount = Object.keys(P.learned).length;
+      let h = '<div class="vc-hero"><h1>🧩 Word Crossword</h1>' +
+        '<p>Review the words, then weave them into the grid — every clue ' +
+        'is a meaning you just learned.</p></div>';
+      if (learnedCount) {
+        h += '<div style="text-align:center;margin-bottom:1.2rem">' +
+          '<span class="vc-pill acc">📚 ' + learnedCount +
+          ' words mastered</span></div>';
+      }
+      h += '<div class="vc-levels">';
+      LEVELS.forEach(function (lv, i) {
+        const st = P.stars[i] || 0;
+        h += '<button class="vc-level" data-l="' + i + '" style="--lc:' +
+          lv.lc + '">' +
+          '<span class="em">' + lv.emoji + '</span>' +
+          '<span class="body"><span class="name">Puzzle ' + (i + 1) + ' — ' +
+          esc(lv.name) + '</span>' +
+          '<span class="meta" style="display:block">' + lv.words +
+          ' crossing words · ' + TIER_LABEL[lv.tier] + '</span></span>' +
+          '<span class="side"><span class="stars">' +
+          '★★★'.slice(0, st) + '<span style="opacity:0.25">' +
+          '★★★'.slice(0, 3 - st) + '</span></span></span></button>';
+      });
+      h += '</div>';
+      el.innerHTML = h;
+      el.querySelectorAll('.vc-level').forEach(function (b) {
+        b.addEventListener('click', function () { start(+b.dataset.l); });
+      });
+    }
+
+    function start(li) {
+      const lv = LEVELS[li];
+      const pool = buildPool(lv.tier);
+      const res = genPuzzle(pool.slice(0, 60), lv.words);
+      if (!res) { home(); return; }
+      const lay = layout(res);
+      S = { li: li, level: lv, lay: lay,
+            set: lay.slots.map(function (s) { return s.wobj; }),
+            phase: 'review', card: 0, seen: 1,
+            letters: {}, locked: {}, sel: null, cur: 0,
+            wrongs: 0, hints: 0, toast: null };
+      reviewScreen();
+    }
+
+    /* ── review deck: learn the words BEFORE solving ──────────────────── */
+
+    function reviewScreen() {
+      const lv = S.level;
+      const w = S.set[S.card];
+      const last = S.card === S.set.length - 1;
+      const allSeen = S.seen >= S.set.length;
+      let h = '<div class="vc-top">' +
+        '<button class="vc-back" id="vc-quit">← All puzzles</button>' +
+        '<span class="vc-crumb">' + lv.emoji + ' Puzzle ' + (S.li + 1) +
+        ' — ' + esc(lv.name) + '</span></div>' +
+        '<div class="vc-review" style="--lc:' + lv.lc + '">' +
+        '<h2>📖 Learn your ' + S.set.length + ' words</h2>' +
+        '<div class="sub">Read every card first — these exact words go ' +
+        'into the crossword grid.</div>' +
+        '<div class="vc-card"><span class="w">' + esc(w.w) + '</span>' +
+        '<button class="say" id="vc-say">🔊 Hear it</button>' +
+        '<div class="m">' + esc(w.mean) + '</div>' +
+        (w.ex ? '<div class="ex">“' + esc(w.ex) + '”</div>' : '') +
+        (w.syn ? '<div class="extra">Similar: ' + esc(w.syn) + '</div>' : '') +
+        (w.ant ? '<div class="extra">Opposite: ' + esc(w.ant) + '</div>' : '') +
+        (w.url ? '<a class="wlink" href="' + esc(w.url) +
+          '" target="_blank" rel="noopener">📖 Full word card ↗</a>' : '') +
+        '</div><div class="vc-dots">';
+      S.set.forEach(function (_, i) {
+        h += '<span class="' + (i <= S.card ? 'on' : 'off') + '">●</span>';
+      });
+      h += '</div><div class="vc-actions">' +
+        '<button class="vc-btn ghost" id="vc-prev"' +
+        (S.card === 0 ? ' disabled' : '') + '>← Back</button>' +
+        (last
+          ? '<button class="vc-btn" id="vc-go"' + (allSeen ? '' : ' disabled') +
+            '>▶ Open the puzzle!</button>'
+          : '<button class="vc-btn" id="vc-nextc">Next word →</button>') +
+        '</div><div class="vc-help">Card ' + (S.card + 1) + ' of ' +
+        S.set.length + '</div></div>';
+      el.innerHTML = h;
+      document.getElementById('vc-quit').addEventListener('click', home);
+      document.getElementById('vc-say').addEventListener('click', function () {
+        speak(w.w + '. ' + w.mean);
+      });
+      document.getElementById('vc-prev').addEventListener('click', function () {
+        if (S.card > 0) { S.card--; reviewScreen(); }
+      });
+      if (last) {
+        document.getElementById('vc-go').addEventListener('click', puzzle);
+      } else {
+        document.getElementById('vc-nextc').addEventListener('click', function () {
+          S.card++;
+          S.seen = Math.max(S.seen, S.card + 1);
+          reviewScreen();
+        });
+      }
+    }
+
+    /* ── puzzle screen ────────────────────────────────────────────────── */
+
+    function puzzle() {
+      S.phase = 'solve';
+      S.sel = S.lay.slots.slice().sort(function (a, b) {
+        return a.num - b.num || (a.dir === 'across' ? 0 : 1) -
+               (b.dir === 'across' ? 0 : 1);
+      })[0];
+      S.cur = 0;
+      renderPuzzle();
+    }
+
+    function renderPuzzle() {
+      const lv = S.level;
+      const lay = S.lay;
+      const cellPx = Math.max(24, Math.min(40,
+        Math.floor(((el.clientWidth || 680) - 40) / lay.W)));
+
+      let h = '<div class="vc-top">' +
+        '<button class="vc-back" id="vc-quit">← All puzzles</button>' +
+        '<span class="vc-crumb">' + lv.emoji + ' Puzzle ' + (S.li + 1) + ' — ' +
+        esc(lv.name) + '</span><span class="vc-spacer"></span>' +
+        '<span class="vc-pill acc" id="vc-count">✅ ' + solvedCount() + '/' +
+        lay.slots.length + '</span>' +
+        '<span class="vc-pill btn" id="vc-sound">' +
+        (P.sound ? '🔊' : '🔇') + '</span></div>' +
+        '<div class="vc-clue" id="vc-clue" style="--lc:' + lv.lc + '"></div>' +
+        '<div class="vc-gridwrap"><div class="vc-grid" id="vc-grid" ' +
+        'style="grid-template-columns:repeat(' + lay.W + ',' + cellPx +
+        'px);grid-auto-rows:' + cellPx + 'px;font-size:' +
+        Math.floor(cellPx * 0.52) + 'px"></div></div>' +
+        '<div class="vc-kbd" id="vc-kbd"></div>' +
+        '<div class="vc-help">Tap a square (tap again to flip ' +
+        'across/down), then type. Finished words check themselves!</div>' +
+        '<div class="vc-cluelists" id="vc-clues"></div>';
+      el.innerHTML = h;
+
+      document.getElementById('vc-quit').addEventListener('click', home);
+      document.getElementById('vc-sound').addEventListener('click', function () {
+        P.sound = !P.sound; save();
+        this.textContent = P.sound ? '🔊' : '🔇';
+      });
+
+      /* grid cells */
+      const gridEl = document.getElementById('vc-grid');
+      const frag = document.createDocumentFragment();
+      for (let y = 0; y < lay.H; y++) {
+        for (let x = 0; x < lay.W; x++) {
+          const d = document.createElement('div');
+          const slots = slotsAt(x, y);
+          if (!slots.length) {
+            d.className = 'vc-cell void';
+          } else {
+            d.className = 'vc-cell';
+            d.dataset.x = x; d.dataset.y = y;
+            const startNum = startNumAt(x, y);
+            if (startNum) {
+              const n = document.createElement('span');
+              n.className = 'n';
+              n.textContent = startNum;
+              d.appendChild(n);
+            }
+            d.addEventListener('click', function () { tapCell(x, y); });
+          }
+          frag.appendChild(d);
+        }
+      }
+      gridEl.appendChild(frag);
+
+      /* on-screen keyboard */
+      const kb = document.getElementById('vc-kbd');
+      ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'].forEach(function (row, ri) {
+        const r = document.createElement('div');
+        r.className = 'vc-krow';
+        row.split('').forEach(function (k) {
+          const b = document.createElement('button');
+          b.className = 'vc-key';
+          b.textContent = k;
+          b.addEventListener('click', function () { typeLetter(k); });
+          r.appendChild(b);
+        });
+        if (ri === 2) {
+          const b = document.createElement('button');
+          b.className = 'vc-key wide';
+          b.textContent = '⌫';
+          b.addEventListener('click', function () { backspace(); });
+          r.appendChild(b);
+        }
+        kb.appendChild(r);
+      });
+
+      refresh();
+    }
+
+    function solvedCount() {
+      return S.lay.slots.filter(function (s) { return s.solved; }).length;
+    }
+
+    function slotsAt(x, y) {
+      return S.lay.slots.filter(function (s) {
+        return slotCells(s).some(function (c) {
+          return c[0] === x && c[1] === y;
+        });
+      });
+    }
+
+    function startNumAt(x, y) {
+      const s = S.lay.slots.find(function (s) { return s.x === x && s.y === y; });
+      return s ? s.num : 0;
+    }
+
+    function cellEl(x, y) {
+      return document.querySelector(
+        '.vc-cell[data-x="' + x + '"][data-y="' + y + '"]');
+    }
+
+    function tapCell(x, y) {
+      unlockAudio();
+      const slots = slotsAt(x, y);
+      if (!slots.length) return;
+      let next = slots[0];
+      if (slots.length > 1 && S.sel && slots.indexOf(S.sel) !== -1) {
+        /* tapping inside the selected slot again flips across/down */
+        next = slots[(slots.indexOf(S.sel) + 1) % slots.length];
+      } else if (S.sel && slots.indexOf(S.sel) !== -1) {
+        next = S.sel;
+      }
+      S.sel = next;
+      const cellsList = slotCells(next);
+      S.cur = cellsList.findIndex(function (c) {
+        return c[0] === x && c[1] === y;
+      });
+      refresh();
+    }
+
+    function slotEmpty(s) {
+      return slotCells(s).every(function (c) {
+        return !S.letters[c[0] + ',' + c[1]];
+      });
+    }
+
+    function selectSlot(s) {
+      S.sel = s;
+      /* an untouched slot starts at cell 0 so a kid can type the WHOLE
+         word — the type-through logic consumes any revealed letters;
+         a partly-typed slot resumes at its first empty, unlocked cell */
+      const cl = slotCells(s);
+      S.cur = 0;
+      if (!slotEmpty(s)) {
+        for (let i = 0; i < cl.length; i++) {
+          const k = cl[i][0] + ',' + cl[i][1];
+          if (!S.locked[k] && !S.letters[k]) { S.cur = i; break; }
+        }
+      }
+      refresh();
+    }
+
+    function typeLetter(ch) {
+      if (!S || S.phase !== 'solve' || !S.sel || S.sel.solved) return;
+      unlockAudio();
+      const cl = slotCells(S.sel);
+      /* find the cell to write: current position, skipping locked cells.
+         Kids type the WHOLE word including revealed letters — when the
+         typed letter matches a locked cell being skipped, consume the
+         keystroke as that cell so the rest of the word stays aligned. */
+      let i = S.cur;
+      while (i < cl.length && S.locked[cl[i][0] + ',' + cl[i][1]]) {
+        if (S.locked[cl[i][0] + ',' + cl[i][1]] === ch.toUpperCase()) {
+          S.cur = Math.min(i + 1, cl.length - 1);
+          refresh();
+          return;
+        }
+        i++;
+      }
+      if (i >= cl.length) return;
+      S.letters[cl[i][0] + ',' + cl[i][1]] = ch.toUpperCase();
+      /* advance ONE cell — if the next cell is locked, stay on it so the
+         next keystroke can type through it (see the consume loop above) */
+      S.cur = Math.min(i + 1, cl.length - 1);
+      refresh();
+      maybeCheck(S.sel);
+    }
+
+    function backspace() {
+      if (!S || S.phase !== 'solve' || !S.sel || S.sel.solved) return;
+      const cl = slotCells(S.sel);
+      let i = S.cur;
+      const curK = cl[i][0] + ',' + cl[i][1];
+      if (!S.locked[curK] && S.letters[curK]) {
+        delete S.letters[curK];
+      } else {
+        /* step back to the previous unlocked cell and clear it */
+        i--;
+        while (i >= 0 && S.locked[cl[i][0] + ',' + cl[i][1]]) i--;
+        if (i < 0) return;
+        delete S.letters[cl[i][0] + ',' + cl[i][1]];
+        S.cur = i;
+      }
+      /* fully cleared → rewind to the slot start so retyping the whole
+         word (revealed letters included) lines up again */
+      if (slotEmpty(S.sel)) S.cur = 0;
+      refresh();
+    }
+
+    function maybeCheck(slot) {
+      const cl = slotCells(slot);
+      const filled = cl.every(function (c) {
+        const k = c[0] + ',' + c[1];
+        return S.locked[k] || S.letters[k];
+      });
+      if (!filled) return;
+      const guess = cl.map(function (c) {
+        const k = c[0] + ',' + c[1];
+        return S.locked[k] || S.letters[k];
+      }).join('');
+      if (guess === slot.word) {
+        slot.solved = true;
+        cl.forEach(function (c) {
+          const k = c[0] + ',' + c[1];
+          S.locked[k] = slot.word[cl.indexOf(c)];
+          delete S.letters[k];
+        });
+        sGood();
+        P.learned[slot.wobj.w] = 1; save();
+        const w = slot.wobj;
+        showToast('good', '✅ <b>' + esc(w.w) + '</b> — ' + esc(w.mean) +
+          (w.ex ? '<br><i>“' + esc(w.ex) + '”</i>' : ''), 1800);
+        const all = S.lay.slots.every(function (s) { return s.solved; });
+        if (all) { setTimeout(win, 1600); }
+        else {
+          /* auto-move to the next unsolved clue — unless the solver has
+             already picked a different slot themselves */
+          setTimeout(function () {
+            if (!S || S.phase !== 'solve') return;
+            if (S.sel && S.sel !== slot && !S.sel.solved) return;
+            const nxt = nextUnsolved(slot);
+            if (nxt) selectSlot(nxt);
+          }, 1800);
+        }
+      } else {
+        sBad();
+        S.wrongs++;
+        slot.wrongs++;
+        flashBad(slot);
+        const w = slot.wobj;
+        if (slot.wrongs >= 2) {
+          /* no dead ends: after two misses, reveal the first wrong letter */
+          for (let i = 0; i < cl.length; i++) {
+            const k = cl[i][0] + ',' + cl[i][1];
+            if (!S.locked[k] && S.letters[k] !== slot.word[i]) {
+              S.locked[k] = slot.word[i];
+              delete S.letters[k];
+              break;
+            }
+          }
+          showToast('bad', '🔎 Not yet! Here’s a free letter.<br><b>' +
+            esc(w.mean) + '</b>' +
+            (w.ex ? '<br><i>“' + esc(w.ex).replace(
+              new RegExp(esc(w.w), 'ig'), '____') + '”</i>' : ''), 2600);
+        } else {
+          showToast('bad', '❌ Not quite — check the spelling!<br><b>' +
+            esc(w.mean) + '</b>', 2200);
+        }
+      }
+      refresh();
+    }
+
+    function nextUnsolved(fromSlot) {
+      const list = S.lay.slots.slice().sort(function (a, b) {
+        return a.num - b.num;
+      });
+      const start = list.indexOf(fromSlot);
+      for (let i = 1; i <= list.length; i++) {
+        const s = list[(start + i) % list.length];
+        if (!s.solved) return s;
+      }
+      return null;
+    }
+
+    function hint() {
+      if (!S || S.phase !== 'solve' || !S.sel || S.sel.solved) return;
+      unlockAudio();
+      const slot = S.sel;
+      const cl = slotCells(slot);
+      for (let i = 0; i < cl.length; i++) {
+        const k = cl[i][0] + ',' + cl[i][1];
+        if (!S.locked[k]) {
+          if (S.letters[k] === slot.word[i]) continue;
+          S.locked[k] = slot.word[i];
+          delete S.letters[k];
+          S.hints++;
+          sGood();
+          refresh();
+          maybeCheck(slot);
+          return;
+        }
+      }
+    }
+
+    function flashBad(slot) {
+      slotCells(slot).forEach(function (c) {
+        const d = cellEl(c[0], c[1]);
+        if (d) d.classList.add('bad');
+      });
+      setTimeout(function () {
+        document.querySelectorAll('.vc-cell.bad').forEach(function (d) {
+          d.classList.remove('bad');
+        });
+      }, 700);
+    }
+
+    let toastTimer = null;
+    function showToast(kind, html, ms) {
+      const wrap = document.querySelector('.vc-gridwrap');
+      if (!wrap) return;
+      let box = document.getElementById('vc-toast');
+      if (!box) {
+        box = document.createElement('div');
+        box.id = 'vc-toast';
+        wrap.appendChild(box);
+      }
+      box.className = 'vc-toast ' + kind;
+      box.innerHTML = html;
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () {
+        const b = document.getElementById('vc-toast');
+        if (b) b.remove();
+      }, ms);
+    }
+
+    function refresh() {
+      if (!S || S.phase !== 'solve') return;
+      const lay = S.lay;
+      const selCells = S.sel ? slotCells(S.sel) : [];
+      for (let y = 0; y < lay.H; y++) {
+        for (let x = 0; x < lay.W; x++) {
+          const d = cellEl(x, y);
+          if (!d) continue;
+          const k = x + ',' + y;
+          d.classList.remove('sel', 'cur', 'lock');
+          if (S.locked[k]) d.classList.add('lock');
+          const inSel = selCells.findIndex(function (c) {
+            return c[0] === x && c[1] === y;
+          });
+          if (inSel !== -1 && !S.sel.solved) {
+            d.classList.add(inSel === S.cur ? 'cur' : 'sel');
+          }
+          /* letter content (keep the number badge) */
+          const letter = S.locked[k] || S.letters[k] || '';
+          let span = d.querySelector('.l');
+          if (!span) {
+            span = document.createElement('span');
+            span.className = 'l';
+            d.appendChild(span);
+          }
+          span.textContent = letter;
+        }
+      }
+      /* clue banner */
+      const cb = document.getElementById('vc-clue');
+      if (cb) {
+        if (S.sel) {
+          const s = S.sel;
+          cb.innerHTML = '<span class="tag">' + s.num + ' ' +
+            (s.dir === 'across' ? 'Across →' : 'Down ↓') + ' · ' + s.len +
+            ' letters</span>' + esc(s.wobj.mean) +
+            '<div><button class="say" id="vc-sayclue">🔊 Read clue</button>' +
+            '<button class="hint" id="vc-hint">💡 Free letter</button></div>';
+          document.getElementById('vc-sayclue').addEventListener('click',
+            function () { speak(S.sel.wobj.mean); });
+          document.getElementById('vc-hint').addEventListener('click', hint);
+        } else {
+          cb.textContent = 'Tap a square to begin!';
+        }
+      }
+      /* counter */
+      const cnt = document.getElementById('vc-count');
+      if (cnt) cnt.textContent = '✅ ' + solvedCount() + '/' + lay.slots.length;
+      /* clue lists */
+      const lists = document.getElementById('vc-clues');
+      if (lists) {
+        let across = '', down = '';
+        S.lay.slots.slice().sort(function (a, b) { return a.num - b.num; })
+          .forEach(function (s) {
+            const item = '<button class="vc-clueitem' +
+              (s.solved ? ' done' : '') + (s === S.sel ? ' on' : '') +
+              '" data-id="' + s.id + '"><span class="num">' + s.num +
+              '.</span> ' + esc(s.wobj.mean) + ' <span style="opacity:0.55">(' +
+              s.len + ')</span></button>';
+            if (s.dir === 'across') across += item; else down += item;
+          });
+        lists.innerHTML =
+          '<div class="vc-cluecol"><h3>➡️ Across</h3>' + across + '</div>' +
+          '<div class="vc-cluecol"><h3>⬇️ Down</h3>' + down + '</div>';
+        lists.querySelectorAll('.vc-clueitem').forEach(function (b) {
+          b.addEventListener('click', function () {
+            const s = S.lay.slots[+b.dataset.id];
+            if (!s.solved) selectSlot(s);
+          });
+        });
+      }
+    }
+
+    /* physical keyboard */
+    document.addEventListener('keydown', function (e) {
+      if (!S || S.phase !== 'solve') return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (/^[a-zA-Z]$/.test(e.key)) {
+        e.preventDefault();
+        typeLetter(e.key);
+      } else if (e.key === 'Backspace') {
+        e.preventDefault();
+        backspace();
+      } else if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        if (S.sel) {
+          const nxt = nextUnsolved(S.sel);
+          if (nxt) selectSlot(nxt);
+        }
+      }
+    });
+
+    /* ── win ──────────────────────────────────────────────────────────── */
+
+    function win() {
+      if (!S || S.phase === 'won') return;
+      S.phase = 'won';
+      sWin();
+      const miss = S.wrongs + S.hints;
+      const stars = miss <= 1 ? 3 : miss <= 4 ? 2 : 1;
+      if ((P.stars[S.li] || 0) < stars) P.stars[S.li] = stars;
+      save();
+
+      const lv = S.level;
+      const li = S.li;
+      const set = S.set;
+      const hasNext = li + 1 < LEVELS.length;
+      S = null;
+
+      let h = '<div class="vc-win"><div class="em">' + lv.emoji + '🎉</div>' +
+        '<h2>Puzzle solved!</h2>' +
+        '<div class="stars">' + '★★★'.slice(0, stars) +
+        '<span style="opacity:0.25">' + '★★★'.slice(0, 3 - stars) +
+        '</span></div>' +
+        '<div class="sub">' + set.length +
+        (set.length === 1 ? ' word' : ' words') + ' woven into the grid · ' +
+        miss + (miss === 1 ? ' slip' : ' slips') + '</div>' +
+        '<div class="vc-recap">';
+      set.forEach(function (w) { h += wordRowHtml(w); });
+      h += '</div><div class="vc-actions">' +
+        '<button class="vc-btn ghost" id="vc-again">↻ New puzzle</button>' +
+        (hasNext ? '<button class="vc-btn" id="vc-next">Next puzzle →</button>' : '') +
+        '<button class="vc-btn ghost" id="vc-home">All puzzles</button>' +
+        '</div></div>';
+      el.innerHTML = h;
+      document.getElementById('vc-again').addEventListener('click', function () { start(li); });
+      if (hasNext) {
+        document.getElementById('vc-next').addEventListener('click', function () { start(li + 1); });
+      }
+      document.getElementById('vc-home').addEventListener('click', home);
+    }
+
+    /* ── boot ─────────────────────────────────────────────────────────── */
+
+    function boot(data) {
+      TIERS = data.tiers;
+      home();
+    }
+
+    return { boot: boot };
+  })();
+
+  init();
+})();
+</script>

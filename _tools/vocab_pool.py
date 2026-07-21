@@ -1,6 +1,7 @@
 """
-vocab_pool.py — shared word-pool loader for the arrow-key vocabulary games
-(Word Maze, Word Snake, Meaning Dash, Word Hopper).
+vocab_pool.py — shared word-pool loader for the vocabulary games
+(Word Maze, Word Snake, Meaning Dash, Word Hopper, Word Tetris,
+Word Crossword).
 
 Rather than maintaining a small hand-written word list, these games draw
 their word bank directly from the site's own Intermediate and Advanced

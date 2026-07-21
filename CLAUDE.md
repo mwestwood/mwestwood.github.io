@@ -424,9 +424,9 @@ The arcade has a **reinforcement engine** (spaced repetition, added July
 Player progress (XP/stars/words/crowns/streak) lives in localStorage under
 `vocab-arcade-v1`; all new fields are backward-compatible with old saves.
 
-### Arrow-key vocabulary games: Word Maze, Word Snake, Meaning Dash, Word Hopper
+### Shared-pool vocabulary games: Word Maze, Word Snake, Meaning Dash, Word Hopper, Word Tetris, Word Crossword
 
-Four separate games share one word bank — but unlike the other game word
+Six separate games share one word bank — but unlike the other game word
 banks on this site, it is **not** a hand-written file. `_tools/vocab_pool.py`
 decrypts the site's own Intermediate and Advanced Word List pages
 (`teaching/vocabulary/intermediate.md`, `advanced.md` — hundreds of full
@@ -440,26 +440,34 @@ site's existing ~1,600-word pool solved that and gave every word a real
 link back "for free". There is no local word-bank file to maintain or
 gitignore anymore; the only input is the site's own encrypted content plus
 the passphrase already required to build these pages. Each game has its
-own build script and encrypted page, but all four call
+own build script and encrypted page, but all six call
 `vocab_pool.load_pools(passphrase, ROOT)` — editing the engine layouts
 never requires re-encryption; editing the Intermediate/Advanced word-card
-pages does, and touches all four (rebuild all four so they stay in sync):
+pages does, and touches all six (rebuild all six so they stay in sync):
 
 ```bash
-python3 _tools/build-vocab-maze.py  "passphrase"  # teaching/vocabulary/maze.md
-python3 _tools/build-word-snake.py  "passphrase"  # teaching/vocabulary/snake.md
-python3 _tools/build-word-dash.py   "passphrase"  # teaching/vocabulary/dash.md
-python3 _tools/build-word-hopper.py "passphrase"  # teaching/vocabulary/hopper.md
+python3 _tools/build-vocab-maze.py      "passphrase"  # teaching/vocabulary/maze.md
+python3 _tools/build-word-snake.py      "passphrase"  # teaching/vocabulary/snake.md
+python3 _tools/build-word-dash.py       "passphrase"  # teaching/vocabulary/dash.md
+python3 _tools/build-word-hopper.py     "passphrase"  # teaching/vocabulary/hopper.md
+python3 _tools/build-word-tetris.py     "passphrase"  # teaching/vocabulary/tetris.md
+python3 _tools/build-word-crossword.py  "passphrase"  # teaching/vocabulary/crossword.md
 ```
 
-All four skip `encrypt-batch.py` (it forces `layout: protected` and skips
+All six skip `encrypt-batch.py` (it forces `layout: protected` and skips
 empty-body files anyway).
 
-Shared design rules (July 2026 — keep when editing any of the four):
+Shared design rules (July 2026 — keep when editing any of the six):
 
-- **Every level is unlocked from the start** — `unlocked()` returns true in
-  all four engines; stars still record per-level bests, they just don't
-  gate anything.
+- **Every level is unlocked from the start** — stars still record
+  per-level bests, they just don't gate anything.
+- **Review-before-play** (Word Tetris and Word Crossword, July 2026 — an
+  explicit requirement): after picking a level the engine shows a
+  card-per-word **review deck** (word, meaning, example, syn/ant,
+  full-card link, 🔊 Hear it via speechSynthesis) and the Start button
+  stays disabled until every card has been paged through (`S.seen`).
+  The level's question/word set is exactly the reviewed set — nothing
+  unreviewed is ever asked.
 - **Context theming**: each level/world sets a hero character and canvas
   palette that match the setting (dolphin in the ocean, penguin on the
   ice, dragon in the lava, ghost in the haunted keep). The character and
@@ -474,8 +482,9 @@ Shared design rules (July 2026 — keep when editing any of the four):
   reacting.
 - Recap screens pluralize "word(s) mastered" (`"1 words"` shipped once and
   was caught in testing — keep the ternary when copying the pattern).
-- **Speed control** (the three real-time engines only — Word Snake, Meaning
-  Dash, Word Hopper; Word Maze is turn-based and has none): a 🐢 Slow /
+- **Speed control** (the four real-time engines only — Word Snake, Meaning
+  Dash, Word Hopper, Word Tetris; Word Maze and Word Crossword are
+  turn-based and have none): a 🐢 Slow /
   🚶 Normal / 🐇 Fast row on the home screen, persisted per-game as
   `P.speed` (`'slow' | 'normal' | 'fast'`, default `'slow'` — the levels'
   base numbers alone shipped too fast and were the direct complaint, and
@@ -485,8 +494,9 @@ Shared design rules (July 2026 — keep when editing any of the four):
   directly in Dash and Hopper (`S.fallSpeed`, obstacle `speed`); Snake's
   `level.speed` is ms-per-tick, so it **divides** instead
   (`S.tickMs = level.speed / SPEED_MULT[P.speed]`) to keep "higher number
-  = faster" consistent across all three. Applied once at `start()` —
-  changing the setting mid-run has no effect until the level restarts.
+  = faster" consistent across all of them; Tetris's `gravity` is also
+  ms-per-row so it divides too. Applied once at `start()` — changing the
+  setting mid-run has no effect until the level restarts.
 - **Word-card link + extra info**: every engine has a `wordRowHtml(w)`
   helper (next to `esc()`) used in every win/game-over recap row — it adds
   `Similar:` / `Opposite:` lines when `syn`/`ant` are present and a
@@ -495,7 +505,7 @@ Shared design rules (July 2026 — keep when editing any of the four):
   treatment directly into its gate teach-card and word-chip info card
   (`infoCard()`) since those are the two other places a word's full detail
   is shown. Copy this helper into any new game rather than re-deriving it.
-- **iPad/touch support**: every button in all four layouts sets
+- **iPad/touch support**: every button in all six layouts sets
   `touch-action: manipulation` + `-webkit-tap-highlight-color: transparent`
   (removes the tap flash and the double-tap-to-zoom that would otherwise
   fight rapid D-pad taps); every canvas sets `-webkit-touch-callout: none`
@@ -508,8 +518,10 @@ Shared design rules (July 2026 — keep when editing any of the four):
   creates/resumes the shared `AC` and is called synchronously at the top of
   `queueDir()` / `moveLane()` / `hop()` (the real gesture handlers) so the
   context is already running by the time a later tick wants to play a
-  tone. Word Maze doesn't need this — its tones fire directly from answer
-  button clicks, which already are gestures.
+  tone. Word Tetris calls it in `input2()` for the same reason. Word Maze
+  and Word Crossword don't strictly need it — their tones fire from
+  answer clicks/keystrokes, which already are gestures (Crossword still
+  calls `unlockAudio()` in its tap/type handlers as a belt-and-braces).
 
 **Word Maze** (`_layouts/protected-maze.html`, nav_order 5) — navigate a
 maze with arrow keys/WASD/D-pad/swipe; 🔒 word gates block the only path.
@@ -550,6 +562,43 @@ must stay ≤ 4 — the board is a fixed 7×7 with the start row at `fy=6`, so
 tile. 20 themed levels (Lily
 Pond → Galactic Gate) with per-level obstacle sets and 2–4 traffic lanes.
 Progress: `vocab-hopper-v1`.
+
+**Word Tetris** (`_layouts/protected-tetris.html`, nav_order 9) — real
+falling-blocks Tetris (7 tetrominoes, rotate with wall kicks, soft drop,
+space = hard drop, D-pad + swipe/tap on touch) with the **review deck
+first** (see Review-before-play above): each of the 20 themed levels
+(Meadow Blocks → Galactic Dock) draws 6–10 words, walks the player
+through their cards, then quizzes exactly those words during play.
+**Word checks** open as a modal over the frozen board after every 2nd
+locked piece (`QUIZ_EVERY`) or any line clear: "which word means …" with
+3 options drawn from the level's own set. Correct = word banked (📚
+pill); wrong = teach feedback + the word requeues + **one garbage row
+rises from the floor** (gray, one random gap) — reaching the top ends
+the run, which is the only failure mode. Win = every level word answered
+correctly; stars by quiz accuracy (≥85% 3★, ≥60% 2★). The board is
+9×14; the level's hero watches from the corner of the canvas. Progress:
+`vocab-tetris-v1`.
+
+**Word Crossword** (`_layouts/protected-crossword.html`, nav_order 10) —
+turn-based (no speed row, no start gate, no lives): 20 themed puzzles
+(Garden Grid → Galaxy Grid) of 5–8 interlocking words; every clue is the
+word's **meaning** (+ letter count), so it's meaning→spelling recall of
+the just-reviewed deck. Puzzles are **generated in the browser at play
+time** (`genPuzzle()`: greedy perpendicular-crossing placement over a
+shuffled slice of the tier pool, retries + accepts want−1 as last
+resort; only `/^[A-Za-z]{3,12}$/` words — filtered in `buildPool`). A
+completed slot **checks itself**: correct → cells lock green + sentence
+toast; wrong → shake + meaning reminder, and the 2nd wrong on a slot
+auto-reveals one letter with the example sentence blanked (`____`) — no
+dead ends; a 💡 "Free letter" button does the same on demand. Stars by
+`wrongs + hints` (≤1 3★, ≤4 2★). Typing (physical keys or the built-in
+QWERTY for iPad) **types through locked cells**: an untouched slot
+starts at cell 0, a keystroke matching a locked letter is consumed, the
+cursor advances one cell at a time and never skips a locked cell ahead
+of typing, and clearing a slot rewinds to its start — kids type the
+WHOLE word including revealed/crossing letters and it stays aligned
+(this shipped misaligned twice in testing; keep all four rules
+together). Progress: `vocab-crossword-v1`.
 
 ### Rebuild WH Question Quest (interactive game page)
 
