@@ -282,6 +282,40 @@ Key implementation details:
 - No `console.log` calls — all debug logging was removed
 - Web Crypto requires HTTPS — shows a clear error if `crypto.subtle` is unavailable
 
+### Performance: large word-list pages (iPad freeze fix)
+
+The Basic/Intermediate/Advanced Word List pages each render **600–900+
+`.word-card` blocks at once** after client-side decryption. Laying them all
+out synchronously measured **~1.8s on a fast desktop**, which balloons into a
+multi-second main-thread hang on an iPad — the reported "tap the word list
+and the whole site freezes" bug (every iPad browser is WebKit, so it hit all
+of them). The fix has three parts, all committed:
+
+1. **`content-visibility: auto` + `contain-intrinsic-size: auto 360px`** on
+   `.main-content .word-card` (`_sass/custom/custom.scss`). The browser skips
+   layout + paint of off-screen cards and renders them lazily on scroll,
+   turning an O(all cards) reflow into O(visible cards) (measured ~6× faster
+   initial layout). `360px` is the height estimate for skipped cards; a
+   `0 360px` fallback line precedes the `auto 360px` line for Safari < 17.
+2. **`settleScrollTo()` in `protected.html`** — because skipped cards use the
+   estimate until rendered, a single `scrollIntoView` lands a `#word`
+   deep-link short. `settleScrollTo` re-scrolls across animation frames
+   (suppressing CSS smooth-scroll) until the target's viewport position stops
+   moving. This is what keeps the A–Z index links and every game's "Full word
+   card ↗" link landing precisely (verified: target sits at
+   `scroll-padding-top` = 72px under the sticky header). Only runs on
+   `/teaching/vocabulary/` pages (inside `enhanceVocab`).
+3. **`@media (pointer: coarse) { body { background-attachment: scroll; } }`** —
+   the fixed SVG-turbulence + gradient backdrop forces iOS Safari to
+   re-composite the whole backdrop each scroll frame; on these tall pages
+   that alone janks/hangs. Let it scroll with the page on touch devices.
+
+Gotcha when testing: the headless preview browser can render
+`content-visibility` regions as **blank in screenshots** even though the DOM
+is correct — verify with `elementFromPoint` / `getBoundingClientRect`, not the
+screenshot. Also its programmatic `scrollTo`/`scrollIntoView` are often inert;
+real gesture scroll works.
+
 ---
 
 ## Common Tasks

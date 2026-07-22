@@ -79,6 +79,16 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+// On touch devices (every iPad browser is WebKit) a `background-attachment:
+// fixed` layer — here an SVG turbulence filter plus three gradients — forces
+// iOS Safari to re-composite the full backdrop on each scroll frame, and on
+// the very tall word-list pages that alone can jank or hang the renderer.
+// Let it scroll with the page there; the effect is barely perceptible in
+// motion and costs nothing to paint.
+@media (pointer: coarse) {
+  body { background-attachment: scroll; }
+}
+
 // Comfortable text selection in the accent colour.
 ::selection {
   background: rgba(226, 176, 74, 0.28);
@@ -726,6 +736,21 @@ a[href="#top"] {
   margin: 1.5rem 0;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.28);
   transition: border-color 0.15s ease, transform 0.15s ease;
+
+  // PERFORMANCE — this is what stops iPad Safari from freezing on the big
+  // word-list pages. Intermediate/Advanced/Basic render 600-900+ of these
+  // cards at once; laying them all out synchronously took ~1.8s on a fast
+  // desktop (measured), which balloons into a multi-second main-thread hang
+  // on an iPad and reads as "the whole site freezes". content-visibility
+  // lets the browser skip layout + paint of off-screen cards and render
+  // them lazily as you scroll, turning an O(all cards) reflow into
+  // O(visible cards). contain-intrinsic-size gives each skipped card a
+  // height estimate so the scrollbar and #word anchor jumps stay sane; the
+  // `auto` form (Safari 17+) remembers each card's real size once rendered,
+  // and the plain `0 360px` line above it is the fallback for older Safari.
+  content-visibility: auto;
+  contain-intrinsic-size: 0 360px;
+  contain-intrinsic-size: auto 360px;
 
   &:hover {
     border-color: var(--accent-line);

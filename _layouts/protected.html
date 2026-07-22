@@ -342,8 +342,34 @@ layout: default
 
     if (location.hash) {
       var target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
-      if (target) setTimeout(function () { target.scrollIntoView(); }, 60);
+      if (target) settleScrollTo(target);
     }
+  }
+
+  /* Land precisely on a #word deep-link (the A–Z index and every game's
+     "Full word card" link jump straight to a card) even though the word
+     cards use content-visibility:auto for performance — see custom.scss.
+     Cards above the target render with an ESTIMATED height until they're
+     scrolled near, so a single scrollIntoView lands short. Re-scroll across
+     animation frames until the target's viewport position stops moving
+     (layout settled), suppressing the CSS smooth-scroll so it doesn't fight
+     the loop. */
+  function settleScrollTo(target) {
+    var html = document.documentElement;
+    var prevBehavior = html.style.scrollBehavior;
+    html.style.scrollBehavior = 'auto';
+    var lastTop = null, stable = 0, frames = 0;
+    function step() {
+      target.scrollIntoView({ block: 'start' });
+      var top = Math.round(target.getBoundingClientRect().top);
+      if (top === lastTop) { stable++; } else { stable = 0; lastTop = top; }
+      if (stable >= 3 || ++frames >= 60) {
+        html.style.scrollBehavior = prevBehavior;
+        return;
+      }
+      requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
   }
 
   async function tryUnlock(passphrase, cache) {
