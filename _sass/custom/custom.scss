@@ -42,11 +42,13 @@
   --links-color: var(--accent);
 }
 
-// Cross-fade between page navigations (progressive enhancement; Chromium +
-// Safari 18+; other browsers simply ignore it).
-@view-transition {
-  navigation: auto;
-}
+// NOTE: a site-wide `@view-transition { navigation: auto; }` cross-fade used
+// to live here. Removed — WebKit's cross-document view-transition capture
+// hangs the renderer on very large destination pages (the ~900-card
+// Intermediate/Advanced/Basic Word List pages), which is exactly what showed
+// up as "the whole site freezes" when tapping into those pages on iPad
+// (every iPad browser is WebKit, so Safari-only bugs hit all of them there).
+// It was purely decorative — safe to drop rather than fight WebKit for it.
 
 @media (prefers-reduced-motion: no-preference) {
   html {
