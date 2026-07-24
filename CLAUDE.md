@@ -1011,6 +1011,83 @@ line — a `//` comment swallows the rest of the script ("Unexpected end of
 input", game silently dead at the gate). Use `/* */` comments only, in this
 and the other game layouts.
 
+### Rebuild Word Odyssey (English reading/writing/speaking academy)
+
+```bash
+python3 _tools/build-odyssey-hub.py   "passphrase"  # teaching/english/odyssey.md
+python3 _tools/build-odyssey-read.py  "passphrase"  # …/odyssey-reading.md
+python3 _tools/build-odyssey-write.py "passphrase"  # …/odyssey-writing.md
+python3 _tools/build-odyssey-speak.py "passphrase"  # …/odyssey-speaking.md
+```
+
+A four-page academy under `English` (nav_order 9–12) that gamifies the
+reading/writing/speaking strategies taught in strong independent schools,
+for a 4th-grader at grade level. Themed as a **Greek hero's voyage**
+(Troy/Odyssey), woven through his interests — soccer & the ancient
+Olympics, guitar/piano, swimming, Minecraft ruins, spy-style code-
+breaking. Reinforces the class lessons already on the site
+(`ms-dany-*.md`); the hub's "for grown-ups" note links to them.
+
+- **🗺️ Voyage Map** (`odyssey.md`, `protected-odyssey-hub`) — the hub.
+  Owns **no games**: it only reads the shared save and renders rank/XP,
+  the **Daily Quest** (one task per hall → +25 XP and a streak bump),
+  the **Powers board** (22 strategies, mastery medals, gold border =
+  due for review), stats, and links out. Everything on it is a link, so
+  it can't drift out of sync with the halls. Its encrypted blob is just
+  the grown-ups note (keeps the page body empty like every other
+  protected page).
+- **🔮 The Oracle** (`odyssey-reading.md`, `protected-odyssey-read`) —
+  12 close-reading passages in 3 "seas", 45 questions. Every question is
+  tagged with the elite strategy it trains (`infer`/`cite`/`craft`/
+  `gist`/`structure`/`pov`/`vocab`) and the tag is shown on screen; the
+  passage stays visible beside every question. Data:
+  `_tools/odyssey_read_data.py`.
+- **⚒️ The Forge** (`odyssey-writing.md`, `protected-odyssey-write`) —
+  39 exercises across 9 games built on Hochman's *The Writing
+  Revolution* (sentence-first instruction): Because/But/So (three-slot,
+  ends by showing all three sentences together — the whole point),
+  Sentence Combine, Expand, Appositives, Fragment-or-Sentence,
+  Show-Don't-Tell, Strong Verbs, Transitions, and **Paragraph Architect**
+  (tap-to-order with slot roles labelled topic/detail/conclusion). Plus
+  the **Writing Studio**: prompt → free write → 7-point rubric
+  self-check → saved to a "My Legend" wall (`P.write.pieces`). Data:
+  `_tools/odyssey_write_data.py`.
+- **🏛️ The Agora** (`odyssey-speaking.md`, `protected-odyssey-speak`) —
+  32 prompts across 6 games: Table Topics (impromptu via **P.R.E.P.**),
+  Claim-Evidence-Reasoning, Talk Moves (accountable-talk stems),
+  Storyteller, Read It Like You Mean It, Say It Strong. Data:
+  `_tools/odyssey_speak_data.py`.
+
+**Shared spine.** All four pages read/write ONE localStorage save,
+`word-odyssey-v1`: `{xp, skills, read:{stars}, write:{stars,pieces},
+speak:{stars,talks,mic}, quest, streak, lastQuestDay, voice, sound}`.
+Ranks (Apprentice → Voyager → Navigator → Champion → Orator → Hero →
+Legend at 0/80/220/450/800/1300/2000 XP) and the Leitner record shape
+(`{b,s,r,x,due}`, boxes 0–6, 0/1/2/4/7/14/30-day intervals, medals
+🥉≥2 🥈≥4 🥇≥6) are **duplicated in all four layouts — keep them in
+sync**. Skill keys: bare for reading, `w_` for writing, `s_` for
+speaking. Same autism-friendly/no-failure rules as the other games (two
+tries then teach + award anyway, no timers, nothing auto-advances,
+explicit XP arithmetic) and the same shared `mwestwood-voice-name`
+reading-voice pick and iOS/Chromium speech-timing fix.
+
+**The mic (Agora only).** Uses the Web Speech API
+(`SpeechRecognition`). Scoring is keyword/structure heuristics
+(`hasAny`/`overlap`/word count) — deliberately generous, and validated
+so a well-formed answer passes while a one-line answer fails. Every
+game falls back to a **self-check list** when the API is missing, the
+mic pill is off, permission is denied, or nothing is heard, so a round
+is never blocked. `fireDone()` guards XP so the free "try again" can't
+double-pay. **Wording matters:** the UI says the browser *may* send
+audio to its maker's service — Chrome does recognition in the cloud, so
+do not reword this to claim on-device-only.
+
+**Gotchas:** these pages skip `encrypt-batch.py` (it forces `layout:
+protected`; it skips them anyway since the body is empty). Same `/* */`
+-comments-only rule as every other game layout. Pluralise every count
+("1 piece written", not "1 pieces") — that bug shipped once here and was
+caught in testing.
+
 ### Inspect encrypted content without changing it
 
 ```bash

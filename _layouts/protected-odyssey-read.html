@@ -1,0 +1,1064 @@
+---
+layout: default
+---
+
+<style>
+  /* ── Password gate (same look as protected.html) ─────────────────────── */
+  #protected-gate {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; min-height: 40vh; padding: 2rem 1rem;
+  }
+  .gate-card {
+    background: var(--sidebar-color, #f5f6fa);
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 8px; padding: 2.5rem 2rem; max-width: 400px; width: 100%;
+    text-align: center; box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .gate-lock { font-size: 2.5rem; margin-bottom: 0.75rem; line-height: 1; }
+  .gate-title {
+    font-size: 1.25rem; font-weight: 600;
+    color: var(--body-text-color, #27262b); margin: 0 0 0.5rem 0;
+  }
+  .gate-subtitle {
+    font-size: 0.875rem; color: var(--body-text-color, #5c5962);
+    opacity: 0.75; margin: 0 0 1.5rem 0;
+  }
+  .gate-input-row { display: flex; gap: 0.5rem; width: 100%; }
+  #gate-password {
+    flex: 1; padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color, #d0d0d0); border-radius: 4px;
+    font-size: 1rem; background: var(--body-background-color, #fff);
+    color: var(--body-text-color, #27262b); outline: none;
+    transition: border-color 0.15s;
+  }
+  #gate-password:focus { border-color: var(--links-color, #7253ed); }
+  #gate-submit {
+    padding: 0.5rem 1.1rem; background: var(--links-color, #7253ed);
+    color: #fff; border: none; border-radius: 4px; font-size: 0.95rem;
+    font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+  #gate-submit:hover { opacity: 0.88; }
+  #gate-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+  #gate-error {
+    margin-top: 0.85rem; font-size: 0.875rem; color: #c0392b;
+    min-height: 1.25rem; display: none;
+  }
+  #gate-status {
+    margin-top: 0.85rem; font-size: 0.875rem;
+    color: var(--body-text-color, #5c5962); opacity: 0.7;
+    min-height: 1.25rem; display: none;
+  }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+
+  /* ── Word Odyssey · Reading Hall (The Oracle) ────────────────────────── */
+  #odyssey-root { display: none; }
+
+  .wo {
+    --sea: #38bdf8; --deep: #0ea5e9; --gold: #fbbf24;
+    --good: #4ade80; --bad: #f87171;
+    --card: rgba(255,255,255,0.05); --card2: rgba(56,189,248,0.09);
+    --line: rgba(255,255,255,0.14);
+    max-width: 780px;
+  }
+  .wo, .wo * { box-sizing: border-box; }
+  .wo button {
+    font-family: inherit; touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .wo-top {
+    display: flex; align-items: center; gap: 0.5rem;
+    margin-bottom: 1rem; flex-wrap: wrap;
+  }
+  .wo-back {
+    background: var(--card); border: 1px solid var(--line); color: inherit;
+    border-radius: 999px; padding: 0.45rem 1.05rem; font-size: 1rem;
+    cursor: pointer;
+  }
+  .wo-back:hover { border-color: var(--sea); }
+  .wo-spacer { flex: 1; }
+  .wo-pill {
+    font-size: 0.92rem; padding: 0.35rem 0.8rem; border-radius: 999px;
+    background: var(--card); border: 1px solid var(--line);
+    white-space: nowrap; color: inherit; cursor: default;
+  }
+  .wo-pill.rank { border-color: var(--gold); color: var(--gold);
+                  font-weight: 700; }
+  .wo-pill.xp { border-color: var(--sea); color: var(--sea);
+                font-weight: 700; }
+  button.wo-pill { cursor: pointer; }
+  button.wo-pill.off { opacity: 0.42; }
+
+  .wo-hero {
+    text-align: center; margin: 0.3rem 0 1.1rem;
+    padding: 1.1rem 1rem 1.3rem;
+    background: linear-gradient(180deg, var(--card2), transparent);
+    border: 1px solid var(--line); border-radius: 16px;
+  }
+  .wo-hero h1 {
+    margin: 0 0 0.25rem; font-size: 1.9rem;
+    font-family: Georgia, 'Times New Roman', serif; letter-spacing: 0.01em;
+  }
+  .wo-hero .sub { margin: 0 0 0.9rem; opacity: 0.78; font-size: 1rem; }
+
+  /* rank progress bar */
+  .wo-rank { max-width: 460px; margin: 0.4rem auto 0; }
+  .wo-rank .lab {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 0.88rem; margin-bottom: 0.3rem;
+  }
+  .wo-rank .lab b { font-size: 1rem; color: var(--gold); }
+  .wo-rank .lab span { opacity: 0.7; }
+  .wo-bar {
+    height: 12px; border-radius: 999px; background: rgba(255,255,255,0.08);
+    overflow: hidden; border: 1px solid var(--line);
+  }
+  .wo-bar > i {
+    display: block; height: 100%;
+    background: linear-gradient(90deg, var(--sea), var(--gold));
+  }
+
+  .wo-voicerow {
+    display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+    justify-content: center; margin: 0 0 1rem;
+  }
+  .wo-voicerow label { font-size: 0.9rem; opacity: 0.75; }
+  .wo-voicerow select {
+    background: var(--card); border: 1px solid var(--line); color: inherit;
+    border-radius: 8px; padding: 0.35rem 0.5rem; font-size: 0.9rem;
+    max-width: 250px;
+  }
+
+  .wo-maplink {
+    font-size: 0.9rem; opacity: 0.8; text-decoration: none;
+    border-bottom: 1px dotted var(--sea);
+  }
+  .wo-maplink:hover { opacity: 1; text-decoration: none; }
+
+  .wo-sect {
+    font-size: 1.05rem; font-weight: 700; margin: 1.4rem 0 0.6rem;
+    display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap;
+  }
+  .wo-sect .desc { font-size: 0.82rem; opacity: 0.62; font-weight: 400; }
+
+  /* powers strip */
+  .wo-powers {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 0.5rem; margin-bottom: 0.4rem;
+  }
+  .wo-power {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 0.55rem 0.4rem; text-align: center;
+    line-height: 1.25;
+  }
+  .wo-power .em { font-size: 1.4rem; }
+  .wo-power .nm { font-size: 0.74rem; font-weight: 600; margin-top: 0.15rem; }
+  .wo-power .md { font-size: 0.95rem; margin-top: 0.1rem; min-height: 1.1em; }
+
+  .wo-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.55rem;
+  }
+  .wo-passage {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 0.75rem 0.6rem; cursor: pointer;
+    color: inherit; text-align: center; line-height: 1.3;
+    display: flex; flex-direction: column; gap: 0.25rem; align-items: center;
+  }
+  .wo-passage:hover { border-color: var(--sea); transform: translateY(-1px); }
+  .wo-passage .em { font-size: 1.7rem; }
+  .wo-passage .nm { font-size: 0.86rem; font-weight: 600; }
+  .wo-passage .st { font-size: 0.8rem; letter-spacing: 0.1em; color: var(--gold); }
+
+  /* passage + question screen */
+  .wo-scroll {
+    background: var(--card2); border: 1px solid var(--line);
+    border-left: 4px solid var(--gold);
+    border-radius: 12px; padding: 1rem 1.1rem; margin-bottom: 1rem;
+  }
+  .wo-scroll h2 {
+    margin: 0 0 0.5rem; font-size: 1.25rem;
+    font-family: Georgia, 'Times New Roman', serif;
+    display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+  }
+  .wo-scroll .text { font-size: 1.12rem; line-height: 1.75; }
+  .wo-readbtn {
+    margin-top: 0.7rem; background: none; border: 1px solid var(--line);
+    color: inherit; border-radius: 999px; padding: 0.35rem 0.9rem;
+    font-size: 0.9rem; cursor: pointer;
+  }
+  .wo-readbtn:hover { border-color: var(--sea); }
+
+  .wo-tag {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    font-size: 0.82rem; font-weight: 700; padding: 0.25rem 0.7rem;
+    border-radius: 999px; margin-bottom: 0.5rem;
+  }
+  .wo-qnum { font-size: 0.85rem; opacity: 0.6; margin: 0.1rem 0 0.3rem; }
+  .wo-q { font-size: 1.3rem; font-weight: 700; line-height: 1.45;
+          margin-bottom: 0.9rem; }
+  .wo-opts { display: flex; flex-direction: column; gap: 0.55rem; }
+  .wo-opt {
+    background: var(--card); border: 2px solid var(--line); color: inherit;
+    border-radius: 12px; padding: 0.75rem 1rem; font-size: 1.08rem;
+    cursor: pointer; text-align: left; line-height: 1.4;
+  }
+  .wo-opt:hover:not(:disabled) { border-color: var(--sea); }
+  .wo-opt:disabled { cursor: default; }
+  .wo-opt.dim { opacity: 0.35; }
+  .wo-opt.yes { border-color: var(--good); background: rgba(74,222,128,0.12); }
+  .wo-opt.no { border-color: var(--bad); animation: woNudge 0.35s; }
+
+  .wo-feedback { margin-top: 0.9rem; font-size: 1.05rem; line-height: 1.55;
+                 min-height: 1.5rem; }
+  .wo-feedback .teach {
+    display: block; margin-top: 0.4rem; padding: 0.6rem 0.8rem;
+    background: var(--card); border-left: 3px solid var(--sea);
+    border-radius: 0 8px 8px 0; font-size: 1rem;
+  }
+  .wo-feedback .math { display: block; margin-top: 0.4rem;
+                       color: var(--gold); font-weight: 700; }
+  .wo-next {
+    display: block; margin: 1.1rem auto 0; padding: 0.8rem 2.6rem;
+    background: var(--sea); color: #06263a; border: none;
+    border-radius: 999px; font-size: 1.15rem; font-weight: 700;
+    cursor: pointer;
+  }
+  .wo-next:hover { opacity: 0.9; }
+
+  /* recap */
+  .wo-recap { text-align: center; padding: 1.2rem 0; }
+  .wo-recap .big { font-size: 3rem; margin-bottom: 0.3rem; }
+  .wo-recap h2 { margin: 0 0 0.3rem; font-size: 1.5rem;
+                 font-family: Georgia, serif; }
+  .wo-recap .stars { font-size: 2rem; letter-spacing: 0.15em;
+                     color: var(--gold); margin: 0.3rem 0; }
+  .wo-recap p { opacity: 0.82; margin: 0.3rem 0; }
+  .wo-recap .powdone {
+    display: flex; gap: 0.4rem; justify-content: center; flex-wrap: wrap;
+    margin: 0.8rem 0;
+  }
+  .wo-recap .powdone span {
+    font-size: 0.82rem; padding: 0.25rem 0.6rem; border-radius: 999px;
+    background: var(--card); border: 1px solid var(--line);
+  }
+  .wo-recap .row { display: flex; gap: 0.6rem; justify-content: center;
+                   margin-top: 1rem; flex-wrap: wrap; }
+
+  /* rank-up banner */
+  .wo-rankup {
+    position: fixed; left: 50%; top: 18%; transform: translateX(-50%);
+    z-index: 50; background: #0b1f2e; color: #fff;
+    border: 2px solid var(--gold); border-radius: 14px;
+    padding: 0.9rem 1.4rem; text-align: center; max-width: 90vw;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5); animation: woPop 0.4s;
+  }
+  .wo-rankup .r1 { font-size: 0.85rem; opacity: 0.8; }
+  .wo-rankup .r2 { font-size: 1.4rem; font-weight: 700; color: var(--gold);
+                   font-family: Georgia, serif; margin-top: 0.15rem; }
+
+  @keyframes woNudge {
+    25% { transform: translateX(-4px); } 75% { transform: translateX(4px); }
+  }
+  @keyframes woPop {
+    0% { transform: translateX(-50%) scale(0.7); opacity: 0; }
+    100% { transform: translateX(-50%) scale(1); opacity: 1; }
+  }
+
+  @media (max-width: 500px) {
+    .wo-scroll .text { font-size: 1.05rem; }
+    .wo-q { font-size: 1.15rem; }
+    .wo-opt { font-size: 1rem; }
+    .wo-hero h1 { font-size: 1.55rem; }
+  }
+</style>
+
+<!-- Password gate -->
+<div id="protected-gate">
+  <div class="gate-card">
+    <div class="gate-lock" aria-hidden="true">🔒</div>
+    <p class="gate-title">{{ page.title | default: "Protected Page" }}</p>
+    <p class="gate-subtitle">This page is password-protected. Enter the passphrase to unlock.</p>
+    <div class="gate-input-row">
+      <label for="gate-password" class="sr-only">Passphrase</label>
+      <input id="gate-password" type="password" placeholder="Passphrase" autocomplete="off" autofocus />
+      <button id="gate-submit">Unlock</button>
+    </div>
+    <div id="gate-error" role="alert" aria-live="polite">Incorrect passphrase — please try again.</div>
+    <div id="gate-status" role="status" aria-live="polite">Decrypting…</div>
+  </div>
+</div>
+
+<div id="odyssey-root"><div class="wo" id="wo"></div></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* Encrypted blob injected by Jekyll from front matter field `encrypted` */
+  const ENCRYPTED_B64 = {{ page.encrypted | jsonify }};
+
+  const STORAGE_KEY = 'mwestwood-passphrase';
+
+  /* ── Gate (same crypto as protected.html) ───────────────────────────── */
+
+  function b64ToBytes(b64) {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+  async function deriveKey(passphrase, salt) {
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw', enc.encode(passphrase), { name: 'PBKDF2' }, false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: salt, iterations: 100000, hash: 'SHA-256' },
+      keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+  }
+  async function decrypt(passphrase) {
+    const blob = b64ToBytes(ENCRYPTED_B64);
+    const salt = blob.slice(0, 16);
+    const iv = blob.slice(16, 28);
+    const ct = blob.slice(28);
+    const key = await deriveKey(passphrase, salt);
+    const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, ct);
+    return new TextDecoder().decode(plaintext);
+  }
+
+  const gate = document.getElementById('protected-gate');
+  const rootWrap = document.getElementById('odyssey-root');
+  const input = document.getElementById('gate-password');
+  const btn = document.getElementById('gate-submit');
+  const errEl = document.getElementById('gate-error');
+  const statusEl = document.getElementById('gate-status');
+
+  function showError(msg) {
+    errEl.textContent = msg || 'Incorrect passphrase — please try again.';
+    errEl.style.display = 'block';
+    statusEl.style.display = 'none';
+    btn.disabled = false;
+    input.select();
+  }
+  function showStatus(msg) {
+    statusEl.textContent = msg;
+    statusEl.style.display = 'block';
+    errEl.style.display = 'none';
+  }
+  function reveal(text) {
+    let data;
+    try { data = JSON.parse(text); }
+    catch (e) { showError('Data error: could not parse passage bank.'); return; }
+    gate.style.display = 'none';
+    rootWrap.style.display = 'block';
+    Oracle.boot(data);
+  }
+  async function tryUnlock(passphrase, cache) {
+    try {
+      showStatus('Decrypting…');
+      btn.disabled = true;
+      const text = await decrypt(passphrase);
+      if (cache) {
+        try { localStorage.setItem(STORAGE_KEY, passphrase); } catch (_) {}
+      }
+      reveal(text);
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'OperationError') {
+        showError('Incorrect passphrase — please try again.');
+      } else if (e instanceof TypeError && e.message.includes('subtle')) {
+        showError('Error: Web Crypto API unavailable. This page requires HTTPS.');
+      } else {
+        showError('Error (' + e.name + '): ' + e.message);
+      }
+    }
+  }
+  async function init() {
+    if (!ENCRYPTED_B64) { showError('No encrypted data on this page.'); return; }
+    try {
+      const cached = localStorage.getItem(STORAGE_KEY);
+      if (cached) {
+        showStatus('Unlocking…');
+        btn.disabled = true;
+        input.disabled = true;
+        try {
+          const text = await decrypt(cached);
+          reveal(text);
+          return;
+        } catch (_) {
+          localStorage.removeItem(STORAGE_KEY);
+          btn.disabled = false;
+          input.disabled = false;
+          statusEl.style.display = 'none';
+        }
+      }
+    } catch (_) {}
+  }
+  btn.addEventListener('click', function () {
+    const pw = input.value;
+    if (!pw) { input.focus(); return; }
+    tryUnlock(pw, true);
+  });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') btn.click();
+  });
+
+  /* ═══════════════════ Word Odyssey · The Oracle ═══════════════════════
+     Close-reading practice, one hall of the Word Odyssey academy.
+     Design rules (shared across every hall):
+       - The passage stays VISIBLE beside every question — comprehension,
+         not memory. Same layout every question; one big NEXT button;
+         nothing auto-advances; no timers.
+       - Every question trains a named ELITE reading strategy (a "Power"):
+         inference, evidence, author's craft, main idea, text structure,
+         point of view, word clues. The Power is shown on the question and
+         its mastery is tracked (spaced-repetition record per skill).
+       - Two tries then teach-and-reveal, a point either way — no failure.
+       - One shared save (`word-odyssey-v1`) unifies XP / rank / streak /
+         skill mastery across the Reading, Writing and Speaking halls.
+       - Reading voice is the site-wide shared pick (`mwestwood-voice-name`).
+  ═══════════════════════════════════════════════════════════════════════ */
+
+  const Oracle = (function () {
+
+    const el = document.getElementById('wo');
+    let DATA = null;
+
+    const SEAS = [
+      { n: 1, em: '🌅', name: 'The Shallows',
+        desc: 'Warm-up voyages along the coast.' },
+      { n: 2, em: '🌊', name: 'The Open Sea',
+        desc: 'Deeper water — clues, evidence, and craft.' },
+      { n: 3, em: '🌩️', name: 'Monster Waters',
+        desc: 'The hardest reading: inference, mood, and meaning.' }
+    ];
+
+    const SKILLS = {
+      infer:     { em: '🔍', name: 'Inference',
+                   col: '#38bdf8', tip: 'Read between the lines using clues.' },
+      cite:      { em: '📜', name: 'Evidence',
+                   col: '#f59e0b', tip: 'Point to the line that proves it.' },
+      craft:     { em: '🎨', name: "Author's Craft",
+                   col: '#c084fc', tip: 'Similes, mood, and word choice.' },
+      gist:      { em: '🎯', name: 'Main Idea',
+                   col: '#34d399', tip: 'The big point, not a small detail.' },
+      structure: { em: '🧱', name: 'Text Structure',
+                   col: '#fb7185', tip: 'How a story is built.' },
+      pov:       { em: '👓', name: 'Point of View',
+                   col: '#a3e635', tip: 'Whose eyes you see through.' },
+      vocab:     { em: '🗝️', name: 'Word Clues',
+                   col: '#22d3ee', tip: 'Meaning from surrounding words.' }
+    };
+    const SKILL_ORDER = ['infer', 'cite', 'craft', 'gist', 'structure',
+                         'pov', 'vocab'];
+
+    const RANKS = [
+      { xp: 0,    em: '🪶', name: 'Apprentice' },
+      { xp: 80,   em: '⚓', name: 'Voyager' },
+      { xp: 220,  em: '🧭', name: 'Navigator' },
+      { xp: 450,  em: '🛡️', name: 'Champion' },
+      { xp: 800,  em: '🏛️', name: 'Orator' },
+      { xp: 1300, em: '⚔️', name: 'Hero' },
+      { xp: 2000, em: '🌟', name: 'Legend' }
+    ];
+    function rankInfo(xp) {
+      let cur = RANKS[0], nxt = null;
+      for (let i = 0; i < RANKS.length; i++) {
+        if (xp >= RANKS[i].xp) { cur = RANKS[i]; nxt = RANKS[i + 1] || null; }
+      }
+      const into = xp - cur.xp;
+      const span = nxt ? (nxt.xp - cur.xp) : 1;
+      const pct = nxt ? Math.max(5, Math.min(100, Math.round(into / span * 100))) : 100;
+      return { cur: cur, nxt: nxt, into: into, span: span, pct: pct };
+    }
+
+    /* ── shared progress store (used by all halls + the hub) ──────────── */
+    const PKEY = 'word-odyssey-v1';
+    let P = {};
+    try { P = JSON.parse(localStorage.getItem(PKEY)) || {}; } catch (_) {}
+    if (!P || typeof P !== 'object') P = {};
+    P.v = P.v || 1;
+    P.xp = P.xp || 0;
+    P.skills = P.skills || {};          /* skillKey -> {b,s,r,x,due} */
+    P.read = P.read || {};
+    P.read.stars = P.read.stars || {};  /* passage id -> 0..3 best */
+    if (P.voice === undefined) P.voice = true;
+    if (P.sound === undefined) P.sound = true;
+    function save() {
+      try { localStorage.setItem(PKEY, JSON.stringify(P)); } catch (_) {}
+    }
+
+    function recordSkill(skill, ok) {
+      const rec = P.skills[skill] || { b: 0, s: 0, r: 0, x: 0, due: 0 };
+      rec.s++;
+      if (ok) { rec.r++; rec.b = Math.min(6, rec.b + 1); }
+      else { rec.x++; rec.b = 1; }
+      const days = [0, 1, 2, 4, 7, 14, 30][rec.b] || 30;
+      rec.due = Date.now() + days * 86400000;
+      P.skills[skill] = rec;
+      save();
+    }
+    function medal(skill) {
+      const rec = P.skills[skill];
+      if (!rec || !rec.s) return '';
+      if (rec.b >= 6) return '🥇';
+      if (rec.b >= 4) return '🥈';
+      if (rec.b >= 2) return '🥉';
+      return '⚪';
+    }
+
+    /* reading voice is shared across every game on the site */
+    const VOICE_KEY = 'mwestwood-voice-name';
+    let voiceName = localStorage.getItem(VOICE_KEY) || '';
+    function saveVoice() {
+      try { localStorage.setItem(VOICE_KEY, voiceName); } catch (_) {}
+    }
+
+    /* ── speech + gentle sounds (kept in sync with the other games) ──── */
+    const JOKE_VOICES = ['Albert', 'Bad News', 'Bahh', 'Bells', 'Boing',
+      'Bubbles', 'Cellos', 'Good News', 'Jester', 'Organ', 'Superstar',
+      'Trinoids', 'Whisper', 'Wobble', 'Zarvox', 'Deranged', 'Hysterical'];
+    const NICE_NAMES = /^(Samantha|Ava|Allison|Susan|Zoe|Karen|Daniel|Moira|Tessa|Fiona|Serena|Kate)\b/;
+
+    let VOICES = [];
+    let chosenVoice = null;
+
+    function rankVoice(v) {
+      const n = v.name;
+      let r = 60;
+      if (n === 'Google US English') r = -100;
+      else if (/natural|neural/i.test(n)) r = 0;
+      else if (/enhanced|premium/i.test(n)) r = 10;
+      else if (NICE_NAMES.test(n)) r = 20;
+      else if (/^Google/i.test(n)) r = 30;
+      else if (v.localService) r = 40;
+      if (/^en[-_]US/i.test(v.lang)) r -= 5;
+      else if (/^en/i.test(v.lang)) r -= 2;
+      return r;
+    }
+    function loadVoices() {
+      try {
+        if (!window.speechSynthesis) return;
+        const all = speechSynthesis.getVoices().filter(function (v) {
+          if (!/^en/i.test(v.lang)) return false;
+          return JOKE_VOICES.indexOf(v.name.replace(/\s*\(.*\)$/, '')) === -1;
+        });
+        if (!all.length) return;
+        all.sort(function (a, b) {
+          return rankVoice(a) - rankVoice(b) || a.name.localeCompare(b.name);
+        });
+        VOICES = all;
+        chosenVoice = null;
+        if (voiceName) {
+          chosenVoice = all.find(function (v) { return v.name === voiceName; }) || null;
+        }
+        if (!chosenVoice) chosenVoice = all[0];
+        const sel = document.getElementById('wo-voicesel');
+        if (sel) fillVoiceSel(sel);
+      } catch (_) {}
+    }
+    loadVoices();
+    try { speechSynthesis.onvoiceschanged = loadVoices; } catch (_) {}
+    setTimeout(loadVoices, 300);
+
+    function fillVoiceSel(sel) {
+      sel.innerHTML = '';
+      const auto = document.createElement('option');
+      auto.value = '';
+      auto.textContent = '✨ Best available' +
+        (VOICES.length && !voiceName ? ' — ' + VOICES[0].name : '');
+      sel.appendChild(auto);
+      VOICES.forEach(function (v) {
+        const o = document.createElement('option');
+        o.value = v.name;
+        o.textContent = v.name + ' (' + v.lang + ')';
+        sel.appendChild(o);
+      });
+      sel.value = (voiceName && VOICES.some(function (v) { return v.name === voiceName; }))
+        ? voiceName : '';
+    }
+
+    /* iOS needs speak() synchronous inside the tap handler; Chrome needs a
+       tiny deferral when cancel() interrupts active speech (Chromium bug
+       679437). Same logic as the other engines — keep in sync. */
+    const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const CAN_DEFER_SPEECH = !IS_IOS;
+
+    function speak(text) {
+      if (!P.voice) return;
+      try {
+        if (!window.speechSynthesis) return;
+        const wasSpeaking = speechSynthesis.speaking;
+        speechSynthesis.cancel();
+        const clean = String(text).replace(/[🎉⭐🌟💪🎯✨🚀🔍📜🎨🧱👓🗝️…]/g, '');
+        const u = new SpeechSynthesisUtterance(clean);
+        u.rate = 0.9;
+        if (chosenVoice) {
+          u.voice = chosenVoice; u.lang = chosenVoice.lang; u.pitch = 1;
+        } else { u.pitch = 1.05; }
+        if (chosenVoice) {
+          u.onerror = function () {
+            try {
+              const fb = new SpeechSynthesisUtterance(clean);
+              fb.rate = 0.9; fb.pitch = 1.05;
+              speechSynthesis.speak(fb);
+            } catch (_) {}
+          };
+        }
+        if (wasSpeaking && CAN_DEFER_SPEECH) {
+          setTimeout(function () {
+            try { speechSynthesis.speak(u); } catch (_) {}
+          }, 50);
+        } else {
+          speechSynthesis.speak(u);
+        }
+      } catch (_) {}
+    }
+
+    let audioCtx = null;
+    function tone(freq, start, dur, vol) {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sine';
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0, audioCtx.currentTime + start);
+      g.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + start + 0.02);
+      g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + start + dur);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(audioCtx.currentTime + start);
+      o.stop(audioCtx.currentTime + start + dur + 0.05);
+    }
+    function sfx(kind) {
+      if (!P.sound) return;
+      try {
+        if (!audioCtx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) return;
+          audioCtx = new AC();
+        }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (kind === 'good') { tone(523, 0, 0.14, 0.07); tone(784, 0.12, 0.2, 0.07); }
+        else if (kind === 'soft') { tone(233, 0, 0.18, 0.045); }
+        else if (kind === 'star') { tone(659, 0, 0.12, 0.06); tone(784, 0.1, 0.12, 0.06); tone(1047, 0.2, 0.25, 0.06); }
+      } catch (_) {}
+    }
+
+    /* ── helpers ─────────────────────────────────────────────────────── */
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;',
+                 '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+    function shuffle(a) {
+      const arr = a.slice();
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+      }
+      return arr;
+    }
+    function stars3(n) { return '★'.repeat(n) + '☆'.repeat(3 - n); }
+
+    function topBar(backLabel, backFn) {
+      const bar = document.createElement('div');
+      bar.className = 'wo-top';
+      if (backFn) {
+        const back = document.createElement('button');
+        back.className = 'wo-back';
+        back.textContent = '← ' + (backLabel || 'Back');
+        back.addEventListener('click', function () {
+          try { speechSynthesis.cancel(); } catch (_) {}
+          backFn();
+        });
+        bar.appendChild(back);
+      }
+      const sp = document.createElement('div');
+      sp.className = 'wo-spacer';
+      bar.appendChild(sp);
+
+      const ri = rankInfo(P.xp);
+      const rank = document.createElement('span');
+      rank.className = 'wo-pill rank';
+      rank.id = 'wo-rankpill';
+      rank.textContent = ri.cur.em + ' ' + ri.cur.name;
+      bar.appendChild(rank);
+
+      const xp = document.createElement('span');
+      xp.className = 'wo-pill xp';
+      xp.id = 'wo-xppill';
+      xp.textContent = '⭐ ' + P.xp + ' XP';
+      bar.appendChild(xp);
+
+      const snd = document.createElement('button');
+      snd.className = 'wo-pill' + (P.sound ? '' : ' off');
+      snd.textContent = '🔔';
+      snd.title = 'Sounds on/off';
+      snd.addEventListener('click', function () {
+        P.sound = !P.sound; save();
+        snd.classList.toggle('off', !P.sound);
+      });
+      bar.appendChild(snd);
+
+      const vc = document.createElement('button');
+      vc.className = 'wo-pill' + (P.voice ? '' : ' off');
+      vc.textContent = '🗣️';
+      vc.title = 'Read-aloud on/off';
+      vc.addEventListener('click', function () {
+        P.voice = !P.voice; save();
+        vc.classList.toggle('off', !P.voice);
+        if (!P.voice) { try { speechSynthesis.cancel(); } catch (_) {} }
+      });
+      bar.appendChild(vc);
+      return bar;
+    }
+
+    function refreshTopPills() {
+      const ri = rankInfo(P.xp);
+      const rp = document.getElementById('wo-rankpill');
+      const xp = document.getElementById('wo-xppill');
+      if (rp) rp.textContent = ri.cur.em + ' ' + ri.cur.name;
+      if (xp) xp.textContent = '⭐ ' + P.xp + ' XP';
+    }
+    function bumpXp(add) {
+      const before = P.xp;
+      P.xp += add;
+      save();
+      refreshTopPills();
+      const b1 = rankInfo(before).cur.name;
+      const b2 = rankInfo(P.xp).cur;
+      if (b2.name !== b1) rankUpBanner(b2);
+      return before + ' + ' + add + ' = ' + P.xp;
+    }
+    function rankUpBanner(rank) {
+      sfx('star');
+      const b = document.createElement('div');
+      b.className = 'wo-rankup';
+      b.innerHTML = '<div class="r1">⚔️ You ranked up!</div>' +
+        '<div class="r2">' + rank.em + ' ' + esc(rank.name) + '</div>';
+      document.body.appendChild(b);
+      speak('You ranked up to ' + rank.name + '!');
+      setTimeout(function () {
+        b.style.transition = 'opacity 0.5s';
+        b.style.opacity = '0';
+        setTimeout(function () { b.remove(); }, 500);
+      }, 2400);
+    }
+
+    /* ── home screen ─────────────────────────────────────────────────── */
+    function home() {
+      el.innerHTML = '';
+      el.appendChild(topBar(null, null));
+
+      const ri = rankInfo(P.xp);
+      const hero = document.createElement('div');
+      hero.className = 'wo-hero';
+      hero.innerHTML =
+        '<h1>🔮 The Oracle</h1>' +
+        '<p class="sub">Read like a hero. Find the clues the Oracle hides, ' +
+        'and grow your reading Powers.</p>' +
+        '<div class="wo-rank">' +
+          '<div class="lab"><b>' + ri.cur.em + ' ' + esc(ri.cur.name) +
+          '</b><span>' + (ri.nxt
+            ? (ri.nxt.xp - P.xp) + ' XP to ' + esc(ri.nxt.name) + ' ' + ri.nxt.em
+            : 'Highest rank!') + '</span></div>' +
+          '<div class="wo-bar"><i style="width:' + ri.pct + '%"></i></div>' +
+        '</div>' +
+        '<p style="margin:0.9rem 0 0"><a href="/teaching/english/odyssey/" ' +
+        'class="wo-maplink">🗺️ Back to the Voyage Map</a></p>';
+      el.appendChild(hero);
+
+      if (VOICES.length) {
+        const vrow = document.createElement('div');
+        vrow.className = 'wo-voicerow';
+        const lab = document.createElement('label');
+        lab.textContent = '🗣️ Reading voice:';
+        lab.htmlFor = 'wo-voicesel';
+        vrow.appendChild(lab);
+        const sel = document.createElement('select');
+        sel.id = 'wo-voicesel';
+        fillVoiceSel(sel);
+        sel.addEventListener('change', function () {
+          voiceName = sel.value; saveVoice(); loadVoices();
+          speak('I will read the stories to you.');
+        });
+        vrow.appendChild(sel);
+        const tryBtn = document.createElement('button');
+        tryBtn.className = 'wo-pill';
+        tryBtn.textContent = '▶ Hear it';
+        tryBtn.addEventListener('click', function () {
+          speak('Welcome, hero. I am the Oracle. Ready to read?');
+        });
+        vrow.appendChild(tryBtn);
+        el.appendChild(vrow);
+      }
+
+      /* Powers strip */
+      const psect = document.createElement('div');
+      psect.className = 'wo-sect';
+      psect.innerHTML = '⚡ Your Reading Powers ' +
+        '<span class="desc">Answer questions to level up each Power.</span>';
+      el.appendChild(psect);
+      const powers = document.createElement('div');
+      powers.className = 'wo-powers';
+      SKILL_ORDER.forEach(function (k) {
+        const s = SKILLS[k];
+        const d = document.createElement('div');
+        d.className = 'wo-power';
+        d.title = s.tip;
+        d.innerHTML = '<div class="em">' + s.em + '</div>' +
+          '<div class="nm">' + esc(s.name) + '</div>' +
+          '<div class="md">' + (medal(k) || '·') + '</div>';
+        powers.appendChild(d);
+      });
+      el.appendChild(powers);
+
+      /* Seas of passages */
+      SEAS.forEach(function (sea) {
+        const passages = DATA.passages.filter(function (p) {
+          return p.tier === sea.n;
+        });
+        if (!passages.length) return;
+        const done = passages.filter(function (p) {
+          return (P.read.stars[p.id] || 0) > 0;
+        }).length;
+
+        const head = document.createElement('div');
+        head.className = 'wo-sect';
+        head.innerHTML = sea.em + ' ' + esc(sea.name) +
+          ' <span class="desc">' + done + ' / ' + passages.length +
+          ' read · ' + esc(sea.desc) + '</span>';
+        el.appendChild(head);
+
+        const grid = document.createElement('div');
+        grid.className = 'wo-grid';
+        passages.forEach(function (p) {
+          const b = document.createElement('button');
+          b.className = 'wo-passage';
+          b.innerHTML = '<span class="em">' + p.emoji + '</span>' +
+            '<span class="nm">' + esc(p.title) + '</span>' +
+            '<span class="st">' + stars3(P.read.stars[p.id] || 0) + '</span>';
+          b.addEventListener('click', function () { play(p); });
+          grid.appendChild(b);
+        });
+        el.appendChild(grid);
+      });
+
+      window.scrollTo(0, 0);
+    }
+
+    /* ── passage round ───────────────────────────────────────────────── */
+    function play(passage) {
+      const qs = passage.qs;
+      let idx = 0;
+      let firstTryRight = 0;
+      let tries = 0;
+      const practiced = {};
+
+      el.innerHTML = '';
+      el.appendChild(topBar('The Oracle', home));
+
+      const card = document.createElement('div');
+      card.className = 'wo-scroll';
+      card.innerHTML = '<h2><span>' + passage.emoji + '</span> ' +
+        esc(passage.title) + '</h2>' +
+        '<div class="text">' + esc(passage.text) + '</div>';
+      const readBtn = document.createElement('button');
+      readBtn.className = 'wo-readbtn';
+      readBtn.textContent = '🔊 Read it to me';
+      readBtn.addEventListener('click', function () {
+        speak(passage.title + '. ' + passage.text);
+      });
+      card.appendChild(readBtn);
+      el.appendChild(card);
+
+      const qWrap = document.createElement('div');
+      el.appendChild(qWrap);
+
+      speak(passage.title + '. ' + passage.text);
+
+      function ask() {
+        const q = qs[idx];
+        const sk = SKILLS[q.skill];
+        tries = 0;
+        qWrap.innerHTML = '';
+
+        const tag = document.createElement('div');
+        tag.className = 'wo-tag';
+        tag.style.background = 'rgba(255,255,255,0.06)';
+        tag.style.color = sk.col;
+        tag.style.border = '1px solid ' + sk.col;
+        tag.innerHTML = sk.em + ' ' + esc(sk.name) + ' Power';
+        qWrap.appendChild(tag);
+
+        const num = document.createElement('div');
+        num.className = 'wo-qnum';
+        num.textContent = 'Question ' + (idx + 1) + ' of ' + qs.length;
+        qWrap.appendChild(num);
+
+        const qEl = document.createElement('div');
+        qEl.className = 'wo-q';
+        qEl.textContent = q.q;
+        qWrap.appendChild(qEl);
+
+        const opts = document.createElement('div');
+        opts.className = 'wo-opts';
+        const feedback = document.createElement('div');
+        feedback.className = 'wo-feedback';
+
+        shuffle(q.opts).forEach(function (o) {
+          const b = document.createElement('button');
+          b.className = 'wo-opt';
+          b.textContent = o[0];
+          b.addEventListener('click', function () { answer(b, o, q, opts, feedback); });
+          opts.appendChild(b);
+        });
+        qWrap.appendChild(opts);
+        qWrap.appendChild(feedback);
+        speak(q.q);
+        window.scrollTo(0, 0);
+      }
+
+      function answer(btnEl, opt, q, opts, feedback) {
+        if (opt[1]) {
+          const first = tries === 0;
+          if (first) firstTryRight++;
+          Array.prototype.forEach.call(opts.children, function (b) {
+            b.disabled = true;
+          });
+          btnEl.classList.add('yes');
+          sfx('good');
+          if (!practiced[q.skill]) {
+            recordSkill(q.skill, true);
+            practiced[q.skill] = true;
+          }
+          const add = first ? 10 : 5;
+          const math = bumpXp(add);
+          feedback.innerHTML = (first ? '🎉 Yes! ' : '💪 You got it! ') +
+            '<span class="math">⭐ ' + esc(math) + ' XP</span>';
+          speak(first ? 'Yes!' : 'You got it!');
+          showNext(feedback);
+        } else {
+          tries++;
+          if (tries === 1) {
+            btnEl.classList.add('no');
+            setTimeout(function () {
+              btnEl.classList.remove('no');
+              btnEl.classList.add('dim');
+              btnEl.disabled = true;
+            }, 350);
+            sfx('soft');
+            feedback.textContent = '🔍 Look at the passage again — try once more!';
+            speak('Look again. Try once more!');
+          } else {
+            Array.prototype.forEach.call(opts.children, function (b) {
+              b.disabled = true;
+            });
+            let correctText = '';
+            q.opts.forEach(function (o) { if (o[1]) correctText = o[0]; });
+            Array.prototype.forEach.call(opts.children, function (b) {
+              if (b.textContent === correctText) b.classList.add('yes');
+            });
+            sfx('soft');
+            if (!practiced[q.skill]) {
+              recordSkill(q.skill, false);
+              practiced[q.skill] = true;
+            }
+            const math = bumpXp(5);
+            /* strip a trailing period so quoted answers don't read ".." */
+            const shown = correctText.replace(/\.$/, '');
+            feedback.innerHTML = 'The answer is <b>' + esc(shown) +
+              '</b>.<span class="teach">💡 ' + esc(q.teach) + '</span>' +
+              '<span class="math">⭐ ' + esc(math) + ' XP</span>';
+            speak('The answer is ' + correctText + '. ' + q.teach);
+            showNext(feedback);
+          }
+        }
+      }
+
+      function showNext(feedback) {
+        const next = document.createElement('button');
+        next.className = 'wo-next';
+        next.textContent = idx + 1 < qs.length ? 'Next ▶' : 'Finish 🏁';
+        next.addEventListener('click', function () {
+          idx++;
+          if (idx < qs.length) ask();
+          else recap();
+        });
+        feedback.appendChild(next);
+      }
+
+      function recap() {
+        const total = qs.length;
+        const ratio = firstTryRight / total;
+        const starsEarned = ratio >= 0.85 ? 3 : ratio >= 0.6 ? 2 : 1;
+        const best = P.read.stars[passage.id] || 0;
+        if (starsEarned > best) P.read.stars[passage.id] = starsEarned;
+        save();
+        sfx('star');
+
+        const usedSkills = {};
+        qs.forEach(function (q) { usedSkills[q.skill] = true; });
+
+        el.innerHTML = '';
+        el.appendChild(topBar('The Oracle', home));
+        const r = document.createElement('div');
+        r.className = 'wo-recap';
+        r.innerHTML = '<div class="big">' + passage.emoji + '</div>' +
+          '<h2>' + esc(passage.title) + ' — done!</h2>' +
+          '<div class="stars">' + stars3(starsEarned) + '</div>' +
+          '<p>' + firstTryRight + ' of ' + total +
+          ' right on the first try.</p>';
+        const pd = document.createElement('div');
+        pd.className = 'powdone';
+        Object.keys(usedSkills).forEach(function (k) {
+          const s = SKILLS[k];
+          const sp = document.createElement('span');
+          sp.innerHTML = s.em + ' ' + esc(s.name) + ' ' + (medal(k) || '');
+          pd.appendChild(sp);
+        });
+        r.appendChild(pd);
+        if (starsEarned === 3) {
+          const perf = document.createElement('p');
+          perf.textContent = 'Perfect voyage! 🎉';
+          r.appendChild(perf);
+        }
+        const row = document.createElement('div');
+        row.className = 'row';
+        const again = document.createElement('button');
+        again.className = 'wo-back';
+        again.textContent = '↻ Read again';
+        again.addEventListener('click', function () { play(passage); });
+        row.appendChild(again);
+        const back = document.createElement('button');
+        back.className = 'wo-back';
+        back.textContent = '🧭 More passages';
+        back.addEventListener('click', home);
+        row.appendChild(back);
+        r.appendChild(row);
+        el.appendChild(r);
+        speak('You finished ' + passage.title + '! ' + firstTryRight +
+              ' out of ' + total + ' on the first try.');
+        window.scrollTo(0, 0);
+      }
+
+      ask();
+      window.scrollTo(0, 0);
+    }
+
+    /* ── boot ─────────────────────────────────────────────────────────── */
+    function boot(data) {
+      DATA = data;
+      home();
+    }
+
+    return { boot: boot };
+  })();
+
+  init();
+})();
+</script>

@@ -1,0 +1,1470 @@
+---
+layout: default
+---
+
+<style>
+  /* ── Password gate (same look as protected.html) ─────────────────────── */
+  #protected-gate {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; min-height: 40vh; padding: 2rem 1rem;
+  }
+  .gate-card {
+    background: var(--sidebar-color, #f5f6fa);
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 8px; padding: 2.5rem 2rem; max-width: 400px; width: 100%;
+    text-align: center; box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .gate-lock { font-size: 2.5rem; margin-bottom: 0.75rem; line-height: 1; }
+  .gate-title {
+    font-size: 1.25rem; font-weight: 600;
+    color: var(--body-text-color, #27262b); margin: 0 0 0.5rem 0;
+  }
+  .gate-subtitle {
+    font-size: 0.875rem; color: var(--body-text-color, #5c5962);
+    opacity: 0.75; margin: 0 0 1.5rem 0;
+  }
+  .gate-input-row { display: flex; gap: 0.5rem; width: 100%; }
+  #gate-password {
+    flex: 1; padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color, #d0d0d0); border-radius: 4px;
+    font-size: 1rem; background: var(--body-background-color, #fff);
+    color: var(--body-text-color, #27262b); outline: none;
+    transition: border-color 0.15s;
+  }
+  #gate-password:focus { border-color: var(--links-color, #7253ed); }
+  #gate-submit {
+    padding: 0.5rem 1.1rem; background: var(--links-color, #7253ed);
+    color: #fff; border: none; border-radius: 4px; font-size: 0.95rem;
+    font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+  #gate-submit:hover { opacity: 0.88; }
+  #gate-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+  #gate-error {
+    margin-top: 0.85rem; font-size: 0.875rem; color: #c0392b;
+    min-height: 1.25rem; display: none;
+  }
+  #gate-status {
+    margin-top: 0.85rem; font-size: 0.875rem;
+    color: var(--body-text-color, #5c5962); opacity: 0.7;
+    min-height: 1.25rem; display: none;
+  }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+
+  /* ── Word Odyssey · Writing Hall (The Forge) ─────────────────────────── */
+  #odyssey-root { display: none; }
+
+  .wo {
+    --sea: #38bdf8; --gold: #fbbf24; --fire: #fb923c;
+    --good: #4ade80; --bad: #f87171;
+    --card: rgba(255,255,255,0.05); --card2: rgba(251,146,60,0.10);
+    --line: rgba(255,255,255,0.14);
+    max-width: 780px;
+  }
+  .wo, .wo * { box-sizing: border-box; }
+  .wo button {
+    font-family: inherit; touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .wo-top {
+    display: flex; align-items: center; gap: 0.5rem;
+    margin-bottom: 1rem; flex-wrap: wrap;
+  }
+  .wo-back {
+    background: var(--card); border: 1px solid var(--line); color: inherit;
+    border-radius: 999px; padding: 0.45rem 1.05rem; font-size: 1rem;
+    cursor: pointer;
+  }
+  .wo-back:hover { border-color: var(--fire); }
+  .wo-spacer { flex: 1; }
+  .wo-pill {
+    font-size: 0.92rem; padding: 0.35rem 0.8rem; border-radius: 999px;
+    background: var(--card); border: 1px solid var(--line);
+    white-space: nowrap; color: inherit; cursor: default;
+  }
+  .wo-pill.rank { border-color: var(--gold); color: var(--gold);
+                  font-weight: 700; }
+  .wo-pill.xp { border-color: var(--sea); color: var(--sea);
+                font-weight: 700; }
+  button.wo-pill { cursor: pointer; }
+  button.wo-pill.off { opacity: 0.42; }
+
+  .wo-hero {
+    text-align: center; margin: 0.3rem 0 1.1rem;
+    padding: 1.1rem 1rem 1.3rem;
+    background: linear-gradient(180deg, var(--card2), transparent);
+    border: 1px solid var(--line); border-radius: 16px;
+  }
+  .wo-hero h1 {
+    margin: 0 0 0.25rem; font-size: 1.9rem;
+    font-family: Georgia, 'Times New Roman', serif;
+  }
+  .wo-hero .sub { margin: 0 0 0.9rem; opacity: 0.78; font-size: 1rem; }
+  .wo-rank { max-width: 460px; margin: 0.4rem auto 0; }
+  .wo-rank .lab {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 0.88rem; margin-bottom: 0.3rem;
+  }
+  .wo-rank .lab b { font-size: 1rem; color: var(--gold); }
+  .wo-rank .lab span { opacity: 0.7; }
+  .wo-bar {
+    height: 12px; border-radius: 999px; background: rgba(255,255,255,0.08);
+    overflow: hidden; border: 1px solid var(--line);
+  }
+  .wo-bar > i {
+    display: block; height: 100%;
+    background: linear-gradient(90deg, var(--fire), var(--gold));
+  }
+
+  .wo-maplink {
+    font-size: 0.9rem; opacity: 0.8; text-decoration: none;
+    border-bottom: 1px dotted var(--fire);
+  }
+  .wo-maplink:hover { opacity: 1; text-decoration: none; }
+
+  .wo-sect {
+    font-size: 1.05rem; font-weight: 700; margin: 1.4rem 0 0.6rem;
+    display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap;
+  }
+  .wo-sect .desc { font-size: 0.82rem; opacity: 0.62; font-weight: 400; }
+
+  /* game cards */
+  .wo-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+    gap: 0.6rem;
+  }
+  .wo-game {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 14px; padding: 0.85rem 0.7rem; cursor: pointer;
+    color: inherit; text-align: center; line-height: 1.3;
+    display: flex; flex-direction: column; gap: 0.28rem; align-items: center;
+  }
+  .wo-game:hover { border-color: var(--fire); transform: translateY(-1px); }
+  .wo-game .em { font-size: 1.9rem; }
+  .wo-game .nm { font-size: 0.95rem; font-weight: 700; }
+  .wo-game .dc { font-size: 0.76rem; opacity: 0.65; }
+  .wo-game .st { font-size: 0.78rem; letter-spacing: 0.08em; color: var(--gold); }
+
+  /* exercise screen */
+  .wo-lesson {
+    background: var(--card2); border: 1px solid var(--line);
+    border-left: 4px solid var(--fire);
+    border-radius: 12px; padding: 0.8rem 1rem; margin-bottom: 1rem;
+    font-size: 0.98rem; line-height: 1.6;
+  }
+  .wo-lesson b { color: var(--fire); }
+
+  .wo-qnum { font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.35rem; }
+  .wo-prompt { font-size: 1.2rem; font-weight: 700; line-height: 1.45;
+               margin-bottom: 0.6rem; }
+  .wo-ctx {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 10px; padding: 0.75rem 0.95rem; margin-bottom: 0.9rem;
+    font-size: 1.1rem; line-height: 1.6; font-style: italic;
+  }
+  .wo-opts { display: flex; flex-direction: column; gap: 0.55rem; }
+  .wo-opt {
+    background: var(--card); border: 2px solid var(--line); color: inherit;
+    border-radius: 12px; padding: 0.75rem 1rem; font-size: 1.06rem;
+    cursor: pointer; text-align: left; line-height: 1.45;
+  }
+  .wo-opt:hover:not(:disabled) { border-color: var(--fire); }
+  .wo-opt:disabled { cursor: default; }
+  .wo-opt.dim { opacity: 0.35; }
+  .wo-opt.yes { border-color: var(--good); background: rgba(74,222,128,0.12); }
+  .wo-opt.no { border-color: var(--bad); animation: woNudge 0.35s; }
+
+  .wo-feedback { margin-top: 0.9rem; font-size: 1.05rem; line-height: 1.55;
+                 min-height: 1.5rem; }
+  .wo-feedback .teach {
+    display: block; margin-top: 0.4rem; padding: 0.6rem 0.8rem;
+    background: var(--card); border-left: 3px solid var(--fire);
+    border-radius: 0 8px 8px 0; font-size: 1rem;
+  }
+  .wo-feedback .math { display: block; margin-top: 0.4rem;
+                       color: var(--gold); font-weight: 700; }
+  .wo-next {
+    display: block; margin: 1.1rem auto 0; padding: 0.8rem 2.6rem;
+    background: var(--fire); color: #2a1206; border: none;
+    border-radius: 999px; font-size: 1.15rem; font-weight: 700;
+    cursor: pointer;
+  }
+  .wo-next:hover { opacity: 0.9; }
+
+  /* Because / But / So slots */
+  .wo-stem {
+    font-size: 1.22rem; font-weight: 700; line-height: 1.5;
+    background: var(--card); border: 1px solid var(--line);
+    border-left: 4px solid var(--gold);
+    border-radius: 10px; padding: 0.8rem 1rem; margin-bottom: 0.9rem;
+  }
+  .wo-slotlab {
+    display: inline-block; font-size: 1.05rem; font-weight: 700;
+    padding: 0.3rem 0.9rem; border-radius: 999px; margin-bottom: 0.6rem;
+  }
+  .wo-slotlab.because { background: rgba(56,189,248,0.16); color: #38bdf8;
+                        border: 1px solid #38bdf8; }
+  .wo-slotlab.but { background: rgba(251,113,133,0.16); color: #fb7185;
+                    border: 1px solid #fb7185; }
+  .wo-slotlab.so { background: rgba(74,222,128,0.16); color: #4ade80;
+                   border: 1px solid #4ade80; }
+  .wo-built {
+    margin-top: 0.9rem; padding: 0.7rem 0.9rem; border-radius: 10px;
+    background: rgba(74,222,128,0.10); border: 1px solid var(--good);
+    font-size: 1.05rem; line-height: 1.6;
+  }
+  .wo-built .lbl { font-size: 0.78rem; opacity: 0.7; display: block;
+                   margin-bottom: 0.2rem; }
+
+  /* Paragraph Architect (ordering) */
+  .wo-slots { display: flex; flex-direction: column; gap: 0.4rem;
+              margin-bottom: 0.9rem; }
+  .wo-slot {
+    display: flex; align-items: flex-start; gap: 0.6rem;
+    background: var(--card); border: 1px dashed var(--line);
+    border-radius: 10px; padding: 0.6rem 0.8rem; min-height: 2.9rem;
+    font-size: 1.02rem; line-height: 1.5;
+  }
+  .wo-slot .n {
+    flex: none; width: 1.7rem; height: 1.7rem; border-radius: 50%;
+    background: rgba(255,255,255,0.09); display: flex;
+    align-items: center; justify-content: center; font-size: 0.85rem;
+    font-weight: 700;
+  }
+  .wo-slot .role { font-size: 0.72rem; opacity: 0.6; display: block; }
+  .wo-slot.filled { border-style: solid; }
+  .wo-slot.ok { border-color: var(--good); background: rgba(74,222,128,0.10); }
+  .wo-slot.bad { border-color: var(--bad); animation: woNudge 0.35s; }
+  .wo-slot button.undo {
+    margin-left: auto; background: none; border: none; color: inherit;
+    opacity: 0.5; cursor: pointer; font-size: 1rem;
+  }
+  .wo-parts { display: flex; flex-direction: column; gap: 0.45rem; }
+  .wo-part {
+    background: var(--card); border: 2px solid var(--line); color: inherit;
+    border-radius: 10px; padding: 0.65rem 0.9rem; font-size: 1.02rem;
+    cursor: pointer; text-align: left; line-height: 1.45;
+  }
+  .wo-part:hover { border-color: var(--fire); }
+  .wo-part.used { display: none; }
+
+  /* Free-write studio */
+  .wo-studio textarea {
+    width: 100%; min-height: 190px; resize: vertical;
+    background: var(--card); border: 1px solid var(--line); color: inherit;
+    border-radius: 12px; padding: 0.85rem 1rem; font-size: 1.05rem;
+    line-height: 1.7; font-family: inherit;
+  }
+  .wo-studio textarea:focus { outline: none; border-color: var(--fire); }
+  .wo-count { font-size: 0.85rem; opacity: 0.7; margin: 0.4rem 0 0.9rem;
+              text-align: right; }
+  .wo-check { display: flex; flex-direction: column; gap: 0.45rem; }
+  .wo-check label {
+    display: flex; gap: 0.6rem; align-items: flex-start;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 10px; padding: 0.6rem 0.8rem; font-size: 1rem;
+    cursor: pointer; line-height: 1.45;
+  }
+  .wo-check input { margin-top: 0.25rem; flex: none;
+                    width: 1.05rem; height: 1.05rem; }
+  .wo-check label.on { border-color: var(--good);
+                       background: rgba(74,222,128,0.10); }
+  .wo-saved {
+    background: var(--card); border: 1px solid var(--line);
+    border-left: 3px solid var(--gold);
+    border-radius: 0 10px 10px 0; padding: 0.7rem 0.9rem;
+    margin-bottom: 0.6rem; font-size: 0.98rem; line-height: 1.6;
+  }
+  .wo-saved .meta { font-size: 0.78rem; opacity: 0.65;
+                    display: flex; gap: 0.6rem; flex-wrap: wrap;
+                    margin-bottom: 0.35rem; }
+  .wo-saved .body { white-space: pre-wrap; }
+
+  /* recap */
+  .wo-recap { text-align: center; padding: 1.2rem 0; }
+  .wo-recap .big { font-size: 3rem; margin-bottom: 0.3rem; }
+  .wo-recap h2 { margin: 0 0 0.3rem; font-size: 1.5rem;
+                 font-family: Georgia, serif; }
+  .wo-recap .stars { font-size: 2rem; letter-spacing: 0.15em;
+                     color: var(--gold); margin: 0.3rem 0; }
+  .wo-recap p { opacity: 0.82; margin: 0.3rem 0; }
+  .wo-recap .row { display: flex; gap: 0.6rem; justify-content: center;
+                   margin-top: 1rem; flex-wrap: wrap; }
+
+  .wo-rankup {
+    position: fixed; left: 50%; top: 18%; transform: translateX(-50%);
+    z-index: 50; background: #2a1206; color: #fff;
+    border: 2px solid var(--gold); border-radius: 14px;
+    padding: 0.9rem 1.4rem; text-align: center; max-width: 90vw;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5); animation: woPop 0.4s;
+  }
+  .wo-rankup .r1 { font-size: 0.85rem; opacity: 0.8; }
+  .wo-rankup .r2 { font-size: 1.4rem; font-weight: 700; color: var(--gold);
+                   font-family: Georgia, serif; margin-top: 0.15rem; }
+
+  @keyframes woNudge {
+    25% { transform: translateX(-4px); } 75% { transform: translateX(4px); }
+  }
+  @keyframes woPop {
+    0% { transform: translateX(-50%) scale(0.7); opacity: 0; }
+    100% { transform: translateX(-50%) scale(1); opacity: 1; }
+  }
+
+  @media (max-width: 500px) {
+    .wo-prompt { font-size: 1.08rem; }
+    .wo-opt, .wo-part { font-size: 0.98rem; }
+    .wo-hero h1 { font-size: 1.55rem; }
+    .wo-ctx { font-size: 1.02rem; }
+  }
+</style>
+
+<!-- Password gate -->
+<div id="protected-gate">
+  <div class="gate-card">
+    <div class="gate-lock" aria-hidden="true">🔒</div>
+    <p class="gate-title">{{ page.title | default: "Protected Page" }}</p>
+    <p class="gate-subtitle">This page is password-protected. Enter the passphrase to unlock.</p>
+    <div class="gate-input-row">
+      <label for="gate-password" class="sr-only">Passphrase</label>
+      <input id="gate-password" type="password" placeholder="Passphrase" autocomplete="off" autofocus />
+      <button id="gate-submit">Unlock</button>
+    </div>
+    <div id="gate-error" role="alert" aria-live="polite">Incorrect passphrase — please try again.</div>
+    <div id="gate-status" role="status" aria-live="polite">Decrypting…</div>
+  </div>
+</div>
+
+<div id="odyssey-root"><div class="wo" id="wo"></div></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* Encrypted blob injected by Jekyll from front matter field `encrypted` */
+  const ENCRYPTED_B64 = {{ page.encrypted | jsonify }};
+
+  const STORAGE_KEY = 'mwestwood-passphrase';
+
+  /* ── Gate (same crypto as protected.html) ───────────────────────────── */
+
+  function b64ToBytes(b64) {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+  async function deriveKey(passphrase, salt) {
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw', enc.encode(passphrase), { name: 'PBKDF2' }, false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: salt, iterations: 100000, hash: 'SHA-256' },
+      keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+  }
+  async function decrypt(passphrase) {
+    const blob = b64ToBytes(ENCRYPTED_B64);
+    const salt = blob.slice(0, 16);
+    const iv = blob.slice(16, 28);
+    const ct = blob.slice(28);
+    const key = await deriveKey(passphrase, salt);
+    const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, ct);
+    return new TextDecoder().decode(plaintext);
+  }
+
+  const gate = document.getElementById('protected-gate');
+  const rootWrap = document.getElementById('odyssey-root');
+  const input = document.getElementById('gate-password');
+  const btn = document.getElementById('gate-submit');
+  const errEl = document.getElementById('gate-error');
+  const statusEl = document.getElementById('gate-status');
+
+  function showError(msg) {
+    errEl.textContent = msg || 'Incorrect passphrase — please try again.';
+    errEl.style.display = 'block';
+    statusEl.style.display = 'none';
+    btn.disabled = false;
+    input.select();
+  }
+  function showStatus(msg) {
+    statusEl.textContent = msg;
+    statusEl.style.display = 'block';
+    errEl.style.display = 'none';
+  }
+  function reveal(text) {
+    let data;
+    try { data = JSON.parse(text); }
+    catch (e) { showError('Data error: could not parse exercise bank.'); return; }
+    gate.style.display = 'none';
+    rootWrap.style.display = 'block';
+    Forge.boot(data);
+  }
+  async function tryUnlock(passphrase, cache) {
+    try {
+      showStatus('Decrypting…');
+      btn.disabled = true;
+      const text = await decrypt(passphrase);
+      if (cache) {
+        try { localStorage.setItem(STORAGE_KEY, passphrase); } catch (_) {}
+      }
+      reveal(text);
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'OperationError') {
+        showError('Incorrect passphrase — please try again.');
+      } else if (e instanceof TypeError && e.message.includes('subtle')) {
+        showError('Error: Web Crypto API unavailable. This page requires HTTPS.');
+      } else {
+        showError('Error (' + e.name + '): ' + e.message);
+      }
+    }
+  }
+  async function init() {
+    if (!ENCRYPTED_B64) { showError('No encrypted data on this page.'); return; }
+    try {
+      const cached = localStorage.getItem(STORAGE_KEY);
+      if (cached) {
+        showStatus('Unlocking…');
+        btn.disabled = true;
+        input.disabled = true;
+        try {
+          const text = await decrypt(cached);
+          reveal(text);
+          return;
+        } catch (_) {
+          localStorage.removeItem(STORAGE_KEY);
+          btn.disabled = false;
+          input.disabled = false;
+          statusEl.style.display = 'none';
+        }
+      }
+    } catch (_) {}
+  }
+  btn.addEventListener('click', function () {
+    const pw = input.value;
+    if (!pw) { input.focus(); return; }
+    tryUnlock(pw, true);
+  });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') btn.click();
+  });
+
+  /* ═══════════════════ Word Odyssey · The Forge ════════════════════════
+     Sentence-craft practice — the writing hall of the Word Odyssey.
+     Built on Hochman's *The Writing Revolution*: instruction starts at
+     the SENTENCE, not the essay. Games:
+       ⚡ Because/But/So   — one stem, three logical relationships
+       🔗 Sentence Combine — choppy kernels -> one strong sentence
+       🌱 Sentence Expand  — answer who/what/when/where/why
+       💎 Appositives      — rename a noun between commas
+       🧱 Fragment or Not  — sentence-boundary judgment
+       🎭 Show Don't Tell  — evidence instead of labels
+       🔥 Strong Verbs     — one precise verb beats verb+adverb
+       🧭 Transitions      — the word that names the logical move
+       🏛️ Paragraph Architect — order topic/detail/conclusion (tap to build)
+       ✍️ The Writing Studio — free write + rubric self-check, saved
+     Shared rules: two tries then teach (no failure state), one big Next,
+     nothing auto-advances, explicit XP arithmetic, shared save
+     `word-odyssey-v1` (XP/rank/skills) with the other halls.
+  ═══════════════════════════════════════════════════════════════════════ */
+
+  const Forge = (function () {
+
+    const el = document.getElementById('wo');
+    let DATA = null;
+
+    /* game definitions — `kind` matches the data bank */
+    const GAMES = [
+      { kind: 'bcs', em: '⚡', name: 'Because / But / So',
+        desc: 'Finish one idea three ways',
+        lesson: 'One sentence stem, three different endings. <b>Because</b> ' +
+                'gives the REASON. <b>But</b> gives the SURPRISE. <b>So</b> ' +
+                'gives the RESULT. This is the single best sentence drill ' +
+                'there is — it makes you think three ways about one idea.' },
+      { kind: 'combine', em: '🔗', name: 'Sentence Combine',
+        desc: 'Choppy sentences → one strong one',
+        lesson: 'Short choppy sentences make writing sound young. Join them ' +
+                'into one smooth sentence and your writing instantly sounds ' +
+                'older and clearer.' },
+      { kind: 'expand', em: '🌱', name: 'Sentence Expand',
+        desc: 'Grow a tiny sentence',
+        lesson: 'Take a bare "kernel" sentence and grow it by answering ' +
+                'question words: <b>who, what, when, where, why, how</b>. ' +
+                'Adding real information beats adding more adjectives.' },
+      { kind: 'appos', em: '💎', name: 'Appositive Adder',
+        desc: 'Rename a noun, between commas',
+        lesson: 'An <b>appositive</b> renames a noun and hides between two ' +
+                'commas: "Athena, <i>the goddess of wisdom</i>, helped him." ' +
+                'It is the fastest way to sound like a real author.' },
+      { kind: 'frag', em: '🧱', name: 'Fragment or Sentence?',
+        desc: 'Spot incomplete sentences',
+        lesson: 'A real sentence needs a <b>subject</b> (who) and a ' +
+                '<b>verb</b> (what they do), and must feel finished. ' +
+                'Fragments and comma splices are the most common mistakes ' +
+                'in 4th-grade writing — learn to hear them.' },
+      { kind: 'show', em: '🎭', name: "Show, Don't Tell",
+        desc: 'Prove it, don\'t label it',
+        lesson: 'Do not TELL the reader "he was nervous." SHOW evidence ' +
+                'they can see — shaking hands, a re-read line — and let ' +
+                'them conclude it themselves. This is the heart of good ' +
+                'story writing.' },
+      { kind: 'verb', em: '🔥', name: 'Strong Verbs',
+        desc: 'One precise verb wins',
+        lesson: 'Weak verb + adverb ("walked quietly") is almost always ' +
+                'beaten by one precise verb ("crept"). Hunt down ' +
+                '<b>was, were, there was, went, got</b> in your own ' +
+                'writing.' },
+      { kind: 'trans', em: '🧭', name: 'Transition Match',
+        desc: 'The word that links ideas',
+        lesson: 'Transitions tell the reader what move you are making: ' +
+                'sequence (then), contrast (however), cause (as a result), ' +
+                'example (for example), conclusion (in conclusion).' },
+      { kind: 'para', em: '🏛️', name: 'Paragraph Architect',
+        desc: 'Build a paragraph in order',
+        lesson: 'A strong paragraph has a shape: a <b>topic sentence</b> ' +
+                'that makes the point, <b>supporting details</b> that prove ' +
+                'it, and a <b>conclusion</b> that wraps it up. Tap the ' +
+                'sentences into the right order.' }
+    ];
+    const GAME_BY_KIND = {};
+    GAMES.forEach(function (g) { GAME_BY_KIND[g.kind] = g; });
+
+    /* paragraph slot roles shown in the ordering game */
+    function slotRole(i, n) {
+      if (i === 0) return 'Topic sentence — the point';
+      if (i === n - 1) return 'Conclusion — wrap it up';
+      return 'Supporting detail ' + i;
+    }
+
+    /* rubric for the free-write studio (self-assessment is itself an
+       elite skill — kids who can grade their own writing improve fastest) */
+    const RUBRIC = [
+      'My first sentence tells the reader what this is about.',
+      'I used at least one <b>because</b>, <b>but</b>, or <b>so</b> sentence.',
+      'I SHOWED a feeling instead of just naming it.',
+      'I used a strong verb instead of "was" or "went".',
+      'I used a transition word (then, however, as a result…).',
+      'Every sentence starts with a capital and ends with punctuation.',
+      'I read it out loud and fixed anything that sounded wrong.'
+    ];
+
+    const RANKS = [
+      { xp: 0,    em: '🪶', name: 'Apprentice' },
+      { xp: 80,   em: '⚓', name: 'Voyager' },
+      { xp: 220,  em: '🧭', name: 'Navigator' },
+      { xp: 450,  em: '🛡️', name: 'Champion' },
+      { xp: 800,  em: '🏛️', name: 'Orator' },
+      { xp: 1300, em: '⚔️', name: 'Hero' },
+      { xp: 2000, em: '🌟', name: 'Legend' }
+    ];
+    function rankInfo(xp) {
+      let cur = RANKS[0], nxt = null;
+      for (let i = 0; i < RANKS.length; i++) {
+        if (xp >= RANKS[i].xp) { cur = RANKS[i]; nxt = RANKS[i + 1] || null; }
+      }
+      const into = xp - cur.xp;
+      const span = nxt ? (nxt.xp - cur.xp) : 1;
+      const pct = nxt ? Math.max(5, Math.min(100, Math.round(into / span * 100))) : 100;
+      return { cur: cur, nxt: nxt, into: into, span: span, pct: pct };
+    }
+
+    /* ── shared progress store (same key as the other halls) ──────────── */
+    const PKEY = 'word-odyssey-v1';
+    let P = {};
+    try { P = JSON.parse(localStorage.getItem(PKEY)) || {}; } catch (_) {}
+    if (!P || typeof P !== 'object') P = {};
+    P.v = P.v || 1;
+    P.xp = P.xp || 0;
+    P.skills = P.skills || {};
+    P.write = P.write || {};
+    P.write.stars = P.write.stars || {};    /* game kind -> 0..3 best */
+    P.write.pieces = P.write.pieces || [];  /* saved free writes */
+    if (P.voice === undefined) P.voice = true;
+    if (P.sound === undefined) P.sound = true;
+    function save() {
+      try { localStorage.setItem(PKEY, JSON.stringify(P)); } catch (_) {}
+    }
+
+    function recordSkill(skill, ok) {
+      const rec = P.skills[skill] || { b: 0, s: 0, r: 0, x: 0, due: 0 };
+      rec.s++;
+      if (ok) { rec.r++; rec.b = Math.min(6, rec.b + 1); }
+      else { rec.x++; rec.b = 1; }
+      const days = [0, 1, 2, 4, 7, 14, 30][rec.b] || 30;
+      rec.due = Date.now() + days * 86400000;
+      P.skills[skill] = rec;
+      save();
+    }
+    function medal(skill) {
+      const rec = P.skills[skill];
+      if (!rec || !rec.s) return '';
+      if (rec.b >= 6) return '🥇';
+      if (rec.b >= 4) return '🥈';
+      if (rec.b >= 2) return '🥉';
+      return '';
+    }
+
+    const VOICE_KEY = 'mwestwood-voice-name';
+    let voiceName = localStorage.getItem(VOICE_KEY) || '';
+
+    /* ── speech + sounds (same rules as the other engines) ───────────── */
+    const JOKE_VOICES = ['Albert', 'Bad News', 'Bahh', 'Bells', 'Boing',
+      'Bubbles', 'Cellos', 'Good News', 'Jester', 'Organ', 'Superstar',
+      'Trinoids', 'Whisper', 'Wobble', 'Zarvox', 'Deranged', 'Hysterical'];
+    const NICE_NAMES = /^(Samantha|Ava|Allison|Susan|Zoe|Karen|Daniel|Moira|Tessa|Fiona|Serena|Kate)\b/;
+    let VOICES = [];
+    let chosenVoice = null;
+
+    function rankVoice(v) {
+      const n = v.name;
+      let r = 60;
+      if (n === 'Google US English') r = -100;
+      else if (/natural|neural/i.test(n)) r = 0;
+      else if (/enhanced|premium/i.test(n)) r = 10;
+      else if (NICE_NAMES.test(n)) r = 20;
+      else if (/^Google/i.test(n)) r = 30;
+      else if (v.localService) r = 40;
+      if (/^en[-_]US/i.test(v.lang)) r -= 5;
+      else if (/^en/i.test(v.lang)) r -= 2;
+      return r;
+    }
+    function loadVoices() {
+      try {
+        if (!window.speechSynthesis) return;
+        const all = speechSynthesis.getVoices().filter(function (v) {
+          if (!/^en/i.test(v.lang)) return false;
+          return JOKE_VOICES.indexOf(v.name.replace(/\s*\(.*\)$/, '')) === -1;
+        });
+        if (!all.length) return;
+        all.sort(function (a, b) {
+          return rankVoice(a) - rankVoice(b) || a.name.localeCompare(b.name);
+        });
+        VOICES = all;
+        chosenVoice = null;
+        if (voiceName) {
+          chosenVoice = all.find(function (v) { return v.name === voiceName; }) || null;
+        }
+        if (!chosenVoice) chosenVoice = all[0];
+      } catch (_) {}
+    }
+    loadVoices();
+    try { speechSynthesis.onvoiceschanged = loadVoices; } catch (_) {}
+    setTimeout(loadVoices, 300);
+
+    const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const CAN_DEFER_SPEECH = !IS_IOS;
+
+    function speak(text) {
+      if (!P.voice) return;
+      try {
+        if (!window.speechSynthesis) return;
+        const wasSpeaking = speechSynthesis.speaking;
+        speechSynthesis.cancel();
+        const clean = String(text).replace(/[🎉⭐🌟💪🎯✨🚀⚡🔗🌱💎🧱🎭🔥🧭🏛️…]/g, '');
+        const u = new SpeechSynthesisUtterance(clean);
+        u.rate = 0.9;
+        if (chosenVoice) {
+          u.voice = chosenVoice; u.lang = chosenVoice.lang; u.pitch = 1;
+        } else { u.pitch = 1.05; }
+        if (wasSpeaking && CAN_DEFER_SPEECH) {
+          setTimeout(function () {
+            try { speechSynthesis.speak(u); } catch (_) {}
+          }, 50);
+        } else {
+          speechSynthesis.speak(u);
+        }
+      } catch (_) {}
+    }
+
+    let audioCtx = null;
+    function tone(freq, start, dur, vol) {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sine';
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0, audioCtx.currentTime + start);
+      g.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + start + 0.02);
+      g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + start + dur);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(audioCtx.currentTime + start);
+      o.stop(audioCtx.currentTime + start + dur + 0.05);
+    }
+    function sfx(kind) {
+      if (!P.sound) return;
+      try {
+        if (!audioCtx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) return;
+          audioCtx = new AC();
+        }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (kind === 'good') { tone(523, 0, 0.14, 0.07); tone(784, 0.12, 0.2, 0.07); }
+        else if (kind === 'soft') { tone(233, 0, 0.18, 0.045); }
+        else if (kind === 'star') { tone(659, 0, 0.12, 0.06); tone(784, 0.1, 0.12, 0.06); tone(1047, 0.2, 0.25, 0.06); }
+      } catch (_) {}
+    }
+
+    /* ── helpers ─────────────────────────────────────────────────────── */
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;',
+                 '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+    function shuffle(a) {
+      const arr = a.slice();
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+      }
+      return arr;
+    }
+    function stars3(n) { return '★'.repeat(n) + '☆'.repeat(3 - n); }
+
+    function topBar(backLabel, backFn) {
+      const bar = document.createElement('div');
+      bar.className = 'wo-top';
+      if (backFn) {
+        const back = document.createElement('button');
+        back.className = 'wo-back';
+        back.textContent = '← ' + (backLabel || 'Back');
+        back.addEventListener('click', function () {
+          try { speechSynthesis.cancel(); } catch (_) {}
+          backFn();
+        });
+        bar.appendChild(back);
+      }
+      const sp = document.createElement('div');
+      sp.className = 'wo-spacer';
+      bar.appendChild(sp);
+
+      const ri = rankInfo(P.xp);
+      const rank = document.createElement('span');
+      rank.className = 'wo-pill rank';
+      rank.id = 'wo-rankpill';
+      rank.textContent = ri.cur.em + ' ' + ri.cur.name;
+      bar.appendChild(rank);
+
+      const xp = document.createElement('span');
+      xp.className = 'wo-pill xp';
+      xp.id = 'wo-xppill';
+      xp.textContent = '⭐ ' + P.xp + ' XP';
+      bar.appendChild(xp);
+
+      const snd = document.createElement('button');
+      snd.className = 'wo-pill' + (P.sound ? '' : ' off');
+      snd.textContent = '🔔';
+      snd.title = 'Sounds on/off';
+      snd.addEventListener('click', function () {
+        P.sound = !P.sound; save();
+        snd.classList.toggle('off', !P.sound);
+      });
+      bar.appendChild(snd);
+
+      const vc = document.createElement('button');
+      vc.className = 'wo-pill' + (P.voice ? '' : ' off');
+      vc.textContent = '🗣️';
+      vc.title = 'Read-aloud on/off';
+      vc.addEventListener('click', function () {
+        P.voice = !P.voice; save();
+        vc.classList.toggle('off', !P.voice);
+        if (!P.voice) { try { speechSynthesis.cancel(); } catch (_) {} }
+      });
+      bar.appendChild(vc);
+      return bar;
+    }
+
+    function refreshTopPills() {
+      const ri = rankInfo(P.xp);
+      const rp = document.getElementById('wo-rankpill');
+      const xp = document.getElementById('wo-xppill');
+      if (rp) rp.textContent = ri.cur.em + ' ' + ri.cur.name;
+      if (xp) xp.textContent = '⭐ ' + P.xp + ' XP';
+    }
+    function bumpXp(add) {
+      const before = P.xp;
+      P.xp += add;
+      save();
+      refreshTopPills();
+      const b1 = rankInfo(before).cur.name;
+      const b2 = rankInfo(P.xp).cur;
+      if (b2.name !== b1) rankUpBanner(b2);
+      return before + ' + ' + add + ' = ' + P.xp;
+    }
+    function rankUpBanner(rank) {
+      sfx('star');
+      const b = document.createElement('div');
+      b.className = 'wo-rankup';
+      b.innerHTML = '<div class="r1">⚔️ You ranked up!</div>' +
+        '<div class="r2">' + rank.em + ' ' + esc(rank.name) + '</div>';
+      document.body.appendChild(b);
+      speak('You ranked up to ' + rank.name + '!');
+      setTimeout(function () {
+        b.style.transition = 'opacity 0.5s';
+        b.style.opacity = '0';
+        setTimeout(function () { b.remove(); }, 500);
+      }, 2400);
+    }
+
+    /* ── home screen ─────────────────────────────────────────────────── */
+    function home() {
+      el.innerHTML = '';
+      el.appendChild(topBar(null, null));
+
+      const ri = rankInfo(P.xp);
+      const hero = document.createElement('div');
+      hero.className = 'wo-hero';
+      hero.innerHTML =
+        '<h1>⚒️ The Forge</h1>' +
+        '<p class="sub">Where sentences are hammered into shape. ' +
+        'Every game here makes your writing stronger.</p>' +
+        '<div class="wo-rank">' +
+          '<div class="lab"><b>' + ri.cur.em + ' ' + esc(ri.cur.name) +
+          '</b><span>' + (ri.nxt
+            ? (ri.nxt.xp - P.xp) + ' XP to ' + esc(ri.nxt.name) + ' ' + ri.nxt.em
+            : 'Highest rank!') + '</span></div>' +
+          '<div class="wo-bar"><i style="width:' + ri.pct + '%"></i></div>' +
+        '</div>' +
+        '<p style="margin:0.9rem 0 0"><a href="/teaching/english/odyssey/" ' +
+        'class="wo-maplink">🗺️ Back to the Voyage Map</a></p>';
+      el.appendChild(hero);
+
+      const head = document.createElement('div');
+      head.className = 'wo-sect';
+      head.innerHTML = '🔨 Sentence Forges ' +
+        '<span class="desc">Each forge teaches one real writing move.</span>';
+      el.appendChild(head);
+
+      const grid = document.createElement('div');
+      grid.className = 'wo-grid';
+      GAMES.forEach(function (g) {
+        const n = DATA.ex.filter(function (e) { return e.kind === g.kind; }).length;
+        if (!n) return;
+        const b = document.createElement('button');
+        b.className = 'wo-game';
+        b.innerHTML = '<span class="em">' + g.em + '</span>' +
+          '<span class="nm">' + esc(g.name) + ' ' + medal('w_' + g.kind) + '</span>' +
+          '<span class="dc">' + esc(g.desc) + '</span>' +
+          '<span class="st">' + stars3(P.write.stars[g.kind] || 0) + '</span>';
+        b.addEventListener('click', function () { playGame(g); });
+        grid.appendChild(b);
+      });
+      el.appendChild(grid);
+
+      const shead = document.createElement('div');
+      shead.className = 'wo-sect';
+      shead.innerHTML = '✍️ The Writing Studio ' +
+        '<span class="desc">Write your own — then grade it like a pro.</span>';
+      el.appendChild(shead);
+
+      const sgrid = document.createElement('div');
+      sgrid.className = 'wo-grid';
+      const sb = document.createElement('button');
+      sb.className = 'wo-game';
+      sb.innerHTML = '<span class="em">✍️</span>' +
+        '<span class="nm">Write Something</span>' +
+        '<span class="dc">A prompt, a blank page, a checklist</span>' +
+        '<span class="st">' + (P.write.pieces.length || 0) + ' saved</span>';
+      sb.addEventListener('click', studio);
+      sgrid.appendChild(sb);
+
+      if (P.write.pieces.length) {
+        const lb = document.createElement('button');
+        lb.className = 'wo-game';
+        lb.innerHTML = '<span class="em">📜</span>' +
+          '<span class="nm">My Legend</span>' +
+          '<span class="dc">Everything you have written</span>' +
+          '<span class="st">' + P.write.pieces.length + ' pieces</span>';
+        lb.addEventListener('click', legend);
+        sgrid.appendChild(lb);
+      }
+      el.appendChild(sgrid);
+
+      window.scrollTo(0, 0);
+    }
+
+    /* ── a game round: 5 exercises of one kind ───────────────────────── */
+    function playGame(game) {
+      const pool = shuffle(DATA.ex.filter(function (e) {
+        return e.kind === game.kind;
+      }));
+      const round = pool.slice(0, Math.min(5, pool.length));
+      let idx = 0;
+      let firstTryRight = 0;
+
+      function screen() {
+        el.innerHTML = '';
+        el.appendChild(topBar('The Forge', home));
+
+        const lesson = document.createElement('div');
+        lesson.className = 'wo-lesson';
+        lesson.innerHTML = game.em + ' <b>' + esc(game.name) + '</b> — ' +
+          game.lesson;
+        el.appendChild(lesson);
+
+        const num = document.createElement('div');
+        num.className = 'wo-qnum';
+        num.textContent = 'Round ' + (idx + 1) + ' of ' + round.length;
+        el.appendChild(num);
+
+        const body = document.createElement('div');
+        el.appendChild(body);
+
+        const ex = round[idx];
+        if (ex.kind === 'bcs') renderBcs(ex, body);
+        else if (ex.kind === 'para') renderPara(ex, body);
+        else renderMcq(ex, body);
+
+        window.scrollTo(0, 0);
+      }
+
+      function advance(gotFirstTry) {
+        if (gotFirstTry) firstTryRight++;
+      }
+
+      function nextButton(host, label) {
+        const next = document.createElement('button');
+        next.className = 'wo-next';
+        next.textContent = label || (idx + 1 < round.length ? 'Next ▶' : 'Finish 🏁');
+        next.addEventListener('click', function () {
+          idx++;
+          if (idx < round.length) screen();
+          else recap();
+        });
+        host.appendChild(next);
+      }
+
+      /* — MCQ kinds — */
+      function renderMcq(ex, host) {
+        const p = document.createElement('div');
+        p.className = 'wo-prompt';
+        p.textContent = ex.prompt;
+        host.appendChild(p);
+
+        if (ex.ctx) {
+          const c = document.createElement('div');
+          c.className = 'wo-ctx';
+          c.textContent = ex.ctx;
+          host.appendChild(c);
+        }
+
+        const opts = document.createElement('div');
+        opts.className = 'wo-opts';
+        const feedback = document.createElement('div');
+        feedback.className = 'wo-feedback';
+        let tries = 0;
+
+        shuffle(ex.opts).forEach(function (o) {
+          const b = document.createElement('button');
+          b.className = 'wo-opt';
+          b.textContent = o[0];
+          b.addEventListener('click', function () {
+            if (o[1]) {
+              const first = tries === 0;
+              advance(first);
+              Array.prototype.forEach.call(opts.children, function (x) {
+                x.disabled = true;
+              });
+              b.classList.add('yes');
+              sfx('good');
+              recordSkill('w_' + ex.kind, first);
+              const math = bumpXp(first ? 10 : 5);
+              feedback.innerHTML = (first ? '🎉 Yes! ' : '💪 Got it! ') +
+                '<span class="teach">💡 ' + esc(ex.teach) + '</span>' +
+                '<span class="math">⭐ ' + esc(math) + ' XP</span>';
+              speak(first ? 'Yes!' : 'Got it!');
+              nextButton(feedback);
+            } else {
+              tries++;
+              if (tries === 1) {
+                b.classList.add('no');
+                setTimeout(function () {
+                  b.classList.remove('no');
+                  b.classList.add('dim');
+                  b.disabled = true;
+                }, 350);
+                sfx('soft');
+                feedback.textContent = '🔍 Not quite — try once more!';
+                speak('Not quite. Try once more!');
+              } else {
+                Array.prototype.forEach.call(opts.children, function (x) {
+                  x.disabled = true;
+                });
+                let correct = '';
+                ex.opts.forEach(function (o2) { if (o2[1]) correct = o2[0]; });
+                Array.prototype.forEach.call(opts.children, function (x) {
+                  if (x.textContent === correct) x.classList.add('yes');
+                });
+                sfx('soft');
+                recordSkill('w_' + ex.kind, false);
+                const math = bumpXp(5);
+                feedback.innerHTML = 'The best answer is highlighted.' +
+                  '<span class="teach">💡 ' + esc(ex.teach) + '</span>' +
+                  '<span class="math">⭐ ' + esc(math) + ' XP</span>';
+                speak(ex.teach);
+                nextButton(feedback);
+              }
+            }
+          });
+          opts.appendChild(b);
+        });
+        host.appendChild(opts);
+        host.appendChild(feedback);
+        speak(ex.prompt + ' ' + (ex.ctx || ''));
+      }
+
+      /* — Because / But / So — */
+      function renderBcs(ex, host) {
+        const stem = document.createElement('div');
+        stem.className = 'wo-stem';
+        stem.textContent = ex.stem + ' …';
+        host.appendChild(stem);
+
+        const slots = ['because', 'but', 'so'];
+        let slotIdx = 0;
+        let slotFirstTry = 0;
+        const chosen = {};
+
+        const area = document.createElement('div');
+        host.appendChild(area);
+        const feedback = document.createElement('div');
+        feedback.className = 'wo-feedback';
+        host.appendChild(feedback);
+
+        function renderSlot() {
+          area.innerHTML = '';
+          feedback.innerHTML = '';
+          const slot = slots[slotIdx];
+          const lab = document.createElement('div');
+          lab.className = 'wo-slotlab ' + slot;
+          lab.textContent = slot === 'because' ? '…because (the REASON)'
+            : slot === 'but' ? '…but (the SURPRISE)'
+            : '…so (the RESULT)';
+          area.appendChild(lab);
+
+          const opts = document.createElement('div');
+          opts.className = 'wo-opts';
+          let tries = 0;
+          shuffle(ex[slot]).forEach(function (o) {
+            const b = document.createElement('button');
+            b.className = 'wo-opt';
+            b.textContent = o[0];
+            b.addEventListener('click', function () {
+              if (o[1]) {
+                const first = tries === 0;
+                if (first) slotFirstTry++;
+                chosen[slot] = o[0];
+                Array.prototype.forEach.call(opts.children, function (x) {
+                  x.disabled = true;
+                });
+                b.classList.add('yes');
+                sfx('good');
+                const math = bumpXp(first ? 8 : 4);
+                const built = document.createElement('div');
+                built.className = 'wo-built';
+                built.innerHTML = '<span class="lbl">Your sentence:</span>' +
+                  esc(ex.stem) + ' <b>' + slot + '</b> ' + esc(o[0]) + '.' +
+                  '<span class="math">⭐ ' + esc(math) + ' XP</span>';
+                feedback.appendChild(built);
+                speak(ex.stem + ' ' + slot + ' ' + o[0]);
+                const nb = document.createElement('button');
+                nb.className = 'wo-next';
+                nb.textContent = slotIdx < 2 ? 'Next: …' + slots[slotIdx + 1] + ' ▶'
+                                             : 'See all three ▶';
+                nb.addEventListener('click', function () {
+                  slotIdx++;
+                  if (slotIdx < 3) renderSlot();
+                  else finishBcs();
+                });
+                feedback.appendChild(nb);
+              } else {
+                tries++;
+                if (tries === 1) {
+                  b.classList.add('no');
+                  setTimeout(function () {
+                    b.classList.remove('no');
+                    b.classList.add('dim');
+                    b.disabled = true;
+                  }, 350);
+                  sfx('soft');
+                  feedback.textContent = slot === 'because'
+                    ? '🔍 "Because" needs a REASON — why did it happen?'
+                    : slot === 'but'
+                    ? '🔍 "But" needs a SURPRISE — something that goes against it.'
+                    : '🔍 "So" needs a RESULT — what happened next because of it?';
+                  speak(feedback.textContent);
+                } else {
+                  let correct = '';
+                  ex[slot].forEach(function (o2) { if (o2[1]) correct = o2[0]; });
+                  chosen[slot] = correct;
+                  Array.prototype.forEach.call(opts.children, function (x) {
+                    x.disabled = true;
+                    if (x.textContent === correct) x.classList.add('yes');
+                  });
+                  sfx('soft');
+                  const math = bumpXp(4);
+                  const built = document.createElement('div');
+                  built.className = 'wo-built';
+                  built.innerHTML = '<span class="lbl">The sentence:</span>' +
+                    esc(ex.stem) + ' <b>' + slot + '</b> ' + esc(correct) + '.' +
+                    '<span class="math">⭐ ' + esc(math) + ' XP</span>';
+                  feedback.appendChild(built);
+                  speak(ex.stem + ' ' + slot + ' ' + correct);
+                  const nb = document.createElement('button');
+                  nb.className = 'wo-next';
+                  nb.textContent = slotIdx < 2 ? 'Next: …' + slots[slotIdx + 1] + ' ▶'
+                                               : 'See all three ▶';
+                  nb.addEventListener('click', function () {
+                    slotIdx++;
+                    if (slotIdx < 3) renderSlot();
+                    else finishBcs();
+                  });
+                  feedback.appendChild(nb);
+                }
+              }
+            });
+            opts.appendChild(b);
+          });
+          area.appendChild(opts);
+          speak(ex.stem + ' ' + slot + ' what?');
+        }
+
+        function finishBcs() {
+          area.innerHTML = '';
+          feedback.innerHTML = '';
+          recordSkill('w_bcs', slotFirstTry >= 2);
+          advance(slotFirstTry === 3);
+          const all = document.createElement('div');
+          all.className = 'wo-built';
+          all.innerHTML = '<span class="lbl">One idea, three ways — ' +
+            'that is how strong writers think:</span>' +
+            '• ' + esc(ex.stem) + ' <b>because</b> ' + esc(chosen.because) + '.<br>' +
+            '• ' + esc(ex.stem) + ' <b>but</b> ' + esc(chosen['but']) + '.<br>' +
+            '• ' + esc(ex.stem) + ' <b>so</b> ' + esc(chosen.so) + '.';
+          feedback.appendChild(all);
+          sfx('star');
+          nextButton(feedback);
+        }
+
+        renderSlot();
+      }
+
+      /* — Paragraph Architect (tap to order) — */
+      function renderPara(ex, host) {
+        const p = document.createElement('div');
+        p.className = 'wo-prompt';
+        p.textContent = ex.topic;
+        host.appendChild(p);
+
+        const n = ex.parts.length;
+        let placed = 0;
+        let mistakes = 0;
+
+        const slotWrap = document.createElement('div');
+        slotWrap.className = 'wo-slots';
+        for (let i = 0; i < n; i++) {
+          const s = document.createElement('div');
+          s.className = 'wo-slot';
+          s.dataset.i = String(i);
+          s.innerHTML = '<span class="n">' + (i + 1) + '</span>' +
+            '<span class="txt"><span class="role">' +
+            esc(slotRole(i, n)) + '</span></span>';
+          slotWrap.appendChild(s);
+        }
+        host.appendChild(slotWrap);
+
+        const partsWrap = document.createElement('div');
+        partsWrap.className = 'wo-parts';
+        const feedback = document.createElement('div');
+        feedback.className = 'wo-feedback';
+
+        shuffle(ex.parts.map(function (t, i) { return { t: t, i: i }; }))
+          .forEach(function (o) {
+            const b = document.createElement('button');
+            b.className = 'wo-part';
+            b.textContent = o.t;
+            b.addEventListener('click', function () {
+              if (b.classList.contains('used')) return;
+              const slot = slotWrap.children[placed];
+              if (o.i === placed) {
+                b.classList.add('used');
+                slot.classList.add('filled', 'ok');
+                slot.querySelector('.txt').innerHTML =
+                  '<span class="role">' + esc(slotRole(placed, n)) +
+                  '</span>' + esc(o.t);
+                placed++;
+                sfx('good');
+                if (placed === n) {
+                  const first = mistakes === 0;
+                  advance(first);
+                  recordSkill('w_para', first);
+                  const math = bumpXp(first ? 12 : 6);
+                  feedback.innerHTML = '🏛️ <b>Paragraph built!</b>' +
+                    '<span class="teach">💡 Notice the shape: the first ' +
+                    'sentence makes the point, the middle sentences prove ' +
+                    'it, and the last one wraps it up. Use this shape ' +
+                    'every time you write a paragraph.</span>' +
+                    '<span class="math">⭐ ' + esc(math) + ' XP</span>';
+                  speak('Paragraph built!');
+                  nextButton(feedback);
+                }
+              } else {
+                mistakes++;
+                slot.classList.add('bad');
+                setTimeout(function () { slot.classList.remove('bad'); }, 400);
+                sfx('soft');
+                feedback.textContent = placed === 0
+                  ? '🔍 Start with the TOPIC SENTENCE — the one that says ' +
+                    'the main point.'
+                  : placed === n - 1
+                  ? '🔍 Save the CONCLUSION for last — it wraps everything up.'
+                  : '🔍 Not that one yet. Which sentence comes next in the ' +
+                    'argument?';
+                speak(feedback.textContent);
+              }
+            });
+            partsWrap.appendChild(b);
+          });
+        host.appendChild(partsWrap);
+        host.appendChild(feedback);
+        speak(ex.topic + '. Tap the sentences in the right order.');
+      }
+
+      function recap() {
+        const total = round.length;
+        const ratio = firstTryRight / total;
+        const starsEarned = ratio >= 0.85 ? 3 : ratio >= 0.6 ? 2 : 1;
+        const best = P.write.stars[game.kind] || 0;
+        if (starsEarned > best) P.write.stars[game.kind] = starsEarned;
+        save();
+        sfx('star');
+
+        el.innerHTML = '';
+        el.appendChild(topBar('The Forge', home));
+        const r = document.createElement('div');
+        r.className = 'wo-recap';
+        r.innerHTML = '<div class="big">' + game.em + '</div>' +
+          '<h2>' + esc(game.name) + ' — forged!</h2>' +
+          '<div class="stars">' + stars3(starsEarned) + '</div>' +
+          '<p>' + firstTryRight + ' of ' + total +
+          ' right on the first try.</p>' +
+          (starsEarned === 3 ? '<p>Master smith! 🔥</p>' : '');
+        const row = document.createElement('div');
+        row.className = 'row';
+        const again = document.createElement('button');
+        again.className = 'wo-back';
+        again.textContent = '↻ Forge again';
+        again.addEventListener('click', function () { playGame(game); });
+        row.appendChild(again);
+        const back = document.createElement('button');
+        back.className = 'wo-back';
+        back.textContent = '⚒️ Other forges';
+        back.addEventListener('click', home);
+        row.appendChild(back);
+        r.appendChild(row);
+        el.appendChild(r);
+        speak('You finished ' + game.name + '! ' + firstTryRight +
+              ' out of ' + total + ' on the first try.');
+        window.scrollTo(0, 0);
+      }
+
+      screen();
+    }
+
+    /* ── The Writing Studio (free write + rubric self-check) ─────────── */
+    const PROMPTS = [
+      'Write about a time you practiced something hard until you got it.',
+      'You find a door in your house that was never there before. Open it.',
+      'Describe your favorite song WITHOUT naming it — make me hear it.',
+      'Tell about the best goal, race, or game you ever saw or played.',
+      'You wake up on the deck of a Greek ship. What do you see, hear, smell?',
+      'Argue: should kids get to choose what they read in school? Give 3 reasons.',
+      'Write the scene where a hero realizes the plan has gone wrong.',
+      'Describe building something with your hands, step by step.',
+      'Something small goes missing in your house. Write it like a mystery.',
+      'Convince someone to try your favorite instrument. Use because/but/so.'
+    ];
+
+    function studio() {
+      el.innerHTML = '';
+      el.appendChild(topBar('The Forge', home));
+
+      const wrap = document.createElement('div');
+      wrap.className = 'wo-studio';
+
+      const head = document.createElement('div');
+      head.className = 'wo-sect';
+      head.innerHTML = '✍️ The Writing Studio';
+      wrap.appendChild(head);
+
+      let prompt = PROMPTS[Math.floor(Math.random() * PROMPTS.length)];
+      const pc = document.createElement('div');
+      pc.className = 'wo-lesson';
+      function paintPrompt() {
+        pc.innerHTML = '<b>Your prompt:</b> ' + esc(prompt);
+        const nb = document.createElement('button');
+        nb.className = 'wo-back';
+        nb.style.marginTop = '0.6rem';
+        nb.textContent = '🎲 Different prompt';
+        nb.addEventListener('click', function () {
+          prompt = PROMPTS[Math.floor(Math.random() * PROMPTS.length)];
+          paintPrompt();
+        });
+        pc.appendChild(nb);
+        const rb = document.createElement('button');
+        rb.className = 'wo-back';
+        rb.style.marginTop = '0.6rem';
+        rb.style.marginLeft = '0.4rem';
+        rb.textContent = '🔊 Read it to me';
+        rb.addEventListener('click', function () { speak(prompt); });
+        pc.appendChild(rb);
+      }
+      paintPrompt();
+      wrap.appendChild(pc);
+
+      const ta = document.createElement('textarea');
+      ta.placeholder = 'Start writing here…';
+      wrap.appendChild(ta);
+
+      const count = document.createElement('div');
+      count.className = 'wo-count';
+      count.textContent = '0 words';
+      wrap.appendChild(count);
+      ta.addEventListener('input', function () {
+        const w = ta.value.trim() ? ta.value.trim().split(/\s+/).length : 0;
+        count.textContent = w + (w === 1 ? ' word' : ' words');
+      });
+
+      const chead = document.createElement('div');
+      chead.className = 'wo-sect';
+      chead.innerHTML = '✅ Check your own work ' +
+        '<span class="desc">Real writers edit themselves. Tick what is true.</span>';
+      wrap.appendChild(chead);
+
+      const check = document.createElement('div');
+      check.className = 'wo-check';
+      RUBRIC.forEach(function (r, i) {
+        const lab = document.createElement('label');
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.dataset.i = String(i);
+        const sp = document.createElement('span');
+        sp.innerHTML = r;
+        lab.appendChild(cb);
+        lab.appendChild(sp);
+        cb.addEventListener('change', function () {
+          lab.classList.toggle('on', cb.checked);
+        });
+        check.appendChild(lab);
+      });
+      wrap.appendChild(check);
+
+      const feedback = document.createElement('div');
+      feedback.className = 'wo-feedback';
+
+      const saveBtn = document.createElement('button');
+      saveBtn.className = 'wo-next';
+      saveBtn.textContent = '📜 Save to My Legend';
+      saveBtn.addEventListener('click', function () {
+        const text = ta.value.trim();
+        if (!text) {
+          feedback.textContent = '✍️ Write something first!';
+          return;
+        }
+        const ticked = Array.prototype.filter.call(
+          check.querySelectorAll('input'), function (c) { return c.checked; }
+        ).length;
+        const words = text.split(/\s+/).length;
+        const xp = Math.min(40, 10 + Math.floor(words / 20) * 5) + ticked * 2;
+        const math = bumpXp(xp);
+        P.write.pieces.unshift({
+          t: prompt, x: text, w: words, c: ticked,
+          d: new Date().toISOString().slice(0, 10)
+        });
+        if (P.write.pieces.length > 60) P.write.pieces.length = 60;
+        save();
+        sfx('star');
+        feedback.innerHTML = '📜 <b>Saved to My Legend!</b> ' +
+          words + ' words · ' + ticked + ' / ' + RUBRIC.length +
+          ' checks ticked.' +
+          '<span class="math">⭐ ' + esc(math) + ' XP</span>';
+        speak('Saved! ' + words + ' words. Nice work.');
+        const row = document.createElement('div');
+        row.style.textAlign = 'center';
+        const lb = document.createElement('button');
+        lb.className = 'wo-back';
+        lb.textContent = '📜 See My Legend';
+        lb.addEventListener('click', legend);
+        row.appendChild(lb);
+        feedback.appendChild(row);
+      });
+      wrap.appendChild(saveBtn);
+      wrap.appendChild(feedback);
+
+      el.appendChild(wrap);
+      window.scrollTo(0, 0);
+    }
+
+    /* ── My Legend (saved pieces) ────────────────────────────────────── */
+    function legend() {
+      el.innerHTML = '';
+      el.appendChild(topBar('The Forge', home));
+
+      const head = document.createElement('div');
+      head.className = 'wo-sect';
+      head.innerHTML = '📜 My Legend ' +
+        '<span class="desc">' + P.write.pieces.length +
+        ' piece(s) written. Watch yourself get better.</span>';
+      el.appendChild(head);
+
+      if (!P.write.pieces.length) {
+        const p = document.createElement('p');
+        p.textContent = 'Nothing here yet — write something in the Studio!';
+        el.appendChild(p);
+      }
+
+      P.write.pieces.forEach(function (pc, i) {
+        const d = document.createElement('div');
+        d.className = 'wo-saved';
+        d.innerHTML = '<div class="meta">📅 ' + esc(pc.d) + ' · ' +
+          pc.w + ' words · ✅ ' + pc.c + '/' + RUBRIC.length + '</div>' +
+          '<div class="meta"><i>' + esc(pc.t) + '</i></div>' +
+          '<div class="body">' + esc(pc.x) + '</div>';
+        const rb = document.createElement('button');
+        rb.className = 'wo-back';
+        rb.style.marginTop = '0.5rem';
+        rb.textContent = '🔊 Hear it';
+        rb.addEventListener('click', function () { speak(pc.x); });
+        d.appendChild(rb);
+        const db = document.createElement('button');
+        db.className = 'wo-back';
+        db.style.marginTop = '0.5rem';
+        db.style.marginLeft = '0.4rem';
+        db.textContent = '🗑️ Remove';
+        db.addEventListener('click', function () {
+          P.write.pieces.splice(i, 1);
+          save();
+          legend();
+        });
+        d.appendChild(db);
+        el.appendChild(d);
+      });
+
+      window.scrollTo(0, 0);
+    }
+
+    /* ── boot ─────────────────────────────────────────────────────────── */
+    function boot(data) {
+      DATA = data;
+      home();
+    }
+
+    return { boot: boot };
+  })();
+
+  init();
+})();
+</script>
