@@ -1,60 +1,61 @@
 """
-odyssey_write_data.py — exercise bank for Word Odyssey · Writing Hall
-("The Forge"), teaching/english/odyssey-writing.md.
+cipher_report_data.py — drill bank for CIPHER · Report Craft
+(teaching/english/cipher-report.md).
 
-THE PEDAGOGY (why these specific games)
----------------------------------------
-This hall gamifies the sentence-level writing curriculum used by strong
-private/independent schools, principally Judith Hochman's *The Writing
-Revolution* (TWR) — whose core insight is that writing instruction should
-start at the SENTENCE, not the essay, and that better sentences produce
-better thinking. Reinforces the class lessons already on this site at
-/teaching/english/ (narrative writing, world-building & show-don't-tell,
-persuasive writing & essay structure).
+WHY THIS ONE IS *NOT* CAPPED
+----------------------------
+Comprehension strategies plateau fast (see the note in
+cipher_field_data.py). Writing does not — it is a generative skill, and
+sentence-level practice keeps paying off. The What Works Clearinghouse
+specifically recommends teaching students to construct sentences via
+**sentence combining** and **sentence expansion**, both of which are here.
 
-Games and the technique each one trains:
+THE METHOD
+----------
+Judith Hochman's *The Writing Revolution* (the Hochman Method): explicit,
+sequenced instruction that starts at the SENTENCE and builds to
+compositions. The named activities Hochman describes, and where they live
+here:
 
-  bcs     ⚡ Because / But / So — TWR's signature drill. One stem finished
-          three ways forces three different logical relationships
-          (cause / contrast / consequence). This single exercise is the
-          biggest sentence-level win in the whole method.
-  combine 🔗 Sentence Combining — the most research-backed writing
-          exercise there is. Turn choppy kernels into one strong sentence.
-  expand  🌱 Sentence Expanding — grow a kernel with who/what/when/
-          where/why detail (TWR "expand a sentence" question words).
-  appos   💎 Appositives — rename a noun with a comma-hugged phrase; the
-          fastest way to sound like a real author.
-  frag    🧱 Fragment or Sentence? — sentence boundary judgment; the #1
-          mechanical error in 4th-grade writing.
-  show    🎭 Show, Don't Tell — replace a "telling" sentence with evidence
-          the reader can see. (Ms. Dany's world-building lesson.)
-  verb    🔥 Strong Verbs — swap weak verb + adverb for one precise verb.
-  trans   🧭 Transitions — pick the linking word that matches the logical
-          move (sequence, contrast, cause, addition, conclusion).
-  para    🏛️ Paragraph Architect — order topic sentence → supporting
-          detail → conclusion (TWR single-paragraph outline).
+  bcs      ⚡ because / but / so conjunction stems  — the signature drill:
+             one stem finished three ways forces three different logical
+             relationships (cause / contrast / consequence)
+  subord   🔗 subordinating conjunctions — sentences that OPEN with
+             although / unless / if. A distinct Hochman activity from
+             because/but/so, and one the first build of this site missed.
+  combine  🪢 sentence combining
+  expand   🌱 sentence expanding (answer who/what/when/where/why/how)
+  appos    💎 appositives — rename a noun between commas
+  frag     🧱 fragment vs sentence (and comma splices)
+  para     🏛️ single-paragraph build: topic → support → conclusion
 
-Theme: a Greek forge where sentences are hammered into shape, woven
-through the kid's interests (Odyssey/Troy, soccer, guitar/piano, swimming,
-Minecraft, arts & crafts, spy stories).
+Plus three craft drills that are standard in strong writing programmes
+and reinforce the class lessons already on this site:
+
+  show     🎭 show don't tell
+  verb     🔥 precise verbs (kill "was / there was / went")
+  trans    🧭 transitions that name the logical move
 
 DATA SHAPES
 -----------
-Most games are MCQ:
+Most drills are MCQ:
     {id, kind, tier, prompt, ctx?, opts: [(text, correct01), ...], teach}
 
-`para` (Paragraph Architect) is an ORDERING game:
-    {id, kind: "para", tier, topic, parts: [str, ...]}  # correct order
-    (the engine shuffles and the player taps them into order)
+`bcs` is a three-slot drill:
+    {id, kind: "bcs", tier, stem, because: [(t,c)...], but: [...], so: [...]}
 
-`bcs` (Because/But/So) is a three-slot game:
-    {id, kind: "bcs", tier, stem, because: [(t,c)...], but: [...],
-     so: [...]}
+`subord` is a two-slot drill (one stem, two different openers):
+    {id, kind: "subord", tier, base, slots: [{word, opts: [(t,c)...]}, ...]}
 
-tier 1 = 🔨 Bronze (simplest), 2 = ⚒️ Iron, 3 = ⭐ Gold (hardest)
+`para` is an ordering drill:
+    {id, kind: "para", tier, topic, parts: [str, ...]}   # correct order
 
-Build with:  python3 _tools/build-odyssey-write.py "<passphrase>"
-(rebuild required after any edit here).
+tier 1 = simplest, 2 = middle, 3 = hardest.
+
+Themed for CIPHER (field reports), and woven through his interests:
+football, guitar/piano, swimming, Minecraft, spy craft, and myth.
+
+Build with:  python3 _tools/build-cipher-report.py "<passphrase>"
 """
 
 EXERCISES = [
@@ -559,6 +560,85 @@ EXERCISES = [
             "cannot reach them.",
             "In every danger, it is his mind — not his muscles — that "
             "brings him home.",
+        ],
+    }
+,
+
+    # ══════════ 🔗 SUBORDINATING CONJUNCTIONS (Hochman) ══════════
+    # Sentences that OPEN with although / unless / if. Distinct from
+    # because/but/so: the dependent clause comes FIRST, which forces a
+    # comma and a different rhythm. Hochman teaches this as its own drill.
+
+    {
+        "id": "sub-keeper", "kind": "subord", "tier": 1,
+        "base": "the keeper dives the right way",
+        "slots": [
+            {"word": "Although",
+             "opts": [("the shot is still too fast to stop.", 1),
+                      ("he had practised all week.", 0),
+                      ("the crowd was very loud.", 0)]},
+            {"word": "If",
+             "opts": [("he has a real chance of saving it.", 1),
+                      ("the match kicked off at three.", 0),
+                      ("his gloves were brand new.", 0)]},
+        ],
+    },
+    {
+        "id": "sub-practice", "kind": "subord", "tier": 1,
+        "base": "you practise every day",
+        "slots": [
+            {"word": "If",
+             "opts": [("you will get better faster than you expect.", 1),
+                      ("the guitar was a gift.", 0),
+                      ("music is enjoyable.", 0)]},
+            {"word": "Unless",
+             "opts": [("you will slowly forget what you learned.", 1),
+                      ("you enjoy playing scales.", 0),
+                      ("the strings are new.", 0)]},
+        ],
+    },
+    {
+        "id": "sub-agent", "kind": "subord", "tier": 2,
+        "base": "the agent had memorised the whole building",
+        "slots": [
+            {"word": "Although",
+             "opts": [("he still got lost once the lights went out.", 1),
+                      ("he had studied the plans for hours.", 0),
+                      ("the building was very large.", 0)]},
+            {"word": "Unless",
+             "opts": [("he would never have found the exit in time.", 1),
+                      ("the corridors all looked the same.", 0),
+                      ("he was a careful person.", 0)]},
+        ],
+    },
+    {
+        "id": "sub-swim", "kind": "subord", "tier": 2,
+        "base": "the water is freezing",
+        "slots": [
+            {"word": "Although",
+             "opts": [("she swims the whole length without stopping.", 1),
+                      ("she is a strong swimmer.", 0),
+                      ("it is early in the morning.", 0)]},
+            {"word": "If",
+             "opts": [("she will need to warm up before she starts.", 1),
+                      ("the pool is outdoors.", 0),
+                      ("she enjoys swimming.", 0)]},
+        ],
+    },
+    {
+        "id": "sub-troy", "kind": "subord", "tier": 3,
+        "base": "the walls of the city had never been broken",
+        "slots": [
+            {"word": "Although",
+             "opts": [("a single wooden horse undid ten years of "
+                       "defence.", 1),
+                      ("the city was extremely old.", 0),
+                      ("the soldiers were tired.", 0)]},
+            {"word": "If",
+             "opts": [("the war might have dragged on for another ten "
+                       "years.", 1),
+                      ("the walls were made of stone.", 0),
+                      ("the war lasted a long time.", 0)]},
         ],
     },
 ]

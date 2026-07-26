@@ -1,26 +1,24 @@
 #!/usr/bin/env python3
 """
-build-odyssey-write.py — generate the encrypted Word Odyssey Writing Hall
-page ("The Forge").
+build-cipher-report.py — generate the encrypted CIPHER Report Craft page.
 
-Reads _tools/odyssey_write_data.py (sentence-craft exercises based on
-Hochman's *The Writing Revolution* plus show-don't-tell / strong verbs /
-transitions / paragraph structure), validates the bank, packs it as
+Reads _tools/cipher_report_data.py (Hochman / The Writing Revolution
+sentence-level drills plus craft drills), validates the bank, packs it as
 compact JSON, encrypts it with the site scheme (salt[16] + iv[12] +
 AES-256-GCM ciphertext+tag, PBKDF2-HMAC-SHA256 100k iterations), and
 writes:
 
-    teaching/english/odyssey-writing.md   (layout: protected-odyssey-write)
+    teaching/english/cipher-report.md  (layout: protected-cipher-report)
 
-The game engine lives in _layouts/protected-odyssey-write.html — only the
-exercise data is in the encrypted blob, so editing the engine never
-requires re-encryption; editing odyssey_write_data.py requires a rebuild.
+The engine lives in _layouts/protected-cipher-report.html — only drill
+data is encrypted here, so editing the engine never requires
+re-encryption; editing cipher_report_data.py requires a rebuild.
 
 encrypt-batch.py must NOT be used on this page (it forces layout:
 protected); it skips the file anyway because the body is empty.
 
 Usage:
-    python3 _tools/build-odyssey-write.py "<passphrase>"
+    python3 _tools/build-cipher-report.py "<passphrase>"
 """
 
 import base64
@@ -34,13 +32,23 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-OUT = os.path.join(ROOT, "teaching", "english", "odyssey-writing.md")
+OUT = os.path.join(ROOT, "teaching", "english", "cipher-report.md")
 
 sys.path.insert(0, HERE)
-import odyssey_write_data as data  # noqa: E402
+import cipher_report_data as data  # noqa: E402
 
 MCQ_KINDS = {"combine", "expand", "appos", "frag", "show", "verb", "trans"}
-ALL_KINDS = MCQ_KINDS | {"bcs", "para"}
+ALL_KINDS = MCQ_KINDS | {"bcs", "subord", "para"}
+
+
+def _check_opts(label, opts, errs, lo=2, hi=4):
+    if not lo <= len(opts) <= hi:
+        errs.append(f"{label}: needs {lo}-{hi} options, got {len(opts)}")
+    if sum(c for _, c in opts) != 1:
+        errs.append(f"{label}: needs exactly one correct option")
+    texts = [t for t, _ in opts]
+    if len(set(texts)) != len(texts):
+        errs.append(f"{label}: duplicate option text")
 
 
 def validate():
@@ -63,14 +71,7 @@ def validate():
         if kind in MCQ_KINDS:
             if not e.get("prompt"):
                 errs.append(f"{eid}: missing prompt")
-            opts = e.get("opts", [])
-            if not 2 <= len(opts) <= 4:
-                errs.append(f"{eid}: needs 2-4 options")
-            if sum(c for _, c in opts) != 1:
-                errs.append(f"{eid}: needs exactly one correct option")
-            texts = [t for t, _ in opts]
-            if len(set(texts)) != len(texts):
-                errs.append(f"{eid}: duplicate option text")
+            _check_opts(eid, e.get("opts", []), errs)
             if not e.get("teach"):
                 errs.append(f"{eid}: missing teach line")
 
@@ -78,14 +79,19 @@ def validate():
             if not e.get("stem"):
                 errs.append(f"{eid}: missing stem")
             for slot in ("because", "but", "so"):
-                opts = e.get(slot, [])
-                if not 2 <= len(opts) <= 4:
-                    errs.append(f"{eid}.{slot}: needs 2-4 options")
-                if sum(c for _, c in opts) != 1:
-                    errs.append(f"{eid}.{slot}: needs exactly one correct")
-                texts = [t for t, _ in opts]
-                if len(set(texts)) != len(texts):
-                    errs.append(f"{eid}.{slot}: duplicate option text")
+                _check_opts(f"{eid}.{slot}", e.get(slot, []), errs)
+
+        elif kind == "subord":
+            if not e.get("base"):
+                errs.append(f"{eid}: missing base")
+            slots = e.get("slots", [])
+            if not 2 <= len(slots) <= 3:
+                errs.append(f"{eid}: needs 2-3 slots")
+            for s in slots:
+                w = s.get("word", "?")
+                if not w:
+                    errs.append(f"{eid}: slot missing word")
+                _check_opts(f"{eid}.{w}", s.get("opts", []), errs)
 
         elif kind == "para":
             if not e.get("topic"):
@@ -118,6 +124,11 @@ def build_payload():
             rec["stem"] = e["stem"]
             for slot in ("because", "but", "so"):
                 rec[slot] = [[t, c] for (t, c) in e[slot]]
+        elif kind == "subord":
+            rec["base"] = e["base"]
+            rec["slots"] = [{"word": s["word"],
+                             "opts": [[t, c] for (t, c) in s["opts"]]}
+                            for s in e["slots"]]
         elif kind == "para":
             rec["topic"] = e["topic"]
             rec["parts"] = e["parts"]
@@ -137,21 +148,20 @@ def encrypt(passphrase: str, plaintext: str) -> str:
 
 def main():
     if len(sys.argv) != 2:
-        print('Usage: python3 _tools/build-odyssey-write.py "<passphrase>"',
+        print('Usage: python3 _tools/build-cipher-report.py "<passphrase>"',
               file=sys.stderr)
         sys.exit(1)
 
     kinds = validate()
-    payload = build_payload()
-    blob = encrypt(sys.argv[1], payload)
+    blob = encrypt(sys.argv[1], build_payload())
 
     front = "\n".join([
         "---",
-        "layout: protected-odyssey-write",
-        'title: "Word Odyssey: Writing Hall"',
+        "layout: protected-cipher-report",
+        'title: "CIPHER: Report Craft"',
         "parent: English",
         "nav_order: 11",
-        "permalink: /teaching/english/odyssey-writing/",
+        "permalink: /teaching/english/cipher-report/",
         f'encrypted: "{blob}"',
         "---",
     ]) + "\n"
@@ -161,9 +171,8 @@ def main():
 
     kind_str = ", ".join(f"{k}:{v}" for k, v in sorted(kinds.items()))
     print(f"✅  Wrote {os.path.relpath(OUT, ROOT)} "
-          f"({len(data.EXERCISES)} exercises, {len(blob) // 1024} KB "
-          f"encrypted)")
-    print(f"    games — {kind_str}")
+          f"({len(data.EXERCISES)} drills, {len(blob) // 1024} KB encrypted)")
+    print(f"    drills — {kind_str}")
 
 
 if __name__ == "__main__":

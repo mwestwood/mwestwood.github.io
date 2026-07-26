@@ -1011,82 +1011,93 @@ line — a `//` comment swallows the rest of the script ("Unexpected end of
 input", game silently dead at the gate). Use `/* */` comments only, in this
 and the other game layouts.
 
-### Rebuild Word Odyssey (English reading/writing/speaking academy)
+### Rebuild CIPHER (English reading/writing/speaking system)
 
 ```bash
-python3 _tools/build-odyssey-hub.py   "passphrase"  # teaching/english/odyssey.md
-python3 _tools/build-odyssey-read.py  "passphrase"  # …/odyssey-reading.md
-python3 _tools/build-odyssey-write.py "passphrase"  # …/odyssey-writing.md
-python3 _tools/build-odyssey-speak.py "passphrase"  # …/odyssey-speaking.md
+python3 _tools/build-cipher-hub.py      "passphrase"  # teaching/english/cipher.md
+python3 _tools/build-cipher-field.py    "passphrase"  # …/cipher-field.md
+python3 _tools/build-cipher-report.py   "passphrase"  # …/cipher-report.md
+python3 _tools/build-cipher-briefing.py "passphrase"  # …/cipher-briefing.md
 ```
 
-A four-page academy under `English` (nav_order 9–12) that gamifies the
-reading/writing/speaking strategies taught in strong independent schools,
-for a 4th-grader at grade level. Themed as a **Greek hero's voyage**
-(Troy/Odyssey), woven through his interests — soccer & the ancient
-Olympics, guitar/piano, swimming, Minecraft ruins, spy-style code-
-breaking. Reinforces the class lessons already on the site
-(`ms-dany-*.md`); the hub's "for grown-ups" note links to them.
+A four-page system under `English` (nav_order 9–12) for the 4th-grader,
+themed as a field-agent dossier (slate/manila, monospace, stamped
+statuses). **It replaced an earlier "Word Odyssey" build that was designed
+from assumption rather than research** — the research is what dictates the
+shape here, so read this before "improving" anything:
 
-- **🗺️ Voyage Map** (`odyssey.md`, `protected-odyssey-hub`) — the hub.
-  Owns **no games**: it only reads the shared save and renders rank/XP,
-  the **Daily Quest** (one task per hall → +25 XP and a streak bump),
-  the **Powers board** (22 strategies, mastery medals, gold border =
-  due for review), stats, and links out. Everything on it is a link, so
-  it can't drift out of sync with the halls. Its encrypted blob is just
-  the grown-ups note (keeps the page body empty like every other
-  protected page).
-- **🔮 The Oracle** (`odyssey-reading.md`, `protected-odyssey-read`) —
-  12 close-reading passages in 3 "seas", 45 questions. Every question is
-  tagged with the elite strategy it trains (`infer`/`cite`/`craft`/
-  `gist`/`structure`/`pov`/`vocab`) and the tag is shown on screen; the
-  passage stays visible beside every question. Data:
-  `_tools/odyssey_read_data.py`.
-- **⚒️ The Forge** (`odyssey-writing.md`, `protected-odyssey-write`) —
-  39 exercises across 9 games built on Hochman's *The Writing
-  Revolution* (sentence-first instruction): Because/But/So (three-slot,
-  ends by showing all three sentences together — the whole point),
-  Sentence Combine, Expand, Appositives, Fragment-or-Sentence,
-  Show-Don't-Tell, Strong Verbs, Transitions, and **Paragraph Architect**
-  (tap-to-order with slot roles labelled topic/detail/conclusion). Plus
-  the **Writing Studio**: prompt → free write → 7-point rubric
-  self-check → saved to a "My Legend" wall (`P.write.pieces`). Data:
-  `_tools/odyssey_write_data.py`.
-- **🏛️ The Agora** (`odyssey-speaking.md`, `protected-odyssey-speak`) —
-  32 prompts across 6 games: Table Topics (impromptu via **P.R.E.P.**),
-  Claim-Evidence-Reasoning, Talk Moves (accountable-talk stems),
-  Storyteller, Read It Like You Mean It, Say It Strong. Data:
-  `_tools/odyssey_speak_data.py`.
+- **The reading toolkit is CAPPED on purpose.** Willingham's review of 12
+  meta-analyses found readers gain essentially all the benefit of
+  comprehension-strategy instruction within ~10 hours, with no measurable
+  gain from more (even at 4× the time). So Field Craft teaches six
+  signposts *once each and stops*. `build-cipher-field.py` **enforces the
+  cap** (`MAX_SIGNPOSTS = 6`, `MAX_PRACTICE_PER_SIGNPOST = 3`) and fails
+  the build if the bank grows. Do not raise these to "add replay value";
+  that is the exact mistake the previous build made.
+- **The writing bank is deliberately NOT capped** — writing is generative
+  and keeps improving with practice (What Works Clearinghouse backs
+  sentence-combining and sentence-expansion specifically).
+- **Vocabulary/morphology is NOT here.** The Vocabulary Arcade already
+  covers 250 Greek/Latin root groups with its own game and spaced
+  repetition; CIPHER links to it instead of duplicating it.
 
-**Shared spine.** All four pages read/write ONE localStorage save,
-`word-odyssey-v1`: `{xp, skills, read:{stars}, write:{stars,pieces},
-speak:{stars,talks,mic}, quest, streak, lastQuestDay, voice, sound}`.
-Ranks (Apprentice → Voyager → Navigator → Champion → Orator → Hero →
-Legend at 0/80/220/450/800/1300/2000 XP) and the Leitner record shape
-(`{b,s,r,x,due}`, boxes 0–6, 0/1/2/4/7/14/30-day intervals, medals
-🥉≥2 🥈≥4 🥇≥6) are **duplicated in all four layouts — keep them in
-sync**. Skill keys: bare for reading, `w_` for writing, `s_` for
-speaking. Same autism-friendly/no-failure rules as the other games (two
-tries then teach + award anyway, no timers, nothing auto-advances,
-explicit XP arithmetic) and the same shared `mwestwood-voice-name`
-reading-voice pick and iOS/Chromium speech-timing fix.
+Pages:
 
-**The mic (Agora only).** Uses the Web Speech API
-(`SpeechRecognition`). Scoring is keyword/structure heuristics
-(`hasAny`/`overlap`/word count) — deliberately generous, and validated
-so a well-formed answer passes while a one-line answer fails. Every
-game falls back to a **self-check list** when the API is missing, the
-mic pill is off, permission is denied, or nothing is heard, so a round
-is never blocked. `fireDone()` guards XP so the free "try again" can't
-double-pay. **Wording matters:** the UI says the browser *may* send
-audio to its maker's service — Chrome does recognition in the cloud, so
-do not reword this to claim on-device-only.
+- **🗄️ CIPHER** (`cipher.md`, `protected-cipher-hub`) — the Agent File.
+  Owns no exercises; reads the shared save and renders status, a single
+  "what to do next" instruction (not a dashboard), module links, recent
+  activity, and **Export/Import**. Export matters: the case files and
+  reports are the child's own writing and live only in localStorage.
+  Its encrypted blob is just the grown-ups note.
+- **📁 Field Craft** (`cipher-field.md`, `protected-cipher-field`) —
+  *Phase A*: the six Notice & Note signposts (Beers & Probst) with their
+  anchor questions, one short lesson each, then done. *Phase B*: the
+  **case-file journal** over books he is really reading — log a signpost,
+  where, what happened, and answer that signpost's anchor question in his
+  own words (typed or dictated). Closing a book opens a Shared-Inquiry
+  style debrief (open interpretive questions, evidence required).
+  **Nothing he writes is auto-graded** — that is intentional.
+  Data: `_tools/cipher_field_data.py`.
+- **✍️ Report Craft** (`cipher-report.md`, `protected-cipher-report`) —
+  44 Hochman/TWR drills across 10 types: because/but/so, **subordinating
+  conjunctions** (although/unless/if — a named Hochman activity), sentence
+  combining, expanding, appositives, fragments, show-don't-tell, precise
+  verbs, transitions, paragraph build. Plus the writing desk (prompt →
+  free write → 8-point rubric self-check → filed).
+  Data: `_tools/cipher_report_data.py`.
+  **Gotcha:** the `subord` drills assemble as `{Word} {base}, {option}` —
+  tense must agree across BOTH slots of the same base. Four shipped
+  broken ("If the keeper dived…, he will have…") and were caught by
+  assembling every sentence before release. Re-run that check after
+  editing any `subord` entry.
+- **🎙️ Briefing Room** (`cipher-briefing.md`, `protected-cipher-briefing`)
+  — the **Oracy Skills Framework** (Cambridge + Voice 21): four strands
+  (physical / linguistic / cognitive / social & emotional), 19 sub-skills
+  with kid-facing "I can" wording. 11 speaking tasks (the Book Briefing
+  pulls his current case file, tying reading to speaking), plus **Talk
+  Moves** = Accountable Talk (Michaels/O'Connor/Resnick). He speaks, sees
+  a transcript, then self-rates against the strand statements with an
+  optional **coach column** for a listening adult.
+  Data: `_tools/cipher_briefing_data.py`.
+  **P.R.E.P. is gone and must stay gone** — it is a Toastmasters device,
+  not a school framework. The only mentions left are code comments saying
+  so.
+
+**Shared save** `cipher-v1`: `{signposts, books, entries, report:{done,
+best,pieces}, briefing:{log,moves}, settings}`. All four layouts embed
+their own copy of the gate/crypto block, `rankVoice()`/`loadVoices()`/
+`speak()` (with the `IS_IOS`/`CAN_DEFER_SPEECH` fix and the shared
+`mwestwood-voice-name` key), `sfx()`, and the `SpeechRecognition` helper
+— **keep them in sync**.
+
+**Mic wording:** the UI says the browser *may* send audio to its maker's
+service. Chrome does recognition in the cloud — do not reword this to
+claim on-device-only. Dictation always degrades to plain typing.
 
 **Gotchas:** these pages skip `encrypt-batch.py` (it forces `layout:
-protected`; it skips them anyway since the body is empty). Same `/* */`
--comments-only rule as every other game layout. Pluralise every count
-("1 piece written", not "1 pieces") — that bug shipped once here and was
-caught in testing.
+protected`; it skips them anyway since the body is empty). `/* */`
+comments only in layout `<script>`. Pluralise every count.
+
 
 ### Inspect encrypted content without changing it
 

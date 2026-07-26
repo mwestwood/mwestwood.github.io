@@ -1,0 +1,695 @@
+---
+layout: default
+---
+
+<style>
+  /* ── Password gate (same look as protected.html) ─────────────────────── */
+  #protected-gate {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; min-height: 40vh; padding: 2rem 1rem;
+  }
+  .gate-card {
+    background: var(--sidebar-color, #f5f6fa);
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 8px; padding: 2.5rem 2rem; max-width: 400px; width: 100%;
+    text-align: center; box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .gate-lock { font-size: 2.5rem; margin-bottom: 0.75rem; line-height: 1; }
+  .gate-title {
+    font-size: 1.25rem; font-weight: 600;
+    color: var(--body-text-color, #27262b); margin: 0 0 0.5rem 0;
+  }
+  .gate-subtitle {
+    font-size: 0.875rem; color: var(--body-text-color, #5c5962);
+    opacity: 0.75; margin: 0 0 1.5rem 0;
+  }
+  .gate-input-row { display: flex; gap: 0.5rem; width: 100%; }
+  #gate-password {
+    flex: 1; padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color, #d0d0d0); border-radius: 4px;
+    font-size: 1rem; background: var(--body-background-color, #fff);
+    color: var(--body-text-color, #27262b); outline: none;
+    transition: border-color 0.15s;
+  }
+  #gate-password:focus { border-color: var(--links-color, #7253ed); }
+  #gate-submit {
+    padding: 0.5rem 1.1rem; background: var(--links-color, #7253ed);
+    color: #fff; border: none; border-radius: 4px; font-size: 0.95rem;
+    font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+  #gate-submit:hover { opacity: 0.88; }
+  #gate-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+  #gate-error {
+    margin-top: 0.85rem; font-size: 0.875rem; color: #c0392b;
+    min-height: 1.25rem; display: none;
+  }
+  #gate-status {
+    margin-top: 0.85rem; font-size: 0.875rem;
+    color: var(--body-text-color, #5c5962); opacity: 0.7;
+    min-height: 1.25rem; display: none;
+  }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+
+  /* ── CIPHER · Agent File (hub) ───────────────────────────────────────── */
+  #cipher-root { display: none; }
+
+  .cf {
+    --sig: #22d3ee; --amber: #fbbf24; --vio: #c084fc; --stamp: #f87171;
+    --ok: #4ade80;
+    --paper: rgba(255,255,255,0.045); --paper2: rgba(34,211,238,0.07);
+    --line: rgba(255,255,255,0.15);
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    max-width: 860px;
+  }
+  .cf, .cf * { box-sizing: border-box; }
+  .cf button, .cf a.btn {
+    font-family: inherit; touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .cf-hero {
+    border: 1px solid var(--line); border-left: 4px solid var(--sig);
+    border-radius: 4px; padding: 1.2rem 1.3rem; margin-bottom: 1.2rem;
+    background: linear-gradient(180deg, var(--paper2), transparent);
+  }
+  .cf-hero .tag {
+    font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.24em;
+    color: var(--sig); text-transform: uppercase;
+  }
+  .cf-hero h1 { margin: 0.3rem 0 0.35rem; font-size: 2rem;
+                letter-spacing: 0.04em; }
+  .cf-hero p { margin: 0; opacity: 0.8; font-size: 1rem; line-height: 1.6; }
+
+  .cf-statbar {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+    gap: 0.5rem; margin-top: 1rem;
+  }
+  .cf-stat {
+    background: rgba(0,0,0,0.2); border: 1px solid var(--line);
+    border-radius: 4px; padding: 0.55rem 0.4rem; text-align: center;
+  }
+  .cf-stat b { display: block; font-family: var(--mono); font-size: 1.3rem;
+               color: var(--amber); }
+  .cf-stat span { font-size: 0.68rem; opacity: 0.7; letter-spacing: 0.05em; }
+
+  .cf-sect {
+    font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.18em;
+    text-transform: uppercase; opacity: 0.62;
+    margin: 1.7rem 0 0.7rem; display: flex; align-items: baseline;
+    gap: 0.6rem; flex-wrap: wrap;
+  }
+  .cf-sect .n { color: var(--sig); }
+
+  /* next-up card */
+  .cf-next {
+    border: 1px solid var(--amber); border-radius: 4px;
+    background: linear-gradient(135deg, rgba(251,191,36,0.10), transparent);
+    padding: 1rem 1.2rem;
+  }
+  .cf-next .lbl {
+    font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.18em;
+    color: var(--amber); text-transform: uppercase;
+  }
+  .cf-next h3 { margin: 0.3rem 0 0.4rem; font-size: 1.2rem; }
+  .cf-next p { margin: 0 0 0.8rem; opacity: 0.85; line-height: 1.6; }
+
+  /* modules */
+  .cf-mods {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(224px, 1fr));
+    gap: 0.7rem;
+  }
+  .cf-mod {
+    display: block; text-decoration: none; color: inherit;
+    background: var(--paper); border: 1px solid var(--line);
+    border-top: 3px solid var(--line);
+    border-radius: 4px; padding: 1rem; line-height: 1.5;
+    transition: transform 0.12s, border-color 0.12s;
+  }
+  .cf-mod:hover { transform: translateY(-2px); text-decoration: none; }
+  .cf-mod.field { border-top-color: var(--sig); }
+  .cf-mod.field:hover { border-color: var(--sig); }
+  .cf-mod.report { border-top-color: var(--amber); }
+  .cf-mod.report:hover { border-color: var(--amber); }
+  .cf-mod.brief { border-top-color: var(--vio); }
+  .cf-mod.brief:hover { border-color: var(--vio); }
+  .cf-mod .em { font-size: 2rem; display: block; }
+  .cf-mod .nm { font-size: 1.15rem; font-weight: 700; display: block;
+                margin: 0.25rem 0 0.1rem; }
+  .cf-mod.field .nm { color: var(--sig); }
+  .cf-mod.report .nm { color: var(--amber); }
+  .cf-mod.brief .nm { color: var(--vio); }
+  .cf-mod .sub { font-family: var(--mono); font-size: 0.68rem;
+                 letter-spacing: 0.12em; opacity: 0.55;
+                 text-transform: uppercase; display: block; }
+  .cf-mod .dc { font-size: 0.88rem; opacity: 0.75; display: block;
+                margin-top: 0.4rem; }
+  .cf-mod .prog {
+    font-family: var(--mono); font-size: 0.74rem; opacity: 0.85;
+    display: block; margin-top: 0.6rem; padding-top: 0.55rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .cf-panel {
+    background: var(--paper); border: 1px solid var(--line);
+    border-radius: 4px; padding: 1rem 1.15rem; line-height: 1.7;
+    font-size: 0.95rem;
+  }
+  .cf-panel.note { border-left: 3px solid var(--sig); opacity: 0.94; }
+  .cf-panel a { font-weight: 600; }
+  .cf-label {
+    font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.16em;
+    text-transform: uppercase; opacity: 0.6; display: block;
+    margin-bottom: 0.4rem;
+  }
+
+  /* Just the Docs colours every .main-content anchor with its link colour
+     via `.main-content a:not(.btn):not(.anchor-heading)` — specificity
+     (0,3,1), which no selector we can write here beats. These cards and
+     CTAs ARE anchors, so their colour has to be forced back or they render
+     link-blue on a cyan button. */
+  .cf a.cf-mod { color: var(--body-text-color, #c9c6d1) !important; }
+  .cf a.cf-btn { color: #04212a !important; }
+  .cf a.cf-btn.ghost { color: var(--body-text-color, #c9c6d1) !important; }
+
+  .cf-btn {
+    background: var(--sig); color: #04212a; border: none;
+    border-radius: 4px; padding: 0.65rem 1.4rem; font-size: 1rem;
+    font-weight: 700; cursor: pointer; text-decoration: none;
+    display: inline-block;
+  }
+  .cf-btn:hover { opacity: 0.9; text-decoration: none; }
+  .cf-btn.ghost { background: none; color: inherit;
+                  border: 1px solid var(--line); font-weight: 400; }
+  .cf-btn.ghost:hover { border-color: var(--sig); }
+  .cf-row { display: flex; gap: 0.5rem; flex-wrap: wrap;
+            align-items: center; margin-top: 0.8rem; }
+  .cf-hint { font-size: 0.82rem; opacity: 0.65; line-height: 1.55;
+             margin-top: 0.5rem; }
+  .cf-ok { color: var(--ok); }
+  .cf-bad { color: var(--stamp); }
+
+  .cf-recent {
+    background: var(--paper); border: 1px solid var(--line);
+    border-left: 3px solid var(--amber); border-radius: 0 4px 4px 0;
+    padding: 0.7rem 0.9rem; margin-bottom: 0.45rem; line-height: 1.6;
+    font-size: 0.95rem;
+  }
+  .cf-recent .meta { font-family: var(--mono); font-size: 0.7rem;
+                     opacity: 0.6; letter-spacing: 0.05em; }
+
+  @media (max-width: 520px) {
+    .cf-hero h1 { font-size: 1.5rem; }
+  }
+</style>
+
+<!-- Password gate -->
+<div id="protected-gate">
+  <div class="gate-card">
+    <div class="gate-lock" aria-hidden="true">🔒</div>
+    <p class="gate-title">{{ page.title | default: "Protected Page" }}</p>
+    <p class="gate-subtitle">This page is password-protected. Enter the passphrase to unlock.</p>
+    <div class="gate-input-row">
+      <label for="gate-password" class="sr-only">Passphrase</label>
+      <input id="gate-password" type="password" placeholder="Passphrase" autocomplete="off" autofocus />
+      <button id="gate-submit">Unlock</button>
+    </div>
+    <div id="gate-error" role="alert" aria-live="polite">Incorrect passphrase — please try again.</div>
+    <div id="gate-status" role="status" aria-live="polite">Decrypting…</div>
+  </div>
+</div>
+
+<div id="cipher-root"><div class="cf" id="cf"></div></div>
+
+<script>
+(function () {
+  'use strict';
+
+  const ENCRYPTED_B64 = {{ page.encrypted | jsonify }};
+  const STORAGE_KEY = 'mwestwood-passphrase';
+
+  /* ── Gate (same crypto as protected.html) ───────────────────────────── */
+  function b64ToBytes(b64) {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+  async function deriveKey(passphrase, salt) {
+    const enc = new TextEncoder();
+    const km = await crypto.subtle.importKey(
+      'raw', enc.encode(passphrase), { name: 'PBKDF2' }, false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: salt, iterations: 100000, hash: 'SHA-256' },
+      km, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+  }
+  async function decrypt(passphrase) {
+    const blob = b64ToBytes(ENCRYPTED_B64);
+    const key = await deriveKey(passphrase, blob.slice(0, 16));
+    const pt = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: blob.slice(16, 28) }, key, blob.slice(28));
+    return new TextDecoder().decode(pt);
+  }
+
+  const gate = document.getElementById('protected-gate');
+  const rootWrap = document.getElementById('cipher-root');
+  const input = document.getElementById('gate-password');
+  const btn = document.getElementById('gate-submit');
+  const errEl = document.getElementById('gate-error');
+  const statusEl = document.getElementById('gate-status');
+
+  function showError(msg) {
+    errEl.textContent = msg || 'Incorrect passphrase — please try again.';
+    errEl.style.display = 'block';
+    statusEl.style.display = 'none';
+    btn.disabled = false;
+    input.select();
+  }
+  function showStatus(msg) {
+    statusEl.textContent = msg;
+    statusEl.style.display = 'block';
+    errEl.style.display = 'none';
+  }
+  function reveal(text) {
+    let data;
+    try { data = JSON.parse(text); }
+    catch (e) { showError('Data error: could not parse hub data.'); return; }
+    gate.style.display = 'none';
+    rootWrap.style.display = 'block';
+    Hub.boot(data);
+  }
+  async function tryUnlock(passphrase, cache) {
+    try {
+      showStatus('Decrypting…');
+      btn.disabled = true;
+      const text = await decrypt(passphrase);
+      if (cache) { try { localStorage.setItem(STORAGE_KEY, passphrase); } catch (_) {} }
+      reveal(text);
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'OperationError') {
+        showError('Incorrect passphrase — please try again.');
+      } else if (e instanceof TypeError && e.message.includes('subtle')) {
+        showError('Error: Web Crypto API unavailable. This page requires HTTPS.');
+      } else {
+        showError('Error (' + e.name + '): ' + e.message);
+      }
+    }
+  }
+  async function init() {
+    if (!ENCRYPTED_B64) { showError('No encrypted data on this page.'); return; }
+    try {
+      const cached = localStorage.getItem(STORAGE_KEY);
+      if (cached) {
+        showStatus('Unlocking…');
+        btn.disabled = true; input.disabled = true;
+        try { reveal(await decrypt(cached)); return; }
+        catch (_) {
+          localStorage.removeItem(STORAGE_KEY);
+          btn.disabled = false; input.disabled = false;
+          statusEl.style.display = 'none';
+        }
+      }
+    } catch (_) {}
+  }
+  btn.addEventListener('click', function () {
+    if (!input.value) { input.focus(); return; }
+    tryUnlock(input.value, true);
+  });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') btn.click();
+  });
+
+  /* ═══════════════════ CIPHER · Agent File (hub) ═══════════════════════
+     Owns no exercises — it only reads the shared save (`cipher-v1`) that
+     the three modules write, and renders status + what to do next +
+     Export/Import.
+
+     Export matters more here than anywhere else on the site: the case
+     files and filed reports are the boy's OWN WRITING and live only in
+     localStorage. Clearing site data would destroy them, so the hub can
+     download the whole save as JSON and restore it.
+  ═══════════════════════════════════════════════════════════════════════ */
+
+  const Hub = (function () {
+
+    const el = document.getElementById('cf');
+    let DATA = null;
+
+    const SIGNPOST_IDS = ['contrast', 'aha', 'tough', 'wiser', 'again', 'memory'];
+    const N_SIGNPOSTS = SIGNPOST_IDS.length;
+
+    const MODULES = [
+      { key: 'field', cls: 'field', em: '📁', name: 'Field Craft',
+        sub: 'Reading', url: '/teaching/english/cipher-field/',
+        dc: 'Train the six signals, then use them on the books you are really reading.' },
+      { key: 'report', cls: 'report', em: '✍️', name: 'Report Craft',
+        sub: 'Writing', url: '/teaching/english/cipher-report/',
+        dc: 'Ten sentence drills, then a desk to write your own reports.' },
+      { key: 'brief', cls: 'brief', em: '🎙️', name: 'Briefing Room',
+        sub: 'Speaking', url: '/teaching/english/cipher-briefing/',
+        dc: 'Say it out loud, with a reason, and rate yourself honestly.' }
+    ];
+
+    const PKEY = 'cipher-v1';
+    let P = {};
+    try { P = JSON.parse(localStorage.getItem(PKEY)) || {}; } catch (_) {}
+    if (!P || typeof P !== 'object') P = {};
+    P.v = P.v || 1;
+    P.signposts = P.signposts || {};
+    P.books = P.books || [];
+    P.entries = P.entries || [];
+    P.report = P.report || {};
+    P.report.done = P.report.done || {};
+    P.report.pieces = P.report.pieces || [];
+    P.briefing = P.briefing || {};
+    P.briefing.log = P.briefing.log || [];
+    P.briefing.moves = P.briefing.moves || {};
+    P.settings = P.settings || {};
+    function save() {
+      try { localStorage.setItem(PKEY, JSON.stringify(P)); } catch (_) {}
+    }
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;',
+                 '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+    function trained() {
+      return SIGNPOST_IDS.filter(function (id) {
+        return P.signposts[id] && P.signposts[id].done;
+      }).length;
+    }
+    function drillRuns() {
+      return Object.keys(P.report.done).reduce(function (a, k) {
+        return a + P.report.done[k];
+      }, 0);
+    }
+    function openBooks() {
+      return P.books.filter(function (b) { return !b.closed; });
+    }
+
+    /* what to do next — one clear instruction, not a dashboard */
+    function nextUp() {
+      const t = trained();
+      if (t < N_SIGNPOSTS) {
+        return {
+          lbl: 'Next',
+          h: 'Train signal ' + (t + 1) + ' of ' + N_SIGNPOSTS,
+          p: 'Each one takes a few minutes and then it is done for good — ' +
+             'there are only six.',
+          url: '/teaching/english/cipher-field/', cta: 'Go to Field Craft'
+        };
+      }
+      if (!P.books.length) {
+        return {
+          lbl: 'Next',
+          h: 'Open your first case file',
+          p: 'Add whatever book you are reading right now. The signals only ' +
+             'pay off on real books.',
+          url: '/teaching/english/cipher-field/', cta: 'Open a case file'
+        };
+      }
+      const ob = openBooks();
+      if (ob.length) {
+        const n = P.entries.filter(function (e) { return e.book === ob[0].id; }).length;
+        if (n < 3) {
+          return {
+            lbl: 'Next',
+            h: 'Log a signal in ' + ob[0].title,
+            p: 'Next time a character surprises you, or the author repeats ' +
+               'something, or someone gives advice — stop and log it.',
+            url: '/teaching/english/cipher-field/', cta: 'Open case file'
+          };
+        }
+      }
+      if (!P.briefing.log.length) {
+        return {
+          lbl: 'Next',
+          h: 'Give your first book briefing',
+          p: 'One minute, out loud, on the book in your case file. Speaking ' +
+             'about what you read is where it locks in.',
+          url: '/teaching/english/cipher-briefing/', cta: 'Go to Briefing Room'
+        };
+      }
+      if (drillRuns() < 3) {
+        return {
+          lbl: 'Next',
+          h: 'Run a sentence drill',
+          p: 'Try Because / But / So, or Although / Unless / If. Five minutes ' +
+             'and your sentences get noticeably stronger.',
+          url: '/teaching/english/cipher-report/', cta: 'Go to Report Craft'
+        };
+      }
+      return {
+        lbl: 'Keep going',
+        h: 'Read, log, speak',
+        p: 'You are running all three. Keep logging signals as you read, ' +
+           'brief someone when you finish a book, and drill sentences when ' +
+           'you have five spare minutes.',
+        url: '/teaching/english/cipher-field/', cta: 'Open Field Craft'
+      };
+    }
+
+    function render() {
+      el.innerHTML = '';
+
+      const t = trained();
+      const closed = P.books.filter(function (b) { return b.closed; }).length;
+
+      const hero = document.createElement('div');
+      hero.className = 'cf-hero';
+      hero.innerHTML =
+        '<div class="tag">Classified // Agent File</div>' +
+        '<h1>🗄️ CIPHER</h1>' +
+        '<p>Read like an agent, write like one, brief like one. ' +
+        'Three modules, one file.</p>' +
+        '<div class="cf-statbar">' +
+          '<div class="cf-stat"><b>' + t + '/' + N_SIGNPOSTS +
+            '</b><span>SIGNALS</span></div>' +
+          '<div class="cf-stat"><b>' + P.books.length +
+            '</b><span>CASE FILES</span></div>' +
+          '<div class="cf-stat"><b>' + P.entries.length +
+            '</b><span>LOG ENTRIES</span></div>' +
+          '<div class="cf-stat"><b>' + P.report.pieces.length +
+            '</b><span>REPORTS</span></div>' +
+          '<div class="cf-stat"><b>' + P.briefing.log.length +
+            '</b><span>BRIEFINGS</span></div>' +
+        '</div>';
+      el.appendChild(hero);
+
+      /* next up */
+      const nu = nextUp();
+      const h0 = document.createElement('div');
+      h0.className = 'cf-sect';
+      h0.innerHTML = '<span class="n">▸</span> What to do next';
+      el.appendChild(h0);
+
+      const next = document.createElement('div');
+      next.className = 'cf-next';
+      next.innerHTML = '<div class="lbl">' + esc(nu.lbl) + '</div>' +
+        '<h3>' + esc(nu.h) + '</h3><p>' + esc(nu.p) + '</p>' +
+        '<a class="cf-btn" href="' + nu.url + '">' + esc(nu.cta) + ' →</a>';
+      el.appendChild(next);
+
+      /* modules */
+      const h1 = document.createElement('div');
+      h1.className = 'cf-sect';
+      h1.innerHTML = '<span class="n">01</span> Modules';
+      el.appendChild(h1);
+
+      const mods = document.createElement('div');
+      mods.className = 'cf-mods';
+      MODULES.forEach(function (m) {
+        let prog = '';
+        if (m.key === 'field') {
+          prog = t + '/' + N_SIGNPOSTS + ' signals · ' +
+            P.books.length + (P.books.length === 1 ? ' case' : ' cases') +
+            (closed ? ' · ' + closed + ' closed' : '');
+        } else if (m.key === 'report') {
+          const runs = drillRuns();
+          prog = runs + (runs === 1 ? ' drill run' : ' drills run') + ' · ' +
+            P.report.pieces.length +
+            (P.report.pieces.length === 1 ? ' report' : ' reports');
+        } else {
+          const n = P.briefing.log.length;
+          const mv = Object.keys(P.briefing.moves).length;
+          prog = n + (n === 1 ? ' briefing' : ' briefings') + ' · ' +
+            mv + (mv === 1 ? ' talk move' : ' talk moves');
+        }
+        const a = document.createElement('a');
+        a.className = 'cf-mod ' + m.cls;
+        a.href = m.url;
+        a.innerHTML = '<span class="em">' + m.em + '</span>' +
+          '<span class="sub">' + esc(m.sub) + '</span>' +
+          '<span class="nm">' + esc(m.name) + '</span>' +
+          '<span class="dc">' + esc(m.dc) + '</span>' +
+          '<span class="prog">' + esc(prog) + '</span>';
+        mods.appendChild(a);
+      });
+      el.appendChild(mods);
+
+      /* vocabulary lives elsewhere — point at it rather than rebuild it */
+      const vocab = document.createElement('div');
+      vocab.className = 'cf-panel note';
+      vocab.style.marginTop = '0.7rem';
+      vocab.innerHTML = '<span class="cf-label">Word power</span>' +
+        'Vocabulary and Greek/Latin roots are not in CIPHER — they already ' +
+        'have a whole arcade of their own. ' +
+        '<a href="/teaching/vocabulary/arcade/">Open the Vocabulary Arcade →</a>';
+      el.appendChild(vocab);
+
+      /* recent activity */
+      const recent = [];
+      P.entries.slice(-3).reverse().forEach(function (e) {
+        const b = P.books.find(function (x) { return x.id === e.book; });
+        recent.push({ d: e.d, t: 'Logged a signal in ' + (b ? b.title : 'a case file'),
+                      x: e.answer || e.what });
+      });
+      P.report.pieces.slice(0, 2).forEach(function (p) {
+        recent.push({ d: p.d, t: 'Filed a report (' + p.w + ' words)', x: p.x });
+      });
+      P.briefing.log.slice(0, 2).forEach(function (l) {
+        recent.push({ d: l.d, t: 'Gave a briefing: ' + (l.title || l.task), x: '' });
+      });
+      recent.sort(function (a, b) { return a.d < b.d ? 1 : -1; });
+
+      if (recent.length) {
+        const h2 = document.createElement('div');
+        h2.className = 'cf-sect';
+        h2.innerHTML = '<span class="n">02</span> Recent activity';
+        el.appendChild(h2);
+        recent.slice(0, 5).forEach(function (r) {
+          const d = document.createElement('div');
+          d.className = 'cf-recent';
+          d.innerHTML = '<div class="meta">' + esc(r.d) + '</div>' +
+            '<b>' + esc(r.t) + '</b>' +
+            (r.x ? '<br><span style="opacity:0.8">' +
+              esc(String(r.x).slice(0, 150)) +
+              (String(r.x).length > 150 ? '…' : '') + '</span>' : '');
+          el.appendChild(d);
+        });
+      }
+
+      /* export / import */
+      const h3 = document.createElement('div');
+      h3.className = 'cf-sect';
+      h3.innerHTML = '<span class="n">03</span> Back up your work';
+      el.appendChild(h3);
+
+      const backup = document.createElement('div');
+      backup.className = 'cf-panel';
+      backup.innerHTML = '<span class="cf-label">Export / Import</span>' +
+        'Your case files, your reports and your briefing log are ' +
+        '<b>your own writing</b>, and they are stored only in this browser. ' +
+        'Clearing site data would erase them. Download a copy now and then.';
+      const row = document.createElement('div');
+      row.className = 'cf-row';
+
+      const exp = document.createElement('button');
+      exp.className = 'cf-btn';
+      exp.textContent = '⬇ Export my file';
+      exp.addEventListener('click', function () {
+        try {
+          const blob = new Blob([JSON.stringify(P, null, 2)],
+                                { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'cipher-agent-file-' +
+            new Date().toISOString().slice(0, 10) + '.json';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+          msg('Downloaded. Keep it somewhere safe.', true);
+        } catch (e) {
+          msg('Could not export: ' + e.message, false);
+        }
+      });
+      row.appendChild(exp);
+
+      const impLabel = document.createElement('label');
+      impLabel.className = 'cf-btn ghost';
+      impLabel.style.cursor = 'pointer';
+      impLabel.textContent = '⬆ Restore from a file';
+      const imp = document.createElement('input');
+      imp.type = 'file';
+      imp.accept = 'application/json,.json';
+      imp.style.display = 'none';
+      impLabel.appendChild(imp);
+      imp.addEventListener('change', function () {
+        const f = imp.files && imp.files[0];
+        if (!f) return;
+        const fr = new FileReader();
+        fr.onload = function () {
+          let incoming;
+          try { incoming = JSON.parse(String(fr.result)); }
+          catch (e) { msg('That file is not a CIPHER export.', false); return; }
+          if (!incoming || typeof incoming !== 'object' ||
+              !('signposts' in incoming || 'books' in incoming)) {
+            msg('That file is not a CIPHER export.', false);
+            return;
+          }
+          /* Restoring REPLACES the current file. Confirm first — the thing
+             being overwritten is his own writing. */
+          const nBooks = (incoming.books || []).length;
+          const nEntries = (incoming.entries || []).length;
+          if (!window.confirm(
+                'Restore this file?\n\n' +
+                'It contains ' + nBooks + ' case file(s) and ' + nEntries +
+                ' log entries.\n\nThis REPLACES what is on this device ' +
+                'right now (' + P.books.length + ' case files, ' +
+                P.entries.length + ' entries).')) {
+            imp.value = '';
+            return;
+          }
+          try {
+            localStorage.setItem(PKEY, JSON.stringify(incoming));
+            msg('Restored. Reloading…', true);
+            setTimeout(function () { location.reload(); }, 900);
+          } catch (e) {
+            msg('Could not restore: ' + e.message, false);
+          }
+        };
+        fr.readAsText(f);
+      });
+      row.appendChild(impLabel);
+      backup.appendChild(row);
+
+      const note = document.createElement('div');
+      note.className = 'cf-hint';
+      note.id = 'cf-backupmsg';
+      backup.appendChild(note);
+      el.appendChild(backup);
+
+      function msg(text, ok) {
+        const n = document.getElementById('cf-backupmsg');
+        if (!n) return;
+        n.textContent = text;
+        n.className = 'cf-hint ' + (ok ? 'cf-ok' : 'cf-bad');
+      }
+
+      /* grown-ups note */
+      const h4 = document.createElement('div');
+      h4.className = 'cf-sect';
+      h4.innerHTML = '<span class="n">04</span> For grown-ups';
+      el.appendChild(h4);
+      const gn = document.createElement('div');
+      gn.className = 'cf-panel note';
+      gn.innerHTML = DATA.note;
+      el.appendChild(gn);
+
+      window.scrollTo(0, 0);
+    }
+
+    function boot(data) { DATA = data; render(); }
+    return { boot: boot };
+  })();
+
+  init();
+})();
+</script>
