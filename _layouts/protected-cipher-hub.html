@@ -340,6 +340,9 @@ layout: default
 
     const SIGNPOST_IDS = ['contrast', 'aha', 'tough', 'wiser', 'again', 'memory'];
     const N_SIGNPOSTS = SIGNPOST_IDS.length;
+    /* second finite toolkit in Field Craft — Stanford SHEG source moves */
+    const SOURCE_IDS = ['sourcing', 'context', 'corrob', 'claim'];
+    const N_SOURCES = SOURCE_IDS.length;
 
     const MODULES = [
       { key: 'field', cls: 'field', em: '📁', name: 'Field Craft',
@@ -383,6 +386,11 @@ layout: default
         return P.signposts[id] && P.signposts[id].done;
       }).length;
     }
+    function sourceTrained() {
+      return SOURCE_IDS.filter(function (id) {
+        return P.signposts[id] && P.signposts[id].done;
+      }).length;
+    }
     function drillRuns() {
       return Object.keys(P.report.done).reduce(function (a, k) {
         return a + P.report.done[k];
@@ -401,6 +409,17 @@ layout: default
           h: 'Train signal ' + (t + 1) + ' of ' + N_SIGNPOSTS,
           p: 'Each one takes a few minutes and then it is done for good — ' +
              'there are only six.',
+          url: '/teaching/english/cipher-field/', cta: 'Go to Field Craft'
+        };
+      }
+      const st = sourceTrained();
+      if (st < N_SOURCES && P.books.length) {
+        return {
+          lbl: 'Next',
+          h: 'Train source check ' + (st + 1) + ' of ' + N_SOURCES,
+          p: 'The signals are for stories. These four are for articles, ' +
+             'websites and anything trying to convince you — starting with ' +
+             'the one that matters most: who wrote this, and why?',
           url: '/teaching/english/cipher-field/', cta: 'Go to Field Craft'
         };
       }
@@ -470,6 +489,8 @@ layout: default
         '<div class="cf-statbar">' +
           '<div class="cf-stat"><b>' + t + '/' + N_SIGNPOSTS +
             '</b><span>SIGNALS</span></div>' +
+          '<div class="cf-stat"><b>' + sourceTrained() + '/' + N_SOURCES +
+            '</b><span>SOURCE CHECKS</span></div>' +
           '<div class="cf-stat"><b>' + P.books.length +
             '</b><span>CASE FILES</span></div>' +
           '<div class="cf-stat"><b>' + P.entries.length +
@@ -507,6 +528,7 @@ layout: default
         let prog = '';
         if (m.key === 'field') {
           prog = t + '/' + N_SIGNPOSTS + ' signals · ' +
+            sourceTrained() + '/' + N_SOURCES + ' source · ' +
             P.books.length + (P.books.length === 1 ? ' case' : ' cases') +
             (closed ? ' · ' + closed + ' closed' : '');
         } else if (m.key === 'report') {

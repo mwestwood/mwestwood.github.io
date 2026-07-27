@@ -1050,8 +1050,14 @@ Pages:
   reports are the child's own writing and live only in localStorage.
   Its encrypted blob is just the grown-ups note.
 - **📁 Field Craft** (`cipher-field.md`, `protected-cipher-field`) —
-  *Phase A*: the six Notice & Note signposts (Beers & Probst) with their
-  anchor questions, one short lesson each, then done. *Phase B*: the
+  *Phase A*: TWO capped toolkits. The six Notice & Note signposts (Beers
+  & Probst) for stories, and four **Source Check** moves for everything
+  else — Stanford SHEG's *Reading Like a Historian* (sourcing,
+  contextualizing, corroborating, claim-vs-evidence). Both are one short
+  lesson each, then done; the builder caps them at 6 and 4. Plus a single
+  **inspectional reading** lesson (Adler's five-minute pre-read scan).
+  Source moves are also loggable in the journal, so a case file can be a
+  non-fiction book or an article. *Phase B*: the
   **case-file journal** over books he is really reading — log a signpost,
   where, what happened, and answer that signpost's anchor question in his
   own words (typed or dictated). Closing a book opens a Shared-Inquiry
@@ -1059,12 +1065,23 @@ Pages:
   **Nothing he writes is auto-graded** — that is intentional.
   Data: `_tools/cipher_field_data.py`.
 - **✍️ Report Craft** (`cipher-report.md`, `protected-cipher-report`) —
-  44 Hochman/TWR drills across 10 types: because/but/so, **subordinating
-  conjunctions** (although/unless/if — a named Hochman activity), sentence
-  combining, expanding, appositives, fragments, show-don't-tell, precise
-  verbs, transitions, paragraph build. Plus the writing desk (prompt →
-  free write → 8-point rubric self-check → filed).
-  Data: `_tools/cipher_report_data.py`.
+  75 drills across 18 types, in two home-screen sections. *Sentence
+  drills* (Hochman/TWR): because/but/so, **subordinating conjunctions**
+  (although/unless/if — a named Hochman activity), sentence combining,
+  expanding, appositives, fragments, show-don't-tell, precise verbs,
+  transitions, paragraph build. *Advanced craft* (high-school /
+  first-year-comp, added because each is one concrete move):
+  `cumul` cumulative sentences (Christensen — custom renderer, indents by
+  level of generality, validator enforces strictly increasing `lvl`),
+  `lard` Lanham's Paramedic Method (engine computes the lard factor % from
+  `ctx` vs the chosen revision), `nominal` nominalisations and `flow`
+  old-to-new information order (Williams), `naysay` the naysayer +
+  "so what?" (Graff & Birkenstein), `warrant` Toulmin warrants/qualifiers/
+  backing, `copia` Erasmus abundance (**generative and unmarked** — counts
+  deduped non-empty lines against a target, mic supported), `tier2`
+  Tier 2 academic word choice (Beck & McKeown / Coxhead).
+  Plus the writing desk (prompt → free write → 8-point rubric self-check
+  → filed). Data: `_tools/cipher_report_data.py`.
   **Gotcha:** the `subord` drills assemble as `{Word} {base}, {option}` —
   tense must agree across BOTH slots of the same base. Four shipped
   broken ("If the keeper dived…, he will have…") and were caught by

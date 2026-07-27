@@ -41,25 +41,22 @@ OUT = os.path.join(ROOT, "teaching", "english", "cipher-field.md")
 sys.path.insert(0, HERE)
 import cipher_field_data as data  # noqa: E402
 
-# The toolkit is finite by design. If these ever need raising, re-read
+# Both toolkits are finite by design. If these ever need raising, re-read
 # the "WHY THIS IS SMALL ON PURPOSE" note in cipher_field_data.py first.
-MAX_SIGNPOSTS = 6
+MAX_SIGNPOSTS = 6          # Notice & Note, for stories
+MAX_SOURCES = 4            # Stanford SHEG moves, for everything else
 MAX_PRACTICE_PER_SIGNPOST = 3
 
 
-def validate():
-    errs = []
-    ids = set()
-
-    if len(data.SIGNPOSTS) != MAX_SIGNPOSTS:
-        errs.append(f"expected exactly {MAX_SIGNPOSTS} signposts, got "
-                    f"{len(data.SIGNPOSTS)} — the toolkit is finite by "
-                    f"design")
-
-    for s in data.SIGNPOSTS:
+def _check_toolkit(items, label, cap, ids, errs):
+    """Both toolkits share a shape, so they share a validator."""
+    if len(items) != cap:
+        errs.append(f"expected exactly {cap} {label}, got {len(items)} — "
+                    f"the toolkit is finite by design")
+    for s in items:
         sid = s.get("id", "?")
         if sid in ids:
-            errs.append(f"duplicate signpost id: {sid}")
+            errs.append(f"duplicate {label} id: {sid}")
         ids.add(sid)
         for f in ("name", "code", "emoji", "anchor", "what", "why"):
             if not s.get(f):
@@ -87,6 +84,21 @@ def validate():
             if not p.get("teach"):
                 errs.append(f"{label}: missing teach line")
 
+
+def validate():
+    errs = []
+    ids = set()
+
+    _check_toolkit(data.SIGNPOSTS, "signposts", MAX_SIGNPOSTS, ids, errs)
+    _check_toolkit(data.SOURCES, "source moves", MAX_SOURCES, ids, errs)
+
+    ins = getattr(data, "INSPECT", None) or {}
+    for f in ("id", "name", "emoji", "what", "why"):
+        if not ins.get(f):
+            errs.append(f"INSPECT missing {f}")
+    if not 3 <= len(ins.get("steps", [])) <= 8:
+        errs.append("INSPECT needs 3-8 steps")
+
     dids = set()
     if not 3 <= len(data.DEBRIEF) <= 6:
         errs.append("DEBRIEF needs 3-6 prompts")
@@ -104,22 +116,31 @@ def validate():
         sys.exit(1)
 
 
+def _pack(items):
+    return [{
+        "id": s["id"], "name": s["name"], "code": s["code"],
+        "emoji": s["emoji"], "anchor": s["anchor"],
+        "what": s["what"], "why": s["why"],
+        "example": {"text": s["example"]["text"],
+                    "spot": s["example"]["spot"],
+                    "think": s["example"]["think"]},
+        "practice": [{
+            "text": p["text"], "q": p["q"],
+            "opts": [[t, c] for (t, c) in p["opts"]],
+            "teach": p["teach"],
+        } for p in s["practice"]],
+    } for s in items]
+
+
 def build_payload():
+    ins = data.INSPECT
     return json.dumps({
-        "v": 1,
-        "signposts": [{
-            "id": s["id"], "name": s["name"], "code": s["code"],
-            "emoji": s["emoji"], "anchor": s["anchor"],
-            "what": s["what"], "why": s["why"],
-            "example": {"text": s["example"]["text"],
-                        "spot": s["example"]["spot"],
-                        "think": s["example"]["think"]},
-            "practice": [{
-                "text": p["text"], "q": p["q"],
-                "opts": [[t, c] for (t, c) in p["opts"]],
-                "teach": p["teach"],
-            } for p in s["practice"]],
-        } for s in data.SIGNPOSTS],
+        "v": 2,
+        "signposts": _pack(data.SIGNPOSTS),
+        "sources": _pack(data.SOURCES),
+        "inspect": {"id": ins["id"], "name": ins["name"],
+                    "emoji": ins["emoji"], "what": ins["what"],
+                    "why": ins["why"], "steps": ins["steps"]},
         "debrief": [{"id": d["id"], "q": d["q"], "hint": d["hint"]}
                     for d in data.DEBRIEF],
     }, separators=(",", ":"), ensure_ascii=False)
@@ -157,11 +178,16 @@ def main():
     with open(OUT, "w", encoding="utf-8") as f:
         f.write(front)
 
-    n_prac = sum(len(s["practice"]) for s in data.SIGNPOSTS)
+    n_sig = sum(len(s["practice"]) for s in data.SIGNPOSTS)
+    n_src = sum(len(s["practice"]) for s in data.SOURCES)
     print(f"✅  Wrote {os.path.relpath(OUT, ROOT)} "
-          f"({len(data.SIGNPOSTS)} signposts, {n_prac} practice items, "
-          f"{len(data.DEBRIEF)} debrief prompts, "
-          f"{len(blob) // 1024} KB encrypted)")
+          f"({len(blob) // 1024} KB encrypted)")
+    print(f"    signposts  {len(data.SIGNPOSTS)} (cap {MAX_SIGNPOSTS}) · "
+          f"{n_sig} practice items")
+    print(f"    source     {len(data.SOURCES)} (cap {MAX_SOURCES}) · "
+          f"{n_src} practice items")
+    print(f"    plus inspectional reading + {len(data.DEBRIEF)} debrief "
+          f"prompts")
 
 
 if __name__ == "__main__":

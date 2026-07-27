@@ -666,8 +666,17 @@ layout: default
                  '"': '&quot;', "'": '&#39;' }[c];
       });
     }
+    /* both toolkits are looked up through one function so entries, the
+       field guide and the lesson flow all work regardless of which kind
+       of move he logged */
+    function allMoves() {
+      return DATA.signposts.concat(DATA.sources || []);
+    }
     function spById(id) {
-      return DATA.signposts.find(function (s) { return s.id === id; }) || null;
+      return allMoves().find(function (s) { return s.id === id; }) || null;
+    }
+    function isSource(id) {
+      return (DATA.sources || []).some(function (s) { return s.id === id; });
     }
     function bookById(id) {
       return P.books.find(function (b) { return b.id === id; }) || null;
@@ -677,6 +686,11 @@ layout: default
     }
     function trainedCount() {
       return DATA.signposts.filter(function (s) {
+        return P.signposts[s.id] && P.signposts[s.id].done;
+      }).length;
+    }
+    function sourceTrainedCount() {
+      return (DATA.sources || []).filter(function (s) {
         return P.signposts[s.id] && P.signposts[s.id].done;
       }).length;
     }
@@ -751,12 +765,23 @@ layout: default
       s.textContent = '📋 Field guide — the six signals';
       d.appendChild(s);
       const t = document.createElement('table');
-      DATA.signposts.forEach(function (sp) {
-        const tr = document.createElement('tr');
-        tr.innerHTML = '<td class="k">' + sp.emoji + ' ' + esc(sp.name) +
-          '</td><td>' + esc(sp.anchor) + '</td>';
-        t.appendChild(tr);
-      });
+      function addRows(list, heading) {
+        if (!list || !list.length) return;
+        const hr = document.createElement('tr');
+        hr.innerHTML = '<td colspan="2" style="font-family:var(--mono);' +
+          'font-size:0.66rem;letter-spacing:0.14em;opacity:0.5;' +
+          'text-transform:uppercase;padding-top:0.6rem">' +
+          esc(heading) + '</td>';
+        t.appendChild(hr);
+        list.forEach(function (sp) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = '<td class="k">' + sp.emoji + ' ' + esc(sp.name) +
+            '</td><td>' + esc(sp.anchor) + '</td>';
+          t.appendChild(tr);
+        });
+      }
+      addRows(DATA.signposts, 'In stories');
+      addRows(DATA.sources, 'In anything else');
       d.appendChild(t);
       wrap.appendChild(d);
       return wrap;
@@ -768,6 +793,8 @@ layout: default
       el.appendChild(topBar(null, null));
 
       const trained = trainedCount();
+      const srcTrained = sourceTrainedCount();
+      const nSrc = (DATA.sources || []).length;
       const open = P.books.filter(function (b) { return !b.closed; });
       const closed = P.books.filter(function (b) { return b.closed; });
 
@@ -776,10 +803,12 @@ layout: default
       hero.innerHTML =
         '<div class="tag">Cipher // Field Craft</div>' +
         '<h1>📁 Field Craft</h1>' +
-        '<p>Six signals to train, then take them into real books. ' +
-        'Every case file is a book you are actually reading.</p>' +
+        '<p>Signals for stories, source checks for everything else — ' +
+        'then take them into whatever you are really reading.</p>' +
         '<div class="cf-statbar">' +
           '<div class="cf-stat"><b>' + trained + '/6</b><span>SIGNALS</span></div>' +
+          '<div class="cf-stat"><b>' + srcTrained + '/' + nSrc +
+            '</b><span>SOURCE CHECKS</span></div>' +
           '<div class="cf-stat"><b>' + open.length + '</b><span>OPEN CASES</span></div>' +
           '<div class="cf-stat"><b>' + closed.length + '</b><span>CLOSED</span></div>' +
           '<div class="cf-stat"><b>' + P.entries.length + '</b><span>ENTRIES</span></div>' +
@@ -789,35 +818,67 @@ layout: default
       /* Phase A */
       const h1 = document.createElement('div');
       h1.className = 'cf-sect';
-      h1.innerHTML = '<span class="n">01</span> Signal training ' +
+      h1.innerHTML = '<span class="n">01</span> Signal training — for stories ' +
         (trained === 6 ? '— complete ✅' : '— ' + trained + ' of 6 done');
       el.appendChild(h1);
 
-      if (trained === 6) {
+      if (trained === 6 && srcTrained === nSrc) {
         const p = document.createElement('div');
         p.className = 'cf-panel';
         p.innerHTML = '<span class="cf-label">Training status</span>' +
-          'All six signals trained. That is the whole toolkit — there is ' +
-          'deliberately no more to grind. From here the work is using them ' +
-          'on real books, down in your case files.';
+          'Both toolkits trained — six signals and ' + nSrc + ' source ' +
+          'checks. That is the whole kit, and there is deliberately no ' +
+          'more to grind. From here the work is using them on real books ' +
+          'and real articles, down in your case files.';
         el.appendChild(p);
       }
 
-      const grid = document.createElement('div');
-      grid.className = 'cf-grid';
-      DATA.signposts.forEach(function (sp) {
-        const done = !!(P.signposts[sp.id] && P.signposts[sp.id].done);
-        const b = document.createElement('button');
-        b.className = 'cf-sp' + (done ? ' done' : '');
-        b.innerHTML =
-          '<span class="em">' + sp.emoji + '</span>' +
-          '<span class="code">' + esc(sp.code) + '</span>' +
-          '<span class="nm">' + esc(sp.name) + '</span>' +
-          '<span class="st">' + (done ? '✓ TRAINED' : 'START →') + '</span>';
-        b.addEventListener('click', function () { lesson(sp); });
-        grid.appendChild(b);
-      });
-      el.appendChild(grid);
+      function trackGrid(list) {
+        const grid = document.createElement('div');
+        grid.className = 'cf-grid';
+        list.forEach(function (sp) {
+          const done = !!(P.signposts[sp.id] && P.signposts[sp.id].done);
+          const b = document.createElement('button');
+          b.className = 'cf-sp' + (done ? ' done' : '');
+          b.innerHTML =
+            '<span class="em">' + sp.emoji + '</span>' +
+            '<span class="code">' + esc(sp.code) + '</span>' +
+            '<span class="nm">' + esc(sp.name) + '</span>' +
+            '<span class="st">' + (done ? '✓ TRAINED' : 'START →') + '</span>';
+          b.addEventListener('click', function () { lesson(sp); });
+          grid.appendChild(b);
+        });
+        return grid;
+      }
+      el.appendChild(trackGrid(DATA.signposts));
+
+      /* Source Check — the second finite toolkit, for non-fiction */
+      const h1b = document.createElement('div');
+      h1b.className = 'cf-sect';
+      h1b.innerHTML = '<span class="n">01b</span> Source check — for ' +
+        'articles, websites, anything that wants you to believe it ' +
+        (srcTrained === nSrc ? '— complete ✅' : '— ' + srcTrained + ' of ' +
+         nSrc + ' done');
+      el.appendChild(h1b);
+      el.appendChild(trackGrid(DATA.sources || []));
+
+      /* Inspectional reading — one lesson, not a track */
+      if (DATA.inspect) {
+        const ins = document.createElement('button');
+        ins.className = 'cf-sp';
+        ins.style.marginTop = '0.55rem';
+        ins.style.width = '100%';
+        const insDone = !!(P.signposts[DATA.inspect.id] &&
+                           P.signposts[DATA.inspect.id].done);
+        if (insDone) ins.classList.add('done');
+        ins.innerHTML = '<span class="em">' + DATA.inspect.emoji + '</span>' +
+          '<span class="code">PRE-READ</span>' +
+          '<span class="nm">' + esc(DATA.inspect.name) + '</span>' +
+          '<span class="st">' + (insDone ? '✓ LEARNED' : 'START →') +
+          '</span>';
+        ins.addEventListener('click', inspectLesson);
+        el.appendChild(ins);
+      }
 
       /* Phase B */
       const h2 = document.createElement('div');
@@ -1098,6 +1159,72 @@ layout: default
       teach();
     }
 
+    /* ── Inspectional reading (Adler level 2) ─────────────────────────── */
+    /* One lesson, no practice bank — it is a habit, not a skill to drill.
+       Five minutes of scanning before page one gives every later page
+       somewhere to attach itself. */
+    function inspectLesson() {
+      const ins = DATA.inspect;
+      el.innerHTML = '';
+      el.appendChild(topBar('Field Craft', home));
+
+      const hero = document.createElement('div');
+      hero.className = 'cf-hero';
+      hero.innerHTML = '<div class="tag">Pre-read // before page one</div>' +
+        '<h1>' + ins.emoji + ' ' + esc(ins.name) + '</h1>';
+      el.appendChild(hero);
+
+      const what = document.createElement('div');
+      what.className = 'cf-panel';
+      what.innerHTML = '<span class="cf-label">What it is</span>' +
+        esc(ins.what);
+      el.appendChild(what);
+
+      const why = document.createElement('div');
+      why.className = 'cf-panel quote';
+      why.innerHTML = '<span class="cf-label">Why it works</span>' +
+        esc(ins.why);
+      el.appendChild(why);
+
+      const h = document.createElement('div');
+      h.className = 'cf-sect';
+      h.innerHTML = '<span class="n">▸</span> The five-minute scan';
+      el.appendChild(h);
+
+      const list = document.createElement('div');
+      ins.steps.forEach(function (s, i) {
+        const d = document.createElement('div');
+        d.className = 'cf-entry';
+        d.innerHTML = '<div class="hd"><span class="sp">STEP ' + (i + 1) +
+          '</span></div><div class="w">' + esc(s) + '</div>';
+        list.appendChild(d);
+      });
+      el.appendChild(list);
+
+      const row = document.createElement('div');
+      row.className = 'cf-row';
+      const done = document.createElement('button');
+      done.className = 'cf-btn';
+      done.textContent = '✅ Got it';
+      done.addEventListener('click', function () {
+        P.signposts[ins.id] = { done: 1, d: today() };
+        save();
+        sfx('badge');
+        home();
+      });
+      row.appendChild(done);
+      const hear = document.createElement('button');
+      hear.className = 'cf-btn ghost';
+      hear.textContent = '🔊 Read this to me';
+      hear.addEventListener('click', function () {
+        speak(ins.name + '. ' + ins.what + ' ' + ins.why + ' ' +
+              ins.steps.join('. '));
+      });
+      row.appendChild(hear);
+      el.appendChild(row);
+      window.scrollTo(0, 0);
+    }
+
     /* ── PHASE B: books ───────────────────────────────────────────────── */
     const EMOJI = ['📕', '📗', '📘', '📙', '🕵️', '⚔️', '🏰', '🚀', '🐉',
                    '⚽', '🎸', '🌊', '🗺️', '🔦', '🧭'];
@@ -1218,7 +1345,7 @@ layout: default
         row.className = 'cf-row';
         const add = document.createElement('button');
         add.className = 'cf-btn';
-        add.textContent = '+ Log a signal';
+        add.textContent = '+ Log what you spotted';
         add.addEventListener('click', function () { newEntry(bookId, null); });
         row.appendChild(add);
         const close = document.createElement('button');
@@ -1318,7 +1445,7 @@ layout: default
       const hero = document.createElement('div');
       hero.className = 'cf-hero';
       hero.innerHTML = '<div class="tag">' + esc(b.title) + '</div>' +
-        '<h1>📌 Log a signal</h1>' +
+        '<h1>📌 Log what you spotted</h1>' +
         '<p>You spotted something. Get it down while it is fresh.</p>';
       el.appendChild(hero);
 
@@ -1329,25 +1456,47 @@ layout: default
 
       const f1 = document.createElement('div');
       f1.className = 'cf-field';
-      f1.innerHTML = '<label class="lab">Which signal?</label>';
-      const chips = document.createElement('div');
-      chips.className = 'cf-chiprow';
-      DATA.signposts.forEach(function (sp) {
-        const c = document.createElement('button');
-        c.type = 'button';
-        c.className = 'cf-chip' + (chosen === sp.id ? ' on' : '');
-        c.textContent = sp.emoji + ' ' + sp.name;
-        c.addEventListener('click', function () {
-          chosen = sp.id;
-          Array.prototype.forEach.call(chips.children, function (x) {
-            x.classList.remove('on');
+      f1.innerHTML = '<label class="lab">What did you spot?</label>';
+      const chipHosts = [];
+
+      /* two chip groups — story signals and source checks — so the
+         journal works for a novel and for a news article alike */
+      function chipGroup(list, heading) {
+        if (!list || !list.length) return;
+        const lab = document.createElement('div');
+        lab.className = 'cf-hint';
+        lab.style.margin = '0.15rem 0 0.3rem';
+        lab.style.fontFamily = 'var(--mono)';
+        lab.style.letterSpacing = '0.1em';
+        lab.style.textTransform = 'uppercase';
+        lab.style.fontSize = '0.66rem';
+        lab.textContent = heading;
+        f1.appendChild(lab);
+        const chips = document.createElement('div');
+        chips.className = 'cf-chiprow';
+        chips.style.marginBottom = '0.5rem';
+        list.forEach(function (sp) {
+          const c = document.createElement('button');
+          c.type = 'button';
+          c.className = 'cf-chip' + (chosen === sp.id ? ' on' : '');
+          c.textContent = sp.emoji + ' ' + sp.name;
+          c.addEventListener('click', function () {
+            chosen = sp.id;
+            chipHosts.forEach(function (h) {
+              Array.prototype.forEach.call(h.children, function (x) {
+                x.classList.remove('on');
+              });
+            });
+            c.classList.add('on');
+            paintAnchor();
           });
-          c.classList.add('on');
-          paintAnchor();
+          chips.appendChild(c);
         });
-        chips.appendChild(c);
-      });
-      f1.appendChild(chips);
+        f1.appendChild(chips);
+        chipHosts.push(chips);
+      }
+      chipGroup(DATA.signposts, 'In a story');
+      chipGroup(DATA.sources, 'In an article or anything factual');
       panel.appendChild(f1);
 
       const f2 = document.createElement('div');
@@ -1404,7 +1553,7 @@ layout: default
       ok.className = 'cf-btn';
       ok.textContent = 'Save to case file';
       ok.addEventListener('click', function () {
-        if (!chosen) { err.textContent = 'Pick which signal you spotted.'; return; }
+        if (!chosen) { err.textContent = 'Pick what you spotted first.'; return; }
         if (!what.value.trim() && !ans.value.trim()) {
           err.textContent = 'Write what happened, or your thinking — even one line.';
           return;

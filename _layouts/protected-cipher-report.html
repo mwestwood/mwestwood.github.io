@@ -512,6 +512,65 @@ layout: default
                 '<b>conclusion</b> that closes it. Tap them into order.' }
     ];
 
+    /* Advanced craft — the high-school end. Kept in its own section so
+       the core ten never look like a wall of eighteen. */
+    const ADVANCED = [
+      { kind: 'cumul', em: '🪜', name: 'Cumulative Sentences',
+        desc: 'Stack detail, layer by layer',
+        lesson: 'Francis Christensen studied what professional writers do ' +
+                'that students do not, and found this: a short base clause, ' +
+                'then <b>free modifiers</b> stacked after it, each one ' +
+                '<b>more specific than the one above</b>. Start general, ' +
+                'then keep dropping closer.' },
+      { kind: 'lard', em: '🔪', name: 'Cut the Lard',
+        desc: 'Same meaning, half the words',
+        lesson: "Richard Lanham's <b>Paramedic Method</b>: circle every " +
+                'preposition, circle every form of <b>is/was/are</b>, find ' +
+                'the real action, put it in an active verb, and start fast ' +
+                '— no wind-up. Then measure your <b>lard factor</b>: the ' +
+                'percentage of words you cut.' },
+      { kind: 'nominal', em: '🔓', name: 'Unfreeze the Verb',
+        desc: 'Kill nominalisations',
+        lesson: 'Joseph Williams found the main cause of foggy writing: ' +
+                '<b>nominalisations</b> — verbs frozen into nouns ' +
+                '(<i>decide → decision</i>, <i>discover → discovery</i>). ' +
+                'His two rules: make the main <b>character</b> the subject, ' +
+                'and their main <b>action</b> the verb.' },
+      { kind: 'flow', em: '🔗', name: 'Old to New',
+        desc: 'Why paragraphs flow',
+        lesson: 'The most underrated rule in writing. Start each sentence ' +
+                'with something the reader <b>already knows</b>, and put ' +
+                'the <b>new</b> idea at the end. Each sentence ends on the ' +
+                'thing the next one begins with. That chain is what readers ' +
+                'feel as "flow".' },
+      { kind: 'naysay', em: '🥊', name: 'The Naysayer',
+        desc: 'Argue against yourself first',
+        lesson: 'From <i>They Say / I Say</i>: before you defend your point, ' +
+                '<b>voice the strongest objection yourself</b> — fairly — ' +
+                'and then answer it. It is the single fastest upgrade to any ' +
+                'argument, at any age. Also: always answer <b>"so what? who ' +
+                'cares?"</b>' },
+      { kind: 'warrant', em: '🌉', name: 'Find the Warrant',
+        desc: 'The hidden bridge in an argument',
+        lesson: 'Stephen Toulmin: evidence is one riverbank, the claim is ' +
+                'the far bank, and the <b>warrant</b> is the bridge — the ' +
+                'assumption nobody states. Almost every weak argument breaks ' +
+                'at the warrant, not the evidence.' },
+      { kind: 'copia', em: '🌾', name: 'Copia',
+        desc: 'Say it twenty ways',
+        lesson: 'In 1512 Erasmus wrote <b>195 versions</b> of one sentence ' +
+                'to prove a point: good writing is not finding the one right ' +
+                'way, it is <b>generating options and then choosing</b>. ' +
+                'Nothing here is marked — quantity is the whole exercise.' },
+      { kind: 'tier2', em: '💠', name: 'Precise Words',
+        desc: 'Upgrade to academic vocabulary',
+        lesson: 'Beck and McKeown split words into three tiers. <b>Tier 2</b> ' +
+                'words — <i>indicates, significant, factor, consequence, ' +
+                'disputes</i> — are the high-value ones because they work in ' +
+                '<b>every subject</b>. Coxhead collected 570 families of them.' }
+    ];
+    const ALL_DRILLS = DRILLS.concat(ADVANCED);
+
     function slotRole(i, n) {
       if (i === 0) return 'Topic sentence';
       if (i === n - 1) return 'Conclusion';
@@ -776,42 +835,55 @@ layout: default
       hero.innerHTML =
         '<div class="tag">Cipher // Report Craft</div>' +
         '<h1>✍️ Report Craft</h1>' +
-        '<p>Agents write clearly or people get hurt. Ten drills that build ' +
-        'sentences, then a desk to write your own.</p>' +
+        '<p>Agents write clearly or people get hurt. Drills that build a ' +
+        'sentence, drills that sharpen one, then a desk to write your ' +
+        'own.</p>' +
         '<div class="cf-statbar">' +
           '<div class="cf-stat"><b>' + totalDone + '</b><span>DRILLS RUN</span></div>' +
           '<div class="cf-stat"><b>' + Object.keys(P.report.done).length +
-            '/' + DRILLS.length + '</b><span>TYPES TRIED</span></div>' +
+            '/' + ALL_DRILLS.length + '</b><span>TYPES TRIED</span></div>' +
           '<div class="cf-stat"><b>' + P.report.pieces.length +
             '</b><span>REPORTS FILED</span></div>' +
         '</div>';
       el.appendChild(hero);
 
+      function drillGrid(list) {
+        const grid = document.createElement('div');
+        grid.className = 'cf-grid';
+        list.forEach(function (g) {
+          const n = DATA.ex.filter(function (e) { return e.kind === g.kind; }).length;
+          if (!n) return;
+          const runs = P.report.done[g.kind] || 0;
+          const best = P.report.best[g.kind];
+          const b = document.createElement('button');
+          b.className = 'cf-drill';
+          b.innerHTML = '<span class="em">' + g.em + '</span>' +
+            '<span class="nm">' + esc(g.name) + '</span>' +
+            '<span class="dc">' + esc(g.desc) + '</span>' +
+            '<span class="st">' + (runs
+              ? '✓ ' + runs + ' run' + (runs === 1 ? '' : 's') +
+                (best != null && g.kind !== 'copia'
+                  ? ' · best ' + Math.round(best * 100) + '%' : '')
+              : 'START →') + '</span>';
+          b.addEventListener('click', function () { playDrill(g); });
+          grid.appendChild(b);
+        });
+        return grid;
+      }
+
       const h1 = document.createElement('div');
       h1.className = 'cf-sect';
       h1.innerHTML = '<span class="n">01</span> Sentence drills';
       el.appendChild(h1);
+      el.appendChild(drillGrid(DRILLS));
 
-      const grid = document.createElement('div');
-      grid.className = 'cf-grid';
-      DRILLS.forEach(function (g) {
-        const n = DATA.ex.filter(function (e) { return e.kind === g.kind; }).length;
-        if (!n) return;
-        const runs = P.report.done[g.kind] || 0;
-        const best = P.report.best[g.kind];
-        const b = document.createElement('button');
-        b.className = 'cf-drill';
-        b.innerHTML = '<span class="em">' + g.em + '</span>' +
-          '<span class="nm">' + esc(g.name) + '</span>' +
-          '<span class="dc">' + esc(g.desc) + '</span>' +
-          '<span class="st">' + (runs
-            ? '✓ ' + runs + ' run' + (runs === 1 ? '' : 's') +
-              (best != null ? ' · best ' + Math.round(best * 100) + '%' : '')
-            : 'START →') + '</span>';
-        b.addEventListener('click', function () { playDrill(g); });
-        grid.appendChild(b);
-      });
-      el.appendChild(grid);
+      const h1b = document.createElement('div');
+      h1b.className = 'cf-sect';
+      h1b.innerHTML = '<span class="n">01b</span> Advanced craft ' +
+        '<span style="text-transform:none;letter-spacing:0;opacity:0.75">' +
+        'what separates a correct writer from a good one</span>';
+      el.appendChild(h1b);
+      el.appendChild(drillGrid(ADVANCED));
 
       const h2 = document.createElement('div');
       h2.className = 'cf-sect';
@@ -871,6 +943,8 @@ layout: default
         if (ex.kind === 'bcs') renderBcs(ex, body);
         else if (ex.kind === 'subord') renderSubord(ex, body);
         else if (ex.kind === 'para') renderPara(ex, body);
+        else if (ex.kind === 'cumul') renderCumul(ex, body);
+        else if (ex.kind === 'copia') renderCopia(ex, body);
         else renderMcq(ex, body);
 
         window.scrollTo(0, 0);
@@ -889,6 +963,23 @@ layout: default
         });
         row.appendChild(b);
         host.appendChild(row);
+      }
+
+      /* Lanham's lard factor: (original − revised) / original, shown only
+         on `lard` drills, where the number IS the lesson. */
+      function lardLine(ex, revised) {
+        if (ex.kind !== 'lard' || !ex.ctx) return '';
+        const wc = function (s) {
+          return s.trim() ? s.trim().split(/\s+/).length : 0;
+        };
+        const before = wc(ex.ctx), after = wc(revised);
+        if (!before || after >= before) return '';
+        const pct = Math.round((before - after) / before * 100);
+        return '<div class="cf-built" style="margin-top:0.6rem">' +
+          '<span class="cf-label">Lard factor</span>' +
+          before + ' words → ' + after + ' words · ' +
+          '<b>' + pct + '% cut</b>' +
+          (pct >= 33 ? ' — Lanham would approve.' : '') + '</div>';
       }
 
       /* — plain MCQ kinds — */
@@ -919,6 +1010,7 @@ layout: default
               b.classList.add('yes');
               sfx('good');
               fb.innerHTML = (tries === 0 ? '✅ <b>Clean.</b>' : '✅ <b>Got it.</b>') +
+                lardLine(ex, o[0]) +
                 '<span class="teach">' + esc(ex.teach) + '</span>';
               nextBtn(fb);
             } else {
@@ -948,6 +1040,230 @@ layout: default
         });
         host.appendChild(opts);
         host.appendChild(fb);
+      }
+
+      /* — cumulative sentences (Christensen) —
+         Each pick must be MORE specific than the one above it, and the
+         built sentence is shown indented by level so the descending
+         generality is visible rather than merely asserted. */
+      function renderCumul(ex, host) {
+        let li = 0, clean = 0;
+        const picked = [];
+
+        const stack = document.createElement('div');
+        stack.className = 'cf-panel quote';
+        host.appendChild(stack);
+        const area = document.createElement('div');
+        const fb = document.createElement('div');
+        fb.className = 'cf-feedback';
+        host.appendChild(area);
+        host.appendChild(fb);
+
+        function paintStack() {
+          let html = '<span class="cf-label">Your sentence so far</span>' +
+            '<div style="line-height:1.75"><b>' + esc(ex.base) + '</b>';
+          picked.forEach(function (p) {
+            html += '<br><span style="display:inline-block;padding-left:' +
+              ((p.lvl - 1) * 1.4) + 'rem;opacity:' +
+              (1 - (p.lvl - 2) * 0.12) + '">' +
+              '<span style="font-family:var(--mono);font-size:0.62rem;' +
+              'opacity:0.5;letter-spacing:0.1em">L' + p.lvl + '</span> ' +
+              esc(p.t) + '</span>';
+          });
+          if (li < ex.levels.length) {
+            html += '<br><span style="display:inline-block;padding-left:' +
+              (ex.levels[li].lvl - 1) * 1.4 + 'rem;opacity:0.4">' +
+              '<span style="font-family:var(--mono);font-size:0.62rem;' +
+              'letter-spacing:0.1em">L' + ex.levels[li].lvl + '</span> ' +
+              '…?</span>';
+          }
+          stack.innerHTML = html + '</div>';
+        }
+
+        function slot() {
+          area.innerHTML = ''; fb.innerHTML = '';
+          paintStack();
+          const lv = ex.levels[li];
+          const lab = document.createElement('div');
+          lab.className = 'cf-slotlab';
+          lab.textContent = 'Level ' + lv.lvl + ' — go more specific';
+          area.appendChild(lab);
+
+          const opts = document.createElement('div');
+          opts.className = 'cf-opts';
+          let tries = 0;
+          shuffle(lv.opts).forEach(function (o) {
+            const b = document.createElement('button');
+            b.className = 'cf-opt';
+            b.textContent = o[0];
+            b.addEventListener('click', function () {
+              if (o[1]) {
+                if (tries === 0) clean++;
+                picked.push({ lvl: lv.lvl, t: o[0] });
+                Array.prototype.forEach.call(opts.children, function (x) { x.disabled = true; });
+                b.classList.add('yes');
+                sfx('good');
+                advance();
+              } else {
+                tries++;
+                if (tries === 1) {
+                  b.classList.add('no');
+                  setTimeout(function () {
+                    b.classList.remove('no'); b.classList.add('dim'); b.disabled = true;
+                  }, 350);
+                  sfx('soft');
+                  fb.textContent = 'That one moves sideways or backwards. ' +
+                    'A cumulative layer must go NARROWER — a detail inside ' +
+                    'the thing above it.';
+                } else {
+                  let correct = '';
+                  lv.opts.forEach(function (o2) { if (o2[1]) correct = o2[0]; });
+                  picked.push({ lvl: lv.lvl, t: correct });
+                  Array.prototype.forEach.call(opts.children, function (x) {
+                    x.disabled = true;
+                    if (x.textContent === correct) x.classList.add('yes');
+                  });
+                  sfx('soft');
+                  advance();
+                }
+              }
+            });
+            opts.appendChild(b);
+          });
+          area.appendChild(opts);
+        }
+
+        function advance() {
+          li++;
+          paintStack();
+          const row = document.createElement('div');
+          row.className = 'cf-row';
+          const b = document.createElement('button');
+          b.className = 'cf-btn';
+          b.textContent = li < ex.levels.length ? 'Add another layer ▸'
+                                                : 'Read it whole ▸';
+          b.addEventListener('click', function () {
+            if (li < ex.levels.length) slot();
+            else finish();
+          });
+          row.appendChild(b);
+          fb.appendChild(row);
+        }
+
+        function finish() {
+          area.innerHTML = ''; fb.innerHTML = '';
+          if (clean === ex.levels.length) firstTry++;
+          const whole = ex.base + ', ' +
+            picked.map(function (p) { return p.t; }).join(' ');
+          const built = document.createElement('div');
+          built.className = 'cf-built';
+          built.innerHTML = '<span class="cf-label">The whole sentence</span>' +
+            esc(whole.replace(/,\s*,/g, ','));
+          fb.appendChild(built);
+          const note = document.createElement('div');
+          note.className = 'cf-feedback';
+          note.innerHTML = '<span class="teach">That is a cumulative ' +
+            'sentence: one short base clause plus ' + picked.length +
+            ' free modifier' + (picked.length === 1 ? '' : 's') +
+            ', each narrower than the last. Christensen found this is ' +
+            'the shape professional prose uses and student prose does ' +
+            'not.</span>';
+          fb.appendChild(note);
+          speak(whole);
+          sfx('badge');
+          nextBtn(fb);
+        }
+
+        slot();
+      }
+
+      /* — copia (Erasmus) —
+         Generative and deliberately unmarked: the exercise IS the
+         quantity. Counts distinct non-empty lines against a target. */
+      function renderCopia(ex, host) {
+        const seed = document.createElement('div');
+        seed.className = 'cf-stem';
+        seed.innerHTML = '<span class="cf-label">The plain version</span>' +
+          esc(ex.seed);
+        host.appendChild(seed);
+
+        const angles = document.createElement('div');
+        angles.className = 'cf-panel';
+        angles.innerHTML = '<span class="cf-label">Angles to try — ' +
+          'you do not have to use them in order</span>' +
+          '<div style="line-height:1.9">' +
+          ex.angles.map(function (a) {
+            return '<span style="display:inline-block;background:' +
+              'rgba(255,255,255,0.06);border:1px solid var(--line);' +
+              'border-radius:999px;padding:0.15rem 0.7rem;margin:0.12rem;' +
+              'font-size:0.88rem">' + esc(a) + '</span>';
+          }).join(' ') + '</div>';
+        host.appendChild(angles);
+
+        const wrap = document.createElement('div');
+        const ta = document.createElement('textarea');
+        ta.placeholder = 'One version per line. Anything counts — silly ' +
+          'ones count too.';
+        ta.style.minHeight = '210px';
+        wrap.appendChild(ta);
+        const count = document.createElement('div');
+        count.className = 'cf-count';
+        wrap.appendChild(count);
+        attachMic(ta, wrap);
+        host.appendChild(wrap);
+
+        const fb = document.createElement('div');
+        fb.className = 'cf-feedback';
+
+        function lines() {
+          const seen = {};
+          return ta.value.split('\n')
+            .map(function (l) { return l.trim(); })
+            .filter(function (l) {
+              if (!l) return false;
+              const k = l.toLowerCase();
+              if (seen[k]) return false;
+              seen[k] = 1;
+              return true;
+            });
+        }
+        function refresh() {
+          const n = lines().length;
+          count.innerHTML = n + ' / ' + ex.target +
+            (n >= ex.target ? ' <span style="color:var(--ok)">✓ target met</span>'
+                            : ' version' + (n === 1 ? '' : 's'));
+          done.disabled = n === 0;
+        }
+        ta.addEventListener('input', refresh);
+
+        const row = document.createElement('div');
+        row.className = 'cf-row';
+        const done = document.createElement('button');
+        done.className = 'cf-btn';
+        done.textContent = 'Done — count them';
+        done.addEventListener('click', function () {
+          const ls = lines();
+          if (!ls.length) return;
+          /* copia is never "wrong" — hitting the target counts as clean */
+          if (ls.length >= ex.target) firstTry++;
+          sfx('badge');
+          fb.innerHTML = '🌾 <b>' + ls.length + ' version' +
+            (ls.length === 1 ? '' : 's') + '.</b>' +
+            (ls.length >= ex.target
+              ? '<span class="teach">Target met. Now the real move: read ' +
+                'them back and pick the ONE you would actually use. That ' +
+                'choice is only possible because you generated ' +
+                'options.</span>'
+              : '<span class="teach">Erasmus wrote 195 versions of one ' +
+                'sentence. You are aiming for ' + ex.target + ' — push a ' +
+                'few more out even if they are bad. Bad ones are how you ' +
+                'reach the good ones.</span>');
+          nextBtn(fb);
+        });
+        row.appendChild(done);
+        host.appendChild(row);
+        host.appendChild(fb);
+        refresh();
       }
 
       /* — because / but / so — */

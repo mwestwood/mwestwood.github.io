@@ -37,8 +37,10 @@ OUT = os.path.join(ROOT, "teaching", "english", "cipher-report.md")
 sys.path.insert(0, HERE)
 import cipher_report_data as data  # noqa: E402
 
-MCQ_KINDS = {"combine", "expand", "appos", "frag", "show", "verb", "trans"}
-ALL_KINDS = MCQ_KINDS | {"bcs", "subord", "para"}
+MCQ_KINDS = {"combine", "expand", "appos", "frag", "show", "verb", "trans",
+             # advanced craft — all ordinary MCQ except cumul/copia
+             "lard", "nominal", "flow", "naysay", "warrant", "tier2"}
+ALL_KINDS = MCQ_KINDS | {"bcs", "subord", "para", "cumul", "copia"}
 
 
 def _check_opts(label, opts, errs, lo=2, hi=4):
@@ -102,6 +104,37 @@ def validate():
             if len(set(parts)) != len(parts):
                 errs.append(f"{eid}: duplicate parts")
 
+        elif kind == "cumul":
+            if not e.get("base"):
+                errs.append(f"{eid}: missing base clause")
+            levels = e.get("levels", [])
+            if not 2 <= len(levels) <= 4:
+                errs.append(f"{eid}: needs 2-4 levels")
+            # Christensen's whole point is DESCENDING generality, so the
+            # level numbers must strictly increase down the stack.
+            prev = 1
+            for lv in levels:
+                n = lv.get("lvl")
+                if not isinstance(n, int) or n <= prev:
+                    errs.append(f"{eid}: level {n!r} must be an int greater "
+                                f"than the previous ({prev})")
+                else:
+                    prev = n
+                _check_opts(f"{eid}.lvl{n}", lv.get("opts", []), errs)
+
+        elif kind == "copia":
+            if not e.get("seed"):
+                errs.append(f"{eid}: missing seed sentence")
+            angles = e.get("angles", [])
+            target = e.get("target")
+            if not isinstance(target, int) or not 3 <= target <= 20:
+                errs.append(f"{eid}: target should be an int 3-20")
+            if len(angles) < (target or 0):
+                errs.append(f"{eid}: needs at least as many angles "
+                            f"({len(angles)}) as the target ({target})")
+            if len(set(angles)) != len(angles):
+                errs.append(f"{eid}: duplicate angles")
+
     if errs:
         for e in errs:
             print("❌ ", e, file=sys.stderr)
@@ -132,6 +165,15 @@ def build_payload():
         elif kind == "para":
             rec["topic"] = e["topic"]
             rec["parts"] = e["parts"]
+        elif kind == "cumul":
+            rec["base"] = e["base"]
+            rec["levels"] = [{"lvl": lv["lvl"],
+                              "opts": [[t, c] for (t, c) in lv["opts"]]}
+                             for lv in e["levels"]]
+        elif kind == "copia":
+            rec["seed"] = e["seed"]
+            rec["target"] = e["target"]
+            rec["angles"] = e["angles"]
         out.append(rec)
     return json.dumps({"v": 1, "ex": out},
                       separators=(",", ":"), ensure_ascii=False)

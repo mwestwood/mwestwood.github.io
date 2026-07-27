@@ -459,3 +459,287 @@ DEBRIEF = [
      "hint": "Be honest. A real reason beats a polite one — and 'no, "
              "because…' is a perfectly good answer."},
 ]
+
+
+# ─────────────────────────────────────────────────────────────────────
+# SOURCE CHECK — the second finite toolkit
+# ─────────────────────────────────────────────────────────────────────
+#
+# The six signposts above are for STORIES. These four moves are for
+# everything else: articles, textbooks, websites, arguments, anything
+# where the question is not "what does this mean?" but "should I believe
+# this?".
+#
+# This is the Stanford History Education Group's "Reading Like a
+# Historian" framework (Wineburg & Reisman) — sourcing, contextualization,
+# corroboration, and close reading of claims. It is the best-evidenced
+# disciplinary-literacy framework there is: in every study of historical
+# reading, SOURCING is the move that separates experts from novices, and
+# students taught this way outperformed peers on comprehension AND
+# factual recall.
+#
+# CAPPED AT 4, for the same reason the signposts are capped at 6: it is a
+# finite toolkit, not a drill mill. Teach the four moves, then use them on
+# real things he actually reads. `build-cipher-field.py` enforces this.
+#
+# Same shape as SIGNPOSTS so the engine renders both with one code path.
+
+SOURCES = [
+    {
+        "id": "sourcing",
+        "name": "Sourcing",
+        "code": "SRC",
+        "emoji": "🔎",
+        "anchor": "Who wrote this, and why did they write it?",
+        "what": "Before you read a word of the actual content, find out "
+                "WHO made it and WHAT they wanted. An author is never a "
+                "neutral machine — they have a job, a side, and a reason "
+                "for writing.",
+        "why": "This is the single move that separates expert readers from "
+               "beginners. Beginners start at word one and believe what "
+               "they read. Experts look at the byline first and read "
+               "everything after it differently.",
+        "example": {
+            "text": "\"Our new BoostPro football boots increase sprint "
+                    "speed by up to 12%. Independent testing confirms "
+                    "BoostPro outperforms every rival on the market.\"\n\n"
+                    "— from boostpro.com/why-boostpro",
+            "spot": "Look at the address: boostpro.com. The company "
+                    "selling the boots wrote the page claiming the boots "
+                    "are best.",
+            "think": "That does not automatically make it false — but it "
+                     "does mean nobody neutral has said it yet. Also watch "
+                     "'up to 12%', which is a phrase that survives even if "
+                     "the real number is 1%.",
+        },
+        "practice": [
+            {
+                "text": "An article titled \"Why Homework Should Be "
+                        "Banned\" appears on a website. At the bottom it "
+                        "says: \"Written by the National Association of "
+                        "After-School Activity Providers.\"",
+                "q": "What does sourcing tell you here?",
+                "opts": [
+                    ("The authors sell after-school activities, so they "
+                     "benefit if kids have less homework", 1),
+                    ("The article must be false because it is about "
+                     "homework", 0),
+                    ("Nothing — the title is all that matters", 0),
+                ],
+                "teach": "The writer has something to gain from the "
+                         "conclusion. That does not prove them wrong, but "
+                         "you now read every reason they give with your "
+                         "eyes open.",
+            },
+            {
+                "text": "Two accounts of the same match. One is by the "
+                        "club's own website. One is by a neutral sports "
+                        "paper that covers every club in the league.",
+                "q": "Which would a careful reader trust more for the "
+                     "facts, and why?",
+                "opts": [
+                    ("The neutral paper — it has no stake in making one "
+                     "club look good", 1),
+                    ("The club site — they were actually there", 0),
+                    ("Neither, since both are about sport", 0),
+                ],
+                "teach": "Being close to the event does not make a source "
+                         "reliable. Ask what the writer WANTS you to "
+                         "think, every single time.",
+            },
+        ],
+    },
+    {
+        "id": "context",
+        "name": "Contextualizing",
+        "code": "CTX",
+        # NOT the clock emoji — Memory Moment already uses 🕰️ and the two
+        # appear side by side in the journal's chip picker.
+        "emoji": "📅",
+        "anchor": "When was this written, and what was happening then?",
+        "what": "Put the text back into its moment. What year is it? What "
+                "did people know then that we do not, and what do we know "
+                "now that they could not?",
+        "why": "People in the past were not stupid — they had different "
+               "information. Judging a 1950 text by 2026 knowledge tells "
+               "you nothing about whether the writer was reasoning well.",
+        "example": {
+            "text": "\"There is no reason for any individual to have a "
+                    "computer in his home.\"\n\n— a computer company "
+                    "executive, 1977",
+            "spot": "The date is doing all the work. 1977: computers were "
+                    "room-sized, cost a fortune, and did almost nothing a "
+                    "family would want.",
+            "think": "It sounds ridiculous now and it was reasonable then. "
+                     "Contextualizing stops you laughing at the past and "
+                     "starts you asking what WE are currently sure about "
+                     "that will look silly later.",
+        },
+        "practice": [
+            {
+                "text": "A travel guide describes a journey from London to "
+                        "Edinburgh as \"an arduous expedition of four "
+                        "days, best attempted only in the summer "
+                        "months.\" The guide was published in 1830.",
+                "q": "What does contextualizing tell you?",
+                "opts": [
+                    ("In 1830 there were no cars or fast trains, so four "
+                     "days was genuinely reasonable", 1),
+                    ("The writer was exaggerating to sound dramatic", 0),
+                    ("The route must have been much longer back then", 0),
+                ],
+                "teach": "The distance did not change — the technology "
+                         "did. Ask what was available to people at the "
+                         "time before you judge what they said.",
+            },
+        ],
+    },
+    {
+        "id": "corrob",
+        "name": "Corroborating",
+        "code": "COR",
+        "emoji": "⚖️",
+        "anchor": "What do other sources say, and where do they disagree?",
+        "what": "Never settle for one account. Line two or three up beside "
+                "each other and look hard at the places they do NOT "
+                "match.",
+        "why": "Where sources agree, you can be fairly confident. Where "
+               "they disagree is where the interesting question always "
+               "lives — somebody has a reason for telling it differently.",
+        "example": {
+            "text": "Report A: \"The crowd numbered around 5,000 and the "
+                    "march was peaceful throughout.\"\n\n"
+                    "Report B: \"Barely 1,500 attended, and scuffles broke "
+                    "out near the square.\"\n\n"
+                    "Report C: \"Police estimated 2,000–3,000. There was "
+                    "one brief disturbance.\"",
+            "spot": "All three disagree on the number, and two of the "
+                    "three mention some kind of trouble.",
+            "think": "The likely truth sits nearer C. A is probably by "
+                     "organisers who want it to look big and calm; B "
+                     "probably by someone who wants it to look small and "
+                     "chaotic. The disagreement told you more than any "
+                     "single report could.",
+        },
+        "practice": [
+            {
+                "text": "Three websites describe the same new game. Two "
+                        "say the multiplayer mode is buggy at launch. One "
+                        "— the game's official site — does not mention "
+                        "bugs at all.",
+                "q": "What is the most sensible conclusion?",
+                "opts": [
+                    ("There probably are bugs; the official site has a "
+                     "reason not to mention them", 1),
+                    ("The two sites are lying because they disagree with "
+                     "the makers", 0),
+                    ("You cannot know anything at all", 0),
+                ],
+                "teach": "Corroboration plus sourcing together. Two "
+                         "independent sources agreeing beats one "
+                         "interested source staying silent.",
+            },
+            {
+                "text": "You read that a particular food is 'proven' to "
+                        "make you smarter. You search and find the claim "
+                        "traces back to one small study, which every "
+                        "article is quoting.",
+                "q": "Have you corroborated the claim?",
+                "opts": [
+                    ("No — many articles repeating ONE study is still "
+                     "only one study", 1),
+                    ("Yes, because lots of different articles say it", 0),
+                    ("Yes, because it was a real study", 0),
+                ],
+                "teach": "Count SOURCES, not articles. Ten pages quoting "
+                         "the same study is one piece of evidence wearing "
+                         "ten hats.",
+            },
+        ],
+    },
+    {
+        "id": "claim",
+        "name": "Claim & Evidence",
+        "code": "CLM",
+        "emoji": "🧩",
+        "anchor": "What is being claimed, and what actually backs it up?",
+        "what": "Separate the CLAIM (what they want you to believe) from "
+                "the EVIDENCE (what they actually showed you). Then ask "
+                "whether the evidence really gets you to the claim.",
+        "why": "Most weak arguments are not lies. They are real evidence "
+               "attached to a much bigger claim than the evidence can "
+               "carry — and the gap between the two is where you have to "
+               "look.",
+        "example": {
+            "text": "\"Students who eat breakfast get better grades. So "
+                    "our cereal will help your child do better at "
+                    "school.\"",
+            "spot": "Claim: this cereal improves grades. Evidence: "
+                    "breakfast-eaters get better grades.",
+            "think": "The evidence is about breakfast in general, not this "
+                     "cereal. And families who manage breakfast every "
+                     "morning may differ in lots of other ways. The "
+                     "evidence is real; it just does not reach the "
+                     "claim.",
+        },
+        "practice": [
+            {
+                "text": "\"Our town's new speed cameras work. Since they "
+                        "were installed in January, accidents on Mill Road "
+                        "have fallen by a third.\"",
+                "q": "What is the weak point in this argument?",
+                "opts": [
+                    ("Something else in January might have caused the "
+                     "drop — the cameras are not proven to be the reason", 1),
+                    ("A third is not a big enough number to matter", 0),
+                    ("Accidents can never be counted accurately", 0),
+                ],
+                "teach": "Two things happening together does not prove one "
+                         "caused the other. Always ask: what ELSE could "
+                         "explain this?",
+            },
+            {
+                "text": "\"Every great musician I have ever met practises "
+                        "daily. Therefore practising daily will make you a "
+                        "great musician.\"",
+                "q": "Where does the evidence fail to reach the claim?",
+                "opts": [
+                    ("Daily practice may be necessary without being "
+                     "enough on its own", 1),
+                    ("The writer has not met enough musicians", 0),
+                    ("Musicians do not really practise every day", 0),
+                ],
+                "teach": "'All great X do Y' does not mean 'doing Y makes "
+                         "you great at X'. Watch for arguments that run "
+                         "backwards.",
+            },
+        ],
+    },
+]
+
+
+# Inspectional reading (Adler, level 2 of 4) — a single lesson, not a
+# track. Taught because it is badly under-taught and immediately useful:
+# five minutes of strategic scanning before reading makes everything
+# after it land better. `pre` is shown when a new case file is opened.
+INSPECT = {
+    "id": "inspect",
+    "name": "Sizing up a book",
+    "emoji": "🗺️",
+    "what": "Before you read page one properly, spend five minutes "
+            "scanning: the cover, the blurb, the contents page, the "
+            "chapter titles, the first page and the last page of the "
+            "first chapter.",
+    "why": "Mortimer Adler called this INSPECTIONAL reading and put it "
+           "second of his four levels, above plain decoding. You are "
+           "building a map before the journey. Readers who do it "
+           "understand more, because every new page has somewhere to "
+           "attach itself.",
+    "steps": [
+        "Read the title and the blurb. What kind of book is this?",
+        "Look at the contents page. How is it organised?",
+        "Read the chapter titles. What is the shape of the whole thing?",
+        "Read the first page. How does the author sound?",
+        "Make a prediction: what do you think this book is going to do?",
+    ],
+}
