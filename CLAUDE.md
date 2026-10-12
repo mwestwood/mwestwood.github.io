@@ -1116,6 +1116,22 @@ protected`; it skips them anyway since the body is empty). `/* */`
 comments only in layout `<script>`. Pluralise every count.
 
 
+### Add a standalone HTML app to MK-practice
+
+```bash
+python3 _tools/build-mk-practice.py "passphrase" /path/to/app.html <slug> "<Title>" <nav_order>
+```
+
+`teaching/mk-practice/` (plain index, nav_order 51) holds whole standalone
+HTML apps (e.g. the Math Kangaroo Quest workbooks). They are tens of MB, so
+the blob is **not** in front matter: the script gzips the HTML, encrypts it
+with the same AES-GCM/PBKDF2 scheme, writes `assets/mk-practice/<slug>.bin`,
+and creates `teaching/mk-practice/<slug>.md` (`layout: protected-app`,
+`blob:` front-matter path, no body). `_layouts/protected-app.html` fetches the
+blob, decrypts, gunzips via `DecompressionStream`, and shows the app in an
+iframe (plus an "Open full page" link). Don't commit the plaintext HTML.
+Re-run the script to update an app; `encrypt-batch.py` skips these pages.
+
 ### Inspect encrypted content without changing it
 
 ```bash
