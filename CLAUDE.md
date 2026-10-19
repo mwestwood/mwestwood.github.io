@@ -1132,6 +1132,9 @@ blob, decrypts, gunzips via `DecompressionStream`, and shows the app in an
 iframe (plus an "Open full page" link). Don't commit the plaintext HTML.
 Re-run the script to update an app; `encrypt-batch.py` skips these pages.
 
+The same script publishes the Grade 4 Challenge Lab under `teaching/ta-g4-math/`
+(plain index, nav_order 52): append `ta-g4-math TA-G4-Math` as the last two args.
+
 ### Inspect encrypted content without changing it
 
 ```bash

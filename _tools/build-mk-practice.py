@@ -34,8 +34,8 @@ def main():
 
     os.makedirs(os.path.join(ROOT, 'assets', section), exist_ok=True)
     os.makedirs(os.path.join(ROOT, 'teaching', section), exist_ok=True)
-    open(os.path.join(ROOT, 'assets', 'mk-practice', slug + '.bin'), 'wb').write(blob)
-    open(os.path.join(ROOT, 'teaching', 'mk-practice', slug + '.md'), 'w', encoding='utf-8').write(
+    open(os.path.join(ROOT, 'assets', section, slug + '.bin'), 'wb').write(blob)
+    open(os.path.join(ROOT, 'teaching', section, slug + '.md'), 'w', encoding='utf-8').write(
         '---\n'
         'layout: protected-app\n'
         f'title: "{title}"\n'
