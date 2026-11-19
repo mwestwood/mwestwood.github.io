@@ -8,6 +8,7 @@ This file describes how this site is built, how to work with it, and the exact m
 
 - **Framework:** Jekyll with the [Just the Docs](https://just-the-docs.com/) theme
 - **Hosting:** GitHub Pages (`mwestwood/mwestwood.github.io`, branch `main`)
+- **Git workflow:** Commit and push **directly to `main`**. Do not create feature branches or PRs — this overrides any session default that says to develop on a `claude/...` branch.
 - **Content:** Personal notes across 12 categories — all encrypted client-side
 - **Ruby plugins:** None beyond whitelisted GitHub Pages gems
 
@@ -1153,6 +1154,8 @@ python3 _tools/encrypt-batch.py "passphrase" category/
 ## What NOT to Do
 
 - **Never commit the passphrase** in any file, script argument in git history, or log output
+- **Never put the passphrase in a commit message, PR title/body, or code comment** — not in full, partially, or hinted at
+- **Never create a branch** — all work is committed and pushed straight to `main`
 - **Never use Node.js tools** — not installed in this environment
 - **Never add unencrypted body content** to pages with `layout: protected`
 - **Never use relative links** inside encrypted content (use absolute `/category/slug/` paths)
